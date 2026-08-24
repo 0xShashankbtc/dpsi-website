@@ -1,10 +1,9 @@
 /**
- * Sentry Backend Instrumentation — Node.js (Hono)
- * MUST be imported before all other modules in api/boot.ts
+ * Sentry Backend Instrumentation — Node.js (Hono) Serverless Optimized
+ * MUST be imported before all other modules
  *
- * Platform:     Node.js (ESM) + Hono
+ * Platform:     Node.js (ESM) + Hono on Vercel Serverless
  * Organisation: orangefuturetech
- * DSN:          same project as frontend
  */
 import * as Sentry from "@sentry/node";
 
@@ -20,16 +19,11 @@ Sentry.init({
   // 100% in dev, 10% in production for performance spans
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
 
-  // Capture local variable values in stack frames (Node.js)
-  includeLocalVariables: true,
+  // Disabled in serverless to prevent Node inspector socket from keeping lambda open
+  includeLocalVariables: false,
 
-  // Enable structured logging API (Sentry.logger.*)
+  // Enable structured logging API
   enableLogs: true,
-
-  // Capture Node.js memory/CPU/event-loop metrics every 30s
-  integrations: [
-    Sentry.nodeRuntimeMetricsIntegration(),
-  ],
 });
 
 export { Sentry };

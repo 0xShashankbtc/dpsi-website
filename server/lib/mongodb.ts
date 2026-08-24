@@ -1,22 +1,4 @@
-import dns from "node:dns";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-
-dotenv.config();
-
-// Ensure resilient DNS resolution for MongoDB Atlas SRV connection strings
-try {
-  dns.setDefaultResultOrder("ipv4first");
-} catch {
-  // Ignore in environments where setting DNS order is restricted
-}
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  console.warn("⚠️ MONGODB_URI is not set in environment variables.");
-}
-
 
 export type AllowedDbName = "dpsi_main" | "dpsi_gallery" | "dpsi_tc" | "dpsi_admin" | (string & {});
 
@@ -60,22 +42,13 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
     return cached.connections[key]!;
   }
 
-  // 2. Return pending connection promise if already in flight
-  if (cached.promises[key]) {
-    try {
-      const conn = await cached.promises[key]!;
-      if (conn.readyState === 1) return conn;
-    } catch {
-      cached.promises[key] = null;
-    }
-  }
-
-  if (!MONGODB_URI) {
+  const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  if (!rawUri) {
     throw new Error("MONGODB_URI environment variable is missing.");
   }
 
-  // 3. Construct database-specific URI
-  let uri = MONGODB_URI.trim();
+  // 2. Construct database-specific URI
+  let uri = rawUri;
   if (uri.includes("?")) {
     const [base, query] = uri.split("?");
     const cleanBase = base.replace(/\/+$/, "");
@@ -84,35 +57,41 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
     uri = `${uri.replace(/\/+$/, "")}/${dbName}`;
   }
 
-  // 4. Initiate single connection promise
-  cached.promises[key] = mongoose.createConnection(uri, {
-    serverSelectionTimeoutMS: 8000,
-    connectTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-    maxPoolSize: 10,
-    minPoolSize: 1,
-    tls: true,
-  }).asPromise();
-
-  try {
-    const conn = await cached.promises[key]!;
-    cached.connections[key] = conn;
-    cached.promises[key] = null;
+  if (!cached.promises[key]) {
+    console.log(`[MongoDB] Initializing connection to [${dbName}]...`);
+    const conn = mongoose.createConnection(uri, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 30000,
+      maxPoolSize: 5,
+      minPoolSize: 0,
+      tls: true,
+    });
 
     conn.on("error", (err) => {
-      console.error(`MongoDB [${dbName}] connection error:`, err.message);
+      console.error(`MongoDB [${dbName}] error:`, err.message);
     });
 
     conn.on("disconnected", () => {
-      console.warn(`MongoDB [${dbName}] disconnected. Clearing connection cache.`);
+      console.warn(`MongoDB [${dbName}] disconnected.`);
       cached.connections[key] = null;
       cached.promises[key] = null;
     });
 
-    return conn;
-  } catch (err) {
-    cached.promises[key] = null;
-    cached.connections[key] = null;
-    throw err;
+    cached.promises[key] = conn
+      .asPromise()
+      .then((c) => {
+        console.log(`[MongoDB] ✅ Connected to [${dbName}]!`);
+        cached.connections[key] = c;
+        return c;
+      })
+      .catch((err) => {
+        console.error(`[MongoDB] ❌ Connection failed for [${dbName}]:`, err.message);
+        cached.promises[key] = null;
+        cached.connections[key] = null;
+        throw err;
+      });
   }
+
+  return cached.promises[key]!;
 }

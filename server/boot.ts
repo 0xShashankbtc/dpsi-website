@@ -8,12 +8,13 @@ import type { HttpBindings } from "@hono/node-server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
-import { seedDatabase } from "./lib/seedDatabase";
-
-// Safe asynchronous background seeding of MongoDB defaults
-seedDatabase().catch((err) => console.warn("Seed warning:", err));
 
 const app = new Hono<{ Bindings: HttpBindings }>();
+
+app.use("*", async (c, next) => {
+  console.log(`[HTTP] ${c.req.method} ${c.req.url}`);
+  await next();
+});
 
 // Security headers (HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection)
 app.use(
@@ -30,42 +31,45 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "https://dpsindirapuram.com",
   "https://www.dpsindirapuram.com",
+  "https://dpsindirapuram.vercel.app",
   "https://dpsi-website.vercel.app",
 ];
 
 app.use(
-  "/api/*",
+  "*",
   cors({
     origin: (origin) => {
-      if (!origin) return origin; // allow server-to-server
-      return ALLOWED_ORIGINS.includes(origin) ? origin : null;
+      if (!origin) return "*"; // allow server-to-server / curl
+      if (origin.endsWith(".vercel.app") || ALLOWED_ORIGINS.includes(origin)) return origin;
+      return origin; // Permissive for school web portals
     },
-    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "x-trpc-source", "x-admin-auth", "x-tenant-id"],
     maxAge: 86400,
   })
 );
 
-app.use(bodyLimit({ maxSize: 15 * 1024 * 1024 }));
-app.use("/api/trpc/*", async (c) => {
+
+const trpcHandler = (c: any) => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
     req: c.req.raw,
     router: appRouter,
     createContext,
   });
+};
+
+app.all("/api/trpc/*", trpcHandler);
+app.all("/trpc/*", (c: any) => {
+  return fetchRequestHandler({
+    endpoint: "/trpc",
+    req: c.req.raw,
+    router: appRouter,
+    createContext,
+  });
 });
+
+app.get("/api/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
-
-if (process.env.NODE_ENV === "production") {
-  const { serve } = await import("@hono/node-server");
-  const { serveStaticFiles } = await import("./lib/vite");
-  serveStaticFiles(app);
-
-  const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
-}
