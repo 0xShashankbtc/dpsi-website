@@ -44,6 +44,9 @@ import {
   HelpCircle,
   BarChart3,
   Cpu,
+  Eye,
+  EyeOff,
+  CheckCircle2,
 } from "lucide-react";
 
 import { trpc } from "@/providers/trpc";
@@ -105,6 +108,17 @@ export default function AdminCMS() {
     typeof window !== "undefined" ? localStorage.getItem("dpsi_admin_tenant_name") || "Delhi Public School Indirapuram" : "Delhi Public School Indirapuram"
   );
   const [loginError, setLoginError] = useState("");
+
+  // First-Time Password Change & Reset State
+  const [isFirstTimePasswordModal, setIsFirstTimePasswordModal] = useState(false);
+  const [changePasswordUsername, setChangePasswordUsername] = useState("");
+  const [changePasswordCurrent, setChangePasswordCurrent] = useState("");
+  const [changePasswordNew, setChangePasswordNew] = useState("");
+  const [changePasswordConfirm, setChangePasswordConfirm] = useState("");
+  const [changePasswordError, setChangePasswordError] = useState("");
+  const [showPasswordCurrent, setShowPasswordCurrent] = useState(false);
+  const [showPasswordNew, setShowPasswordNew] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const [pageModal, setPageModal] = useState(false);
   const [pageForm, setPageForm] = useState({ title: "", slug: "", content: "", category: "General" });
@@ -395,6 +409,7 @@ export default function AdminCMS() {
 
   // Mutations
   const adminLoginMutation = trpc.cms.adminLogin.useMutation();
+  const changePasswordMutation = trpc.cms.changePassword.useMutation();
   const uploadTranscode = trpc.cms.uploadAndTranscode.useMutation();
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -409,20 +424,78 @@ export default function AdminCMS() {
 
       if (res.success && res.token) {
         const clientName = res.tenant?.schoolName || "DPS Indirapuram";
-        toast.success(`Welcome back, ${res.user?.username}! (${clientName})`);
-        setIsAuthenticated(true);
         localStorage.setItem("dpsi_admin_token", res.token);
         localStorage.setItem("dpsi_admin_auth", "true");
         localStorage.setItem("dpsi_admin_user", res.user?.username || "Admin");
         localStorage.setItem("dpsi_admin_tenant", res.tenant?.tenantId || (res.user as any)?.tenantId || "dpsi");
         localStorage.setItem("dpsi_admin_tenant_name", clientName);
         setActiveTenantName(clientName);
+
+        if (res.mustChangePassword) {
+          setChangePasswordUsername(adminUsername || res.user?.username || "Admin");
+          setChangePasswordCurrent(adminPassword);
+          setIsFirstTimePasswordModal(true);
+          toast.warning("First-Time Login: Please create a new permanent password.");
+        } else {
+          setIsAuthenticated(true);
+          toast.success(`Welcome back, ${res.user?.username}! (${clientName})`);
+        }
       } else {
         setLoginError(res.error || "Invalid username or password");
         toast.error(res.error || "Authentication failed");
       }
     } catch (err: any) {
       setLoginError(err.message || "Failed to authenticate");
+    }
+  };
+
+  const handleChangePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePasswordError("");
+
+    if (changePasswordNew.length < 8) {
+      setChangePasswordError("New password must be at least 8 characters long.");
+      return;
+    }
+    if (changePasswordNew !== changePasswordConfirm) {
+      setChangePasswordError("New password and confirmation password do not match.");
+      return;
+    }
+    if (changePasswordNew === changePasswordCurrent) {
+      setChangePasswordError("New password cannot be identical to your temporary password.");
+      return;
+    }
+
+    try {
+      const res = await changePasswordMutation.mutateAsync({
+        username: changePasswordUsername || adminUsername || localStorage.getItem("dpsi_admin_user") || "Admin",
+        currentPassword: changePasswordCurrent,
+        newPassword: changePasswordNew,
+        schoolCode: schoolCode.trim() || undefined,
+      });
+
+      if (res.success && res.token) {
+        const clientName = res.tenant?.schoolName || activeTenantName || "DPS Indirapuram";
+        toast.success(res.message || "Password updated successfully! Welcome to CMS.");
+        localStorage.setItem("dpsi_admin_token", res.token);
+        localStorage.setItem("dpsi_admin_auth", "true");
+        localStorage.setItem("dpsi_admin_user", res.user?.username || "Admin");
+        localStorage.setItem("dpsi_admin_tenant", res.tenant?.tenantId || (res.user as any)?.tenantId || "dpsi");
+        localStorage.setItem("dpsi_admin_tenant_name", clientName);
+        setActiveTenantName(clientName);
+        setIsAuthenticated(true);
+        setIsFirstTimePasswordModal(false);
+        setChangePasswordCurrent("");
+        setChangePasswordNew("");
+        setChangePasswordConfirm("");
+        setChangePasswordError("");
+      } else {
+        setChangePasswordError(res.error || "Failed to update password.");
+        toast.error(res.error || "Failed to update password.");
+      }
+    } catch (err: any) {
+      setChangePasswordError(err.message || "Failed to change password.");
+      toast.error(err.message || "Failed to change password.");
     }
   };
 
@@ -1476,8 +1549,155 @@ export default function AdminCMS() {
 
 
 
-  // 🔒 LIGHT LOGIN VIEW
+  // 🔒 LIGHT LOGIN VIEW / FIRST TIME PASSWORD RESET VIEW
   if (!isAuthenticated) {
+    if (isFirstTimePasswordModal) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-xl shadow-slate-200/60 relative overflow-hidden"
+          >
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20 text-white">
+                <Key className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Security Setup Required</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Your account is currently using the initial default password (<b>Admin@2026!</b>). For security compliance, please set your permanent password to continue.
+              </p>
+            </div>
+
+            {changePasswordError && (
+              <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{changePasswordError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Account Username</label>
+                <div className="relative">
+                  <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                  <Input
+                    type="text"
+                    disabled
+                    value={changePasswordUsername || adminUsername || "Admin"}
+                    className="pl-10 bg-slate-100 border-slate-200 text-slate-600 rounded-xl cursor-not-allowed text-xs font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Current / Temporary Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                  <Input
+                    type={showPasswordCurrent ? "text" : "password"}
+                    required
+                    value={changePasswordCurrent}
+                    onChange={(e) => setChangePasswordCurrent(e.target.value)}
+                    placeholder="Enter Admin@2026!"
+                    className="pl-10 pr-10 bg-slate-50 border-slate-200 text-slate-900 rounded-xl focus:border-emerald-600 focus:bg-white text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordCurrent(!showPasswordCurrent)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPasswordCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">New Secure Password</label>
+                <div className="relative">
+                  <Key className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                  <Input
+                    type={showPasswordNew ? "text" : "password"}
+                    required
+                    value={changePasswordNew}
+                    onChange={(e) => setChangePasswordNew(e.target.value)}
+                    placeholder="At least 8 characters"
+                    className="pl-10 pr-10 bg-slate-50 border-slate-200 text-slate-900 rounded-xl focus:border-emerald-600 focus:bg-white text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordNew(!showPasswordNew)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPasswordNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Confirm New Password</label>
+                <div className="relative">
+                  <CheckCircle className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                  <Input
+                    type={showPasswordConfirm ? "text" : "password"}
+                    required
+                    value={changePasswordConfirm}
+                    onChange={(e) => setChangePasswordConfirm(e.target.value)}
+                    placeholder="Re-type new password"
+                    className="pl-10 pr-10 bg-slate-50 border-slate-200 text-slate-900 rounded-xl focus:border-emerald-600 focus:bg-white text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPasswordConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Password Rules */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1 text-[11px]">
+                <div className={`flex items-center gap-1.5 ${changePasswordNew.length >= 8 ? "text-emerald-700 font-medium" : "text-slate-400"}`}>
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Minimum 8 characters</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${changePasswordNew && changePasswordNew === changePasswordConfirm ? "text-emerald-700 font-medium" : "text-slate-400"}`}>
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Passwords match</span>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={changePasswordMutation.isPending || changePasswordNew.length < 8 || changePasswordNew !== changePasswordConfirm}
+                className="w-full mt-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {changePasswordMutation.isPending ? (
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Save Password & Enter CMS <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsFirstTimePasswordModal(false);
+                  setChangePasswordError("");
+                }}
+                className="w-full py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors text-center cursor-pointer"
+              >
+                ← Back to Login
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <motion.div
@@ -1534,7 +1754,10 @@ export default function AdminCMS() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-700">Password</label>
+                <span className="text-[10px] text-emerald-700 font-medium">Default: Admin@2026!</span>
+              </div>
               <div className="relative">
                 <Key className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                 <Input
@@ -1708,6 +1931,21 @@ export default function AdminCMS() {
             className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5 mr-1" /> Sync DB
+          </Button>
+          <Button
+            onClick={() => {
+              setChangePasswordUsername(localStorage.getItem("dpsi_admin_user") || "Admin");
+              setChangePasswordCurrent("");
+              setChangePasswordNew("");
+              setChangePasswordConfirm("");
+              setChangePasswordError("");
+              setIsFirstTimePasswordModal(true);
+            }}
+            variant="outline"
+            size="sm"
+            className="text-xs border-amber-200 text-amber-800 bg-amber-50 hover:bg-amber-100 cursor-pointer"
+          >
+            <Key className="w-3.5 h-3.5 mr-1 text-amber-600" /> Change Password
           </Button>
           <Button
             onClick={handleLogout}
@@ -6422,6 +6660,155 @@ export default function AdminCMS() {
                   {editingStatMetricId ? "Save Changes" : "Create Counter"}
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- CHANGE PASSWORD MODAL (AUTHENTICATED) --- */}
+        {isFirstTimePasswordModal && isAuthenticated && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                    <Key className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Change Admin Password</h3>
+                    <p className="text-[11px] text-slate-500">Update your security credentials</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 rounded-full"
+                  onClick={() => {
+                    setIsFirstTimePasswordModal(false);
+                    setChangePasswordError("");
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {changePasswordError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{changePasswordError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleChangePasswordSubmit} className="space-y-3.5">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Account Username</label>
+                  <Input
+                    type="text"
+                    disabled
+                    value={localStorage.getItem("dpsi_admin_user") || "Admin"}
+                    className="bg-slate-100 border-slate-200 text-slate-600 rounded-xl cursor-not-allowed text-xs font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Current / Temporary Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showPasswordCurrent ? "text" : "password"}
+                      required
+                      value={changePasswordCurrent}
+                      onChange={(e) => setChangePasswordCurrent(e.target.value)}
+                      placeholder="Current password"
+                      className="pr-10 bg-slate-50 border-slate-200 text-slate-900 rounded-xl text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordCurrent(!showPasswordCurrent)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showPasswordCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">New Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showPasswordNew ? "text" : "password"}
+                      required
+                      value={changePasswordNew}
+                      onChange={(e) => setChangePasswordNew(e.target.value)}
+                      placeholder="At least 8 characters"
+                      className="pr-10 bg-slate-50 border-slate-200 text-slate-900 rounded-xl text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordNew(!showPasswordNew)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showPasswordNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Confirm New Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showPasswordConfirm ? "text" : "password"}
+                      required
+                      value={changePasswordConfirm}
+                      onChange={(e) => setChangePasswordConfirm(e.target.value)}
+                      placeholder="Re-type new password"
+                      className="pr-10 bg-slate-50 border-slate-200 text-slate-900 rounded-xl text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showPasswordConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-[11px]">
+                  <div className={`flex items-center gap-1.5 ${changePasswordNew.length >= 8 ? "text-emerald-700 font-medium" : "text-slate-400"}`}>
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Minimum 8 characters</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${changePasswordNew && changePasswordNew === changePasswordConfirm ? "text-emerald-700 font-medium" : "text-slate-400"}`}>
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Passwords match</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsFirstTimePasswordModal(false);
+                      setChangePasswordError("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={changePasswordMutation.isPending || changePasswordNew.length < 8 || changePasswordNew !== changePasswordConfirm}
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white flex items-center gap-1.5"
+                  >
+                    {changePasswordMutation.isPending ? (
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      "Update Password"
+                    )}
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         )}

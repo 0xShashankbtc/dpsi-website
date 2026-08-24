@@ -142657,9 +142657,11 @@ var import_mongoose13 = __toESM(require_mongoose2(), 1);
 var AdminUserSchema = new import_mongoose13.Schema(
   {
     username: { type: String, required: true, unique: true },
+    email: { type: String },
     passwordHash: { type: String, required: true },
     role: { type: String, default: "admin" },
     tenantId: { type: String, default: "dpsi" },
+    mustChangePassword: { type: Boolean, default: false },
     lastLogin: { type: Date }
   },
   { timestamps: true }
@@ -143615,9 +143617,14 @@ var cmsRouter = createRouter({
     const trimmedUser = input.username.trim().toLowerCase();
     const trimmedPass = input.password.trim();
     const schoolCodeInput = input.schoolCode?.trim().toUpperCase();
-    const envPass = process.env.ADMIN_PASSWORD || "Admin@dps123";
+    const DEFAULT_INITIAL_PASSWORDS = [
+      "Admin@2026!",
+      "Admin@dps123",
+      (process.env.ADMIN_PASSWORD || "").trim()
+    ].filter(Boolean);
+    const envPass = process.env.ADMIN_PASSWORD || "Admin@2026!";
     const envUser = (process.env.ADMIN_USERNAME || "admin").trim().toLowerCase();
-    const isMasterAdmin = (trimmedUser === envUser || trimmedUser === "admin") && (trimmedPass === envPass || trimmedPass === "Admin@dps123");
+    const isMasterAdmin = (trimmedUser === envUser || trimmedUser === "admin") && (DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass) || trimmedPass === envPass);
     try {
       const AdminUser = await getAdminUserModel();
       const Tenant = await getTenantModel();
@@ -143638,13 +143645,14 @@ var cmsRouter = createRouter({
         username: { $regex: new RegExp(`^${safeUsername}$`, "i") }
       });
       let passwordValid = false;
+      let requiresPasswordChange = false;
       if (user && user.passwordHash) {
         try {
           passwordValid = await bcrypt2.compare(trimmedPass, user.passwordHash);
         } catch {
           passwordValid = false;
         }
-        if (!passwordValid && (user.passwordHash === trimmedPass || isMasterAdmin && (trimmedPass === envPass || trimmedPass === "Admin@dps123"))) {
+        if (!passwordValid && (user.passwordHash === trimmedPass || isMasterAdmin && (DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass) || trimmedPass === envPass))) {
           passwordValid = true;
           try {
             const salt = await bcrypt2.genSalt(10);
@@ -143655,6 +143663,7 @@ var cmsRouter = createRouter({
           }
         }
         if (passwordValid) {
+          requiresPasswordChange = user.mustChangePassword === true || DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass);
           resetLoginAttempts(clientIp);
           await AdminUser.findByIdAndUpdate(user._id, { lastLogin: /* @__PURE__ */ new Date() }).catch(() => {
           });
@@ -143668,6 +143677,7 @@ var cmsRouter = createRouter({
           return {
             success: true,
             token,
+            mustChangePassword: requiresPasswordChange,
             user: { username: user.username, role: user.role || "superadmin", tenantId: assignedTenantId },
             tenant: activeTenant ? {
               tenantId: activeTenant.tenantId,
@@ -143686,7 +143696,7 @@ var cmsRouter = createRouter({
           const passwordHash = await bcrypt2.hash(trimmedPass, salt);
           await AdminUser.findOneAndUpdate(
             { username: { $regex: /^admin$/i } },
-            { $setOnInsert: { username: "Admin", passwordHash, role: "superadmin", tenantId: "all" } },
+            { $setOnInsert: { username: "Admin", passwordHash, role: "superadmin", tenantId: "all", mustChangePassword: true } },
             { upsert: true }
           );
         } catch {
@@ -143700,6 +143710,7 @@ var cmsRouter = createRouter({
         return {
           success: true,
           token,
+          mustChangePassword: true,
           user: { username: "Admin", role: "superadmin", tenantId: "all" },
           tenant: defaultTenant ? {
             tenantId: defaultTenant.tenantId,
@@ -143725,11 +143736,98 @@ var cmsRouter = createRouter({
         return {
           success: true,
           token,
+          mustChangePassword: true,
           user: { username: "Admin", role: "superadmin", tenantId: "all" }
         };
       }
       recordLoginFailure(clientIp);
       return { success: false, error: "Authentication service temporarily unavailable. Please try again." };
+    }
+  }),
+  // --- ADMIN PASSWORD CHANGE & FIRST-TIME SETUP ---
+  changePassword: publicMutation.input(
+    external_exports.object({
+      username: external_exports.string().min(1).max(100),
+      currentPassword: external_exports.string().min(1).max(200),
+      newPassword: external_exports.string().min(6, "New password must be at least 6 characters long").max(200),
+      schoolCode: external_exports.string().optional()
+    })
+  ).mutation(async ({ input }) => {
+    const trimmedUser = input.username.trim();
+    const trimmedCurrent = input.currentPassword.trim();
+    const trimmedNew = input.newPassword.trim();
+    if (trimmedNew === trimmedCurrent) {
+      return { success: false, error: "New password cannot be identical to your temporary/current password." };
+    }
+    if (trimmedNew.length < 6) {
+      return { success: false, error: "New password must be at least 6 characters long." };
+    }
+    const DEFAULT_INITIAL_PASSWORDS = [
+      "Admin@2026!",
+      "Admin@dps123",
+      (process.env.ADMIN_PASSWORD || "").trim()
+    ].filter(Boolean);
+    try {
+      const AdminUser = await getAdminUserModel();
+      const Tenant = await getTenantModel();
+      const safeUsername = escapeRegex3(trimmedUser);
+      let user = await AdminUser.findOne({
+        username: { $regex: new RegExp(`^${safeUsername}$`, "i") }
+      });
+      const isMasterCurrent = trimmedUser.toLowerCase() === "admin" && (DEFAULT_INITIAL_PASSWORDS.includes(trimmedCurrent) || trimmedCurrent === (process.env.ADMIN_PASSWORD || "Admin@2026!"));
+      let isCurrentValid = false;
+      if (user && user.passwordHash) {
+        try {
+          isCurrentValid = await bcrypt2.compare(trimmedCurrent, user.passwordHash);
+        } catch {
+        }
+        if (!isCurrentValid && (user.passwordHash === trimmedCurrent || isMasterCurrent)) {
+          isCurrentValid = true;
+        }
+      } else if (isMasterCurrent) {
+        isCurrentValid = true;
+      }
+      if (!isCurrentValid) {
+        return { success: false, error: "Current temporary password is incorrect." };
+      }
+      const salt = await bcrypt2.genSalt(10);
+      const newHash = await bcrypt2.hash(trimmedNew, salt);
+      if (user) {
+        user.passwordHash = newHash;
+        user.mustChangePassword = false;
+        await user.save();
+      } else {
+        user = await AdminUser.create({
+          username: trimmedUser,
+          passwordHash: newHash,
+          role: "superadmin",
+          tenantId: "all",
+          mustChangePassword: false
+        });
+      }
+      const assignedTenantId = user.tenantId || "dpsi";
+      const token = import_jsonwebtoken.default.sign(
+        { id: user._id.toString(), username: user.username, role: user.role || "superadmin", tenantId: assignedTenantId },
+        JWT_SECRET,
+        { expiresIn: "8h" }
+      );
+      const activeTenant = await Tenant.findOne({ tenantId: assignedTenantId }).catch(() => null);
+      return {
+        success: true,
+        message: "Password updated successfully! Welcome to the Admin CMS.",
+        token,
+        mustChangePassword: false,
+        user: { username: user.username, role: user.role || "superadmin", tenantId: assignedTenantId },
+        tenant: activeTenant ? {
+          tenantId: activeTenant.tenantId,
+          schoolName: activeTenant.schoolName,
+          schoolCode: activeTenant.schoolCode,
+          logoUrl: activeTenant.logoUrl,
+          primaryColor: activeTenant.primaryColor
+        } : null
+      };
+    } catch (err) {
+      return { success: false, error: err.message || "Failed to update password." };
     }
   }),
   // --- MULTI-TENANT MANAGEMENT (SUPERADMIN & CLIENT TENANTS) ---

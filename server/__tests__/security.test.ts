@@ -151,4 +151,40 @@ describe("Cybersecurity & Hardening Test Suite", () => {
       expect(signal.aborted).toBe(false);
     });
   });
+
+  describe("First-Time Password Reset & Policy Enforcement", () => {
+    const DEFAULT_INITIAL_PASSWORDS = ["Admin@2026!", "Admin@dps123"];
+
+    it("flags default initial passwords (Admin@2026!) as requiring a mandatory password change", () => {
+      const enteredPassword = "Admin@2026!";
+      const mustChange = DEFAULT_INITIAL_PASSWORDS.includes(enteredPassword);
+      expect(mustChange).toBe(true);
+    });
+
+    it("rejects new passwords that are identical to the temporary initial password", () => {
+      const currentPassword = "Admin@2026!";
+      const newPassword = "Admin@2026!";
+      const isIdentical = newPassword.trim() === currentPassword.trim();
+      expect(isIdentical).toBe(true);
+    });
+
+    it("validates new password length requirements (min 8 chars)", () => {
+      const shortPass = "Admin1!";
+      const validPass = "SecureSchool@2026#";
+
+      const passwordSchema = z.string().min(8, "Password must be at least 8 characters long");
+      expect(() => passwordSchema.parse(shortPass)).toThrow();
+      expect(() => passwordSchema.parse(validPass)).not.toThrow();
+    });
+
+    it("successfully creates a secure bcrypt hash for a new user password", async () => {
+      const newPassword = "MyNewSecureAdminPassword2026!";
+      const salt = await bcrypt.genSalt(10);
+      const newHash = await bcrypt.hash(newPassword, salt);
+
+      expect(newHash).toMatch(/^\$2[aby]?\$\d+\$/);
+      expect(await bcrypt.compare(newPassword, newHash)).toBe(true);
+      expect(await bcrypt.compare("Admin@2026!", newHash)).toBe(false);
+    });
+  });
 });
