@@ -1,5 +1,28 @@
 import { motion } from "framer-motion";
-import { FlaskConical, BookOpen, Dumbbell, Microscope, Music, Palette, Wifi, Bus, Shield, HeartPulse, Building } from "lucide-react";
+import {
+  FlaskConical,
+  BookOpen,
+  Dumbbell,
+  Microscope,
+  Music,
+  Palette,
+  Wifi,
+  Bus,
+  Shield,
+  HeartPulse,
+  Building,
+  Bot,
+  Cpu,
+  Boxes,
+  Hammer,
+  Wrench,
+  Rocket,
+  Lightbulb,
+  Atom,
+  Sparkles,
+  Code,
+  PenTool,
+} from "lucide-react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/providers/trpc";
@@ -16,6 +39,17 @@ const iconMap: Record<string, React.ReactNode> = {
   Shield: <Shield className="w-8 h-8" />,
   HeartPulse: <HeartPulse className="w-8 h-8" />,
   Building: <Building className="w-8 h-8" />,
+  Bot: <Bot className="w-8 h-8" />,
+  Cpu: <Cpu className="w-8 h-8" />,
+  Boxes: <Boxes className="w-8 h-8" />,
+  Hammer: <Hammer className="w-8 h-8" />,
+  Wrench: <Wrench className="w-8 h-8" />,
+  Rocket: <Rocket className="w-8 h-8" />,
+  Lightbulb: <Lightbulb className="w-8 h-8" />,
+  Atom: <Atom className="w-8 h-8" />,
+  Sparkles: <Sparkles className="w-8 h-8" />,
+  Code: <Code className="w-8 h-8" />,
+  PenTool: <PenTool className="w-8 h-8" />,
 };
 
 export default function Facilities() {

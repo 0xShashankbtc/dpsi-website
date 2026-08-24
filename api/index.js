@@ -142944,90 +142944,146 @@ async function seedDatabase(tenantId = "dpsi", options) {
         }
       ]);
     }
-    const facilityCount = await Facility.countDocuments({ isDeleted: false });
-    if (facilityCount === 0) {
-      await Facility.insertMany([
-        {
-          title: "Futuristic AI & Robotics Lab",
-          category: "Innovation",
-          description: "Next-gen AI/ML research center equipped with humanoid robots, Arduino/Raspberry Pi workstations, 3D printers, and expert mentors.",
-          icon: "Microscope",
-          imageUrl: "/images/facilities/ai_robotics_lab.webp",
-          order: 1
-        },
-        {
-          title: "Advanced Science Laboratories",
-          category: "Academics",
-          description: "State-of-the-art Physics, Chemistry, and Biology laboratories equipped with modern precision apparatus and safety systems.",
-          icon: "FlaskConical",
-          imageUrl: "/images/facilities/science_lab.webp",
-          order: 2
-        },
-        {
-          title: "Next-Gen Smart Classrooms",
-          category: "Infrastructure",
-          description: "Equipped with interactive digital touchboards, ergonomic learning pods, and high-speed gigabit connectivity.",
-          icon: "Wifi",
-          imageUrl: "/images/facilities/smart_classroom.webp",
-          order: 3
-        },
-        {
-          title: "Sports & Aquatic Complex",
-          category: "Sports",
-          description: "Olympic-size swimming pool, basketball courts, cricket ground, athletics track, and indoor badminton courts.",
-          icon: "Dumbbell",
-          imageUrl: "/images/facilities/swimming_pool.webp",
-          order: 4
-        },
-        {
-          title: "Digital Knowledge Library",
-          category: "Academics",
-          description: "A vast repository of 50,000+ books, digital archives, e-journals, and quiet reading spaces for focused study.",
-          icon: "BookOpen",
-          imageUrl: "/images/facilities/library.webp",
-          order: 5
-        },
-        {
-          title: "Performing Arts & Music Studio",
-          category: "Arts",
-          description: "Professional music rooms, dance studios, and an auditorium with stage lighting and acoustics.",
-          icon: "Music",
-          imageUrl: "/images/facilities/music_dance.webp",
-          order: 6
-        },
-        {
-          title: "Art & Craft Studio",
-          category: "Arts",
-          description: "Spacious art studios for painting, sculpture, pottery, and craft with professional-grade materials.",
-          icon: "Palette",
-          imageUrl: "/images/facilities/art_craft_studio.webp",
-          order: 7
-        },
-        {
-          title: "GPS AC Transportation",
-          category: "Transport",
-          description: "Fleet of 50+ GPS-enabled AC buses covering all major areas with trained drivers and attendants.",
-          icon: "Bus",
-          imageUrl: "/images/facilities/transport_bus.webp",
-          order: 8
-        },
-        {
-          title: "Campus Safety & Security",
-          category: "Safety",
-          description: "24/7 CCTV surveillance, trained security personnel, fire safety systems, and emergency response protocols.",
-          icon: "Shield",
-          imageUrl: "/images/facilities/campus_security.webp",
-          order: 9
-        },
-        {
-          title: "Health & Medical Center",
-          category: "Health",
-          description: "On-campus medical facility with qualified nurses, annual health checkups, and counseling services.",
-          icon: "HeartPulse",
-          imageUrl: "/images/facilities/medical_infirmary.webp",
-          order: 10
-        }
-      ]);
+    const initialFacilities = [
+      {
+        title: "Design, Robotics & Ai Lab",
+        category: "Innovation & Technology",
+        description: "State-of-the-art AI & Robotics innovation center equipped with humanoid robots, Arduino/Raspberry Pi workstations, 3D printers, IoT microcontrollers, and CAD software for hands-on engineering.",
+        icon: "Bot",
+        imageUrl: "/images/facilities/ai_robotics_lab.webp",
+        geometry: "torusKnot",
+        color: "#047857",
+        accent: "#10b981",
+        order: 1
+      },
+      {
+        title: "MakerSpace",
+        category: "Innovation & Creativity",
+        description: "A collaborative hands-on creative workspace where students design, build, and invent using digital fabrication, woodworking, rapid prototyping, and electronics tools.",
+        icon: "Boxes",
+        imageUrl: "/images/facilities/art_craft_studio.webp",
+        geometry: "octahedron",
+        color: "#0284c7",
+        accent: "#38bdf8",
+        order: 2
+      },
+      {
+        title: "Innovation Club",
+        category: "Student Clubs & Research",
+        description: "A vibrant incubator hub for student-led science projects, patent exploration, hackathons, STEAM challenges, and inter-school innovation summits.",
+        icon: "Rocket",
+        imageUrl: "/images/facilities/smart_classroom.webp",
+        geometry: "icosahedron",
+        color: "#d97706",
+        accent: "#f59e0b",
+        order: 3
+      },
+      {
+        title: "Advanced Science Laboratories",
+        category: "Academics",
+        description: "State-of-the-art Physics, Chemistry, and Biology laboratories equipped with modern precision apparatus and safety systems.",
+        icon: "FlaskConical",
+        imageUrl: "/images/facilities/science_lab.webp",
+        geometry: "dodecahedron",
+        color: "#1d4ed8",
+        accent: "#60a5fa",
+        order: 4
+      },
+      {
+        title: "Next-Gen Smart Classrooms",
+        category: "Infrastructure",
+        description: "Equipped with interactive digital touchboards, ergonomic learning pods, and high-speed gigabit connectivity.",
+        icon: "Wifi",
+        imageUrl: "/images/facilities/smart_classroom.webp",
+        geometry: "icosahedron",
+        color: "#7c3aed",
+        accent: "#a78bfa",
+        order: 5
+      },
+      {
+        title: "Sports & Aquatic Complex",
+        category: "Sports",
+        description: "Olympic-size swimming pool, basketball courts, cricket ground, athletics track, and indoor badminton courts.",
+        icon: "Dumbbell",
+        imageUrl: "/images/facilities/swimming_pool.webp",
+        geometry: "octahedron",
+        color: "#059669",
+        accent: "#34d399",
+        order: 6
+      },
+      {
+        title: "Digital Knowledge Library",
+        category: "Academics",
+        description: "A vast repository of 50,000+ books, digital archives, e-journals, and quiet reading spaces for focused study.",
+        icon: "BookOpen",
+        imageUrl: "/images/facilities/library.webp",
+        geometry: "torusKnot",
+        color: "#b45309",
+        accent: "#fbbf24",
+        order: 7
+      },
+      {
+        title: "Performing Arts & Music Studio",
+        category: "Arts",
+        description: "Professional music rooms, dance studios, and an auditorium with stage lighting and acoustics.",
+        icon: "Music",
+        imageUrl: "/images/facilities/music_dance.webp",
+        geometry: "dodecahedron",
+        color: "#db2777",
+        accent: "#f472b6",
+        order: 8
+      },
+      {
+        title: "Art & Craft Studio",
+        category: "Arts",
+        description: "Spacious art studios for painting, sculpture, pottery, and craft with professional-grade materials.",
+        icon: "Palette",
+        imageUrl: "/images/facilities/art_craft_studio.webp",
+        geometry: "octahedron",
+        color: "#9333ea",
+        accent: "#c084fc",
+        order: 9
+      },
+      {
+        title: "GPS AC Transportation",
+        category: "Transport",
+        description: "Fleet of 50+ GPS-enabled AC buses covering all major areas with trained drivers and attendants.",
+        icon: "Bus",
+        imageUrl: "/images/facilities/transport_bus.webp",
+        geometry: "icosahedron",
+        color: "#4f46e5",
+        accent: "#818cf8",
+        order: 10
+      },
+      {
+        title: "Campus Safety & Security",
+        category: "Safety",
+        description: "24/7 CCTV surveillance, trained security personnel, fire safety systems, and emergency response protocols.",
+        icon: "Shield",
+        imageUrl: "/images/facilities/campus_security.webp",
+        geometry: "torusKnot",
+        color: "#dc2626",
+        accent: "#f87171",
+        order: 11
+      },
+      {
+        title: "Health & Medical Center",
+        category: "Health",
+        description: "On-campus medical facility with qualified nurses, annual health checkups, and counseling services.",
+        icon: "HeartPulse",
+        imageUrl: "/images/facilities/medical_infirmary.webp",
+        geometry: "octahedron",
+        color: "#e11d48",
+        accent: "#fb7185",
+        order: 12
+      }
+    ];
+    for (const fac of initialFacilities) {
+      await Facility.findOneAndUpdate(
+        { title: fac.title },
+        { $setOnInsert: { ...fac, isActive: true, isDeleted: false } },
+        { upsert: true }
+      );
     }
     const departmentCount = await Department.countDocuments({ isDeleted: false });
     if (departmentCount === 0) {
