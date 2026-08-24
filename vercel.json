@@ -1,12 +1,6 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "functions": {
-    "api/boot.ts": {
-      "maxDuration": 30,
-      "memory": 1024
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
@@ -23,7 +17,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/boot"
+      "destination": "/api"
     },
     {
       "source": "/(.*)",
