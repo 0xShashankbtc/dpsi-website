@@ -879,17 +879,18 @@ export async function seedDatabase(
       ]);
     }
 
-    // 21. ADMIN USER
+    // 21. ADMIN USER (Bootstrap with initial environment variable password if configured)
     const AdminUser = await getAdminUserModel();
     const adminUser = await AdminUser.findOne({ username: { $regex: /^admin$/i } });
-    const defaultPassword = process.env.ADMIN_PASSWORD || "Admin@dps123";
-    if (!adminUser) {
+    const initialPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD;
+    if (!adminUser && initialPassword) {
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(defaultPassword, salt);
+      const passwordHash = await bcrypt.hash(initialPassword, salt);
       await AdminUser.create({
-        username: "Admin",
+        username: process.env.ADMIN_USERNAME || "Admin",
         passwordHash,
         role: "superadmin",
+        mustChangePassword: true,
       });
     }
 

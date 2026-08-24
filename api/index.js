@@ -143526,14 +143526,15 @@ async function seedDatabase(tenantId = "dpsi", options) {
     }
     const AdminUser = await getAdminUserModel();
     const adminUser = await AdminUser.findOne({ username: { $regex: /^admin$/i } });
-    const defaultPassword = process.env.ADMIN_PASSWORD || "Admin@dps123";
-    if (!adminUser) {
+    const initialPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD;
+    if (!adminUser && initialPassword) {
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(defaultPassword, salt);
+      const passwordHash = await bcrypt.hash(initialPassword, salt);
       await AdminUser.create({
-        username: "Admin",
+        username: process.env.ADMIN_USERNAME || "Admin",
         passwordHash,
-        role: "superadmin"
+        role: "superadmin",
+        mustChangePassword: true
       });
     }
     console.log("\u2705 MongoDB Auto-Seeding completed successfully with all models populated!");
@@ -143617,14 +143618,9 @@ var cmsRouter = createRouter({
     const trimmedUser = input.username.trim().toLowerCase();
     const trimmedPass = input.password.trim();
     const schoolCodeInput = input.schoolCode?.trim().toUpperCase();
-    const DEFAULT_INITIAL_PASSWORDS = [
-      "Admin@2026!",
-      "Admin@dps123",
-      (process.env.ADMIN_PASSWORD || "").trim()
-    ].filter(Boolean);
-    const envPass = process.env.ADMIN_PASSWORD || "Admin@2026!";
-    const envUser = (process.env.ADMIN_USERNAME || "admin").trim().toLowerCase();
-    const isMasterAdmin = (trimmedUser === envUser || trimmedUser === "admin") && (DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass) || trimmedPass === envPass);
+    const envAdminPassword = (process.env.INITIAL_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "").trim();
+    const envAdminUser = (process.env.ADMIN_USERNAME || "admin").trim().toLowerCase();
+    const isBootstrapAdmin = !!envAdminPassword && (trimmedUser === envAdminUser || trimmedUser === "admin") && trimmedPass === envAdminPassword;
     try {
       const AdminUser = await getAdminUserModel();
       const Tenant = await getTenantModel();
@@ -143652,18 +143648,11 @@ var cmsRouter = createRouter({
         } catch {
           passwordValid = false;
         }
-        if (!passwordValid && (user.passwordHash === trimmedPass || isMasterAdmin && (DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass) || trimmedPass === envPass))) {
+        if (!passwordValid && user.mustChangePassword && isBootstrapAdmin) {
           passwordValid = true;
-          try {
-            const salt = await bcrypt2.genSalt(10);
-            const newHash = await bcrypt2.hash(trimmedPass, salt);
-            await AdminUser.findByIdAndUpdate(user._id, { passwordHash: newHash }).catch(() => {
-            });
-          } catch {
-          }
         }
         if (passwordValid) {
-          requiresPasswordChange = user.mustChangePassword === true || DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass);
+          requiresPasswordChange = user.mustChangePassword === true;
           resetLoginAttempts(clientIp);
           await AdminUser.findByIdAndUpdate(user._id, { lastLogin: /* @__PURE__ */ new Date() }).catch(() => {
           });
@@ -143689,7 +143678,7 @@ var cmsRouter = createRouter({
           };
         }
       }
-      if (isMasterAdmin) {
+      if (isBootstrapAdmin) {
         resetLoginAttempts(clientIp);
         try {
           const salt = await bcrypt2.genSalt(10);
@@ -143726,7 +143715,7 @@ var cmsRouter = createRouter({
     } catch (dbErr) {
       const errMsg = dbErr instanceof Error ? dbErr.message : "Unknown error";
       console.warn("MongoDB connection check during auth:", errMsg);
-      if (isMasterAdmin) {
+      if (isBootstrapAdmin) {
         resetLoginAttempts(clientIp);
         const token = import_jsonwebtoken.default.sign(
           { id: "master", username: "Admin", role: "superadmin", tenantId: "all" },
@@ -143762,11 +143751,7 @@ var cmsRouter = createRouter({
     if (trimmedNew.length < 6) {
       return { success: false, error: "New password must be at least 6 characters long." };
     }
-    const DEFAULT_INITIAL_PASSWORDS = [
-      "Admin@2026!",
-      "Admin@dps123",
-      (process.env.ADMIN_PASSWORD || "").trim()
-    ].filter(Boolean);
+    const envAdminPassword = (process.env.INITIAL_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "").trim();
     try {
       const AdminUser = await getAdminUserModel();
       const Tenant = await getTenantModel();
@@ -143774,17 +143759,17 @@ var cmsRouter = createRouter({
       let user = await AdminUser.findOne({
         username: { $regex: new RegExp(`^${safeUsername}$`, "i") }
       });
-      const isMasterCurrent = trimmedUser.toLowerCase() === "admin" && (DEFAULT_INITIAL_PASSWORDS.includes(trimmedCurrent) || trimmedCurrent === (process.env.ADMIN_PASSWORD || "Admin@2026!"));
+      const isBootstrapMatch = !!envAdminPassword && trimmedUser.toLowerCase() === "admin" && trimmedCurrent === envAdminPassword;
       let isCurrentValid = false;
       if (user && user.passwordHash) {
         try {
           isCurrentValid = await bcrypt2.compare(trimmedCurrent, user.passwordHash);
         } catch {
         }
-        if (!isCurrentValid && (user.passwordHash === trimmedCurrent || isMasterCurrent)) {
+        if (!isCurrentValid && user.mustChangePassword && isBootstrapMatch) {
           isCurrentValid = true;
         }
-      } else if (isMasterCurrent) {
+      } else if (isBootstrapMatch) {
         isCurrentValid = true;
       }
       if (!isCurrentValid) {

@@ -1565,7 +1565,7 @@ export default function AdminCMS() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Security Setup Required</h2>
               <p className="text-xs text-slate-500 mt-1">
-                Your account is currently using the initial default password (<b>Admin@2026!</b>). For security compliance, please set your permanent password to continue.
+                Your account is currently using an initial temporary password. For security compliance, please set your permanent password to continue.
               </p>
             </div>
 
@@ -1599,7 +1599,7 @@ export default function AdminCMS() {
                     required
                     value={changePasswordCurrent}
                     onChange={(e) => setChangePasswordCurrent(e.target.value)}
-                    placeholder="Enter Admin@2026!"
+                    placeholder="Enter current temporary password"
                     className="pl-10 pr-10 bg-slate-50 border-slate-200 text-slate-900 rounded-xl focus:border-emerald-600 focus:bg-white text-xs"
                   />
                   <button
@@ -1754,10 +1754,7 @@ export default function AdminCMS() {
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700">Password</label>
-                <span className="text-[10px] text-emerald-700 font-medium">Default: Admin@2026!</span>
-              </div>
+              <label className="text-xs font-semibold text-slate-700">Password</label>
               <div className="relative">
                 <Key className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                 <Input

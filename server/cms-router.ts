@@ -79,19 +79,14 @@ export const cmsRouter = createRouter({
       const trimmedPass = input.password.trim();
       const schoolCodeInput = input.schoolCode?.trim().toUpperCase();
 
-      const DEFAULT_INITIAL_PASSWORDS = [
-        "Admin@2026!",
-        "Admin@dps123",
-        (process.env.ADMIN_PASSWORD || "").trim(),
-      ].filter(Boolean);
+      const envAdminPassword = (process.env.INITIAL_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "").trim();
+      const envAdminUser = (process.env.ADMIN_USERNAME || "admin").trim().toLowerCase();
 
-      const envPass = process.env.ADMIN_PASSWORD || "Admin@2026!";
-      const envUser = (process.env.ADMIN_USERNAME || "admin").trim().toLowerCase();
-
-      // Check master admin credentials from env vars or defaults
-      const isMasterAdmin =
-        (trimmedUser === envUser || trimmedUser === "admin") &&
-        (DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass) || trimmedPass === envPass);
+      // Check bootstrap admin credentials strictly from environment variable for initial setup
+      const isBootstrapAdmin =
+        !!envAdminPassword &&
+        (trimmedUser === envAdminUser || trimmedUser === "admin") &&
+        trimmedPass === envAdminPassword;
 
       try {
         const AdminUser = await getAdminUserModel();
@@ -119,25 +114,20 @@ export const cmsRouter = createRouter({
         let requiresPasswordChange = false;
 
         if (user && user.passwordHash) {
-          // 1. Try bcrypt comparison
+          // 1. Verify bcrypt password hash from MongoDB
           try {
             passwordValid = await bcrypt.compare(trimmedPass, user.passwordHash);
           } catch {
             passwordValid = false;
           }
 
-          // 2. Fallback: Check plaintext match or master admin match & upgrade to bcrypt
-          if (!passwordValid && (user.passwordHash === trimmedPass || (isMasterAdmin && (DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass) || trimmedPass === envPass)))) {
+          // 2. Allow bootstrap password ONLY if account is flagged as mustChangePassword
+          if (!passwordValid && user.mustChangePassword && isBootstrapAdmin) {
             passwordValid = true;
-            try {
-              const salt = await bcrypt.genSalt(10);
-              const newHash = await bcrypt.hash(trimmedPass, salt);
-              await AdminUser.findByIdAndUpdate(user._id, { passwordHash: newHash }).catch(() => {});
-            } catch {}
           }
 
           if (passwordValid) {
-            requiresPasswordChange = user.mustChangePassword === true || DEFAULT_INITIAL_PASSWORDS.includes(trimmedPass);
+            requiresPasswordChange = user.mustChangePassword === true;
 
             resetLoginAttempts(clientIp);
             await AdminUser.findByIdAndUpdate(user._id, { lastLogin: new Date() }).catch(() => {});
@@ -166,7 +156,8 @@ export const cmsRouter = createRouter({
           }
         }
 
-        if (isMasterAdmin) {
+        // 3. If user record does not exist in DB yet, bootstrap initial admin using environment variable
+        if (isBootstrapAdmin) {
           resetLoginAttempts(clientIp);
           try {
             const salt = await bcrypt.genSalt(10);
@@ -207,7 +198,7 @@ export const cmsRouter = createRouter({
         const errMsg = dbErr instanceof Error ? dbErr.message : "Unknown error";
         console.warn("MongoDB connection check during auth:", errMsg);
 
-        if (isMasterAdmin) {
+        if (isBootstrapAdmin) {
           resetLoginAttempts(clientIp);
           const token = jwt.sign(
             { id: "master", username: "Admin", role: "superadmin" as const, tenantId: "all" },
@@ -250,11 +241,7 @@ export const cmsRouter = createRouter({
         return { success: false, error: "New password must be at least 6 characters long." };
       }
 
-      const DEFAULT_INITIAL_PASSWORDS = [
-        "Admin@2026!",
-        "Admin@dps123",
-        (process.env.ADMIN_PASSWORD || "").trim(),
-      ].filter(Boolean);
+      const envAdminPassword = (process.env.INITIAL_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "").trim();
 
       try {
         const AdminUser = await getAdminUserModel();
@@ -265,19 +252,20 @@ export const cmsRouter = createRouter({
           username: { $regex: new RegExp(`^${safeUsername}$`, "i") },
         });
 
-        const isMasterCurrent =
+        const isBootstrapMatch =
+          !!envAdminPassword &&
           trimmedUser.toLowerCase() === "admin" &&
-          (DEFAULT_INITIAL_PASSWORDS.includes(trimmedCurrent) || trimmedCurrent === (process.env.ADMIN_PASSWORD || "Admin@2026!"));
+          trimmedCurrent === envAdminPassword;
 
         let isCurrentValid = false;
         if (user && user.passwordHash) {
           try {
             isCurrentValid = await bcrypt.compare(trimmedCurrent, user.passwordHash);
           } catch {}
-          if (!isCurrentValid && (user.passwordHash === trimmedCurrent || isMasterCurrent)) {
+          if (!isCurrentValid && user.mustChangePassword && isBootstrapMatch) {
             isCurrentValid = true;
           }
-        } else if (isMasterCurrent) {
+        } else if (isBootstrapMatch) {
           isCurrentValid = true;
         }
 
@@ -285,7 +273,7 @@ export const cmsRouter = createRouter({
           return { success: false, error: "Current temporary password is incorrect." };
         }
 
-        // Hash new password
+        // Hash new password with bcrypt (10 salt rounds)
         const salt = await bcrypt.genSalt(10);
         const newHash = await bcrypt.hash(trimmedNew, salt);
 

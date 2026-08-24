@@ -33,12 +33,12 @@ describe("Cybersecurity & Hardening Test Suite", () => {
 
   describe("Password Hashing & Bcrypt Verification", () => {
     it("correctly hashes with bcrypt and verifies passwords", async () => {
-      const password = "Admin@dps123";
+      const testPassword = "MockTemporaryPassword#123";
       const salt = await bcrypt.genSalt(10);
-      const hash = await bcrypt.hash(password, salt);
+      const hash = await bcrypt.hash(testPassword, salt);
 
       expect(hash).toMatch(/^\$2[aby]?\$\d+\$/);
-      expect(await bcrypt.compare(password, hash)).toBe(true);
+      expect(await bcrypt.compare(testPassword, hash)).toBe(true);
       expect(await bcrypt.compare("WrongPassword", hash)).toBe(false);
     });
   });
@@ -153,24 +153,21 @@ describe("Cybersecurity & Hardening Test Suite", () => {
   });
 
   describe("First-Time Password Reset & Policy Enforcement", () => {
-    const DEFAULT_INITIAL_PASSWORDS = ["Admin@2026!", "Admin@dps123"];
-
-    it("flags default initial passwords (Admin@2026!) as requiring a mandatory password change", () => {
-      const enteredPassword = "Admin@2026!";
-      const mustChange = DEFAULT_INITIAL_PASSWORDS.includes(enteredPassword);
-      expect(mustChange).toBe(true);
+    it("flags accounts with mustChangePassword=true as requiring a mandatory password change", () => {
+      const mockUserAccount = { username: "Admin", mustChangePassword: true };
+      expect(mockUserAccount.mustChangePassword).toBe(true);
     });
 
     it("rejects new passwords that are identical to the temporary initial password", () => {
-      const currentPassword = "Admin@2026!";
-      const newPassword = "Admin@2026!";
+      const currentPassword = "TemporaryPassword#123";
+      const newPassword = "TemporaryPassword#123";
       const isIdentical = newPassword.trim() === currentPassword.trim();
       expect(isIdentical).toBe(true);
     });
 
     it("validates new password length requirements (min 8 chars)", () => {
-      const shortPass = "Admin1!";
-      const validPass = "SecureSchool@2026#";
+      const shortPass = "Short1!";
+      const validPass = "SecureCustomPass@2026#";
 
       const passwordSchema = z.string().min(8, "Password must be at least 8 characters long");
       expect(() => passwordSchema.parse(shortPass)).toThrow();
@@ -178,13 +175,13 @@ describe("Cybersecurity & Hardening Test Suite", () => {
     });
 
     it("successfully creates a secure bcrypt hash for a new user password", async () => {
-      const newPassword = "MyNewSecureAdminPassword2026!";
+      const newPassword = "MyNewCustomAdminPassword2026!";
       const salt = await bcrypt.genSalt(10);
       const newHash = await bcrypt.hash(newPassword, salt);
 
       expect(newHash).toMatch(/^\$2[aby]?\$\d+\$/);
       expect(await bcrypt.compare(newPassword, newHash)).toBe(true);
-      expect(await bcrypt.compare("Admin@2026!", newHash)).toBe(false);
+      expect(await bcrypt.compare("OldTemporaryPassword#123", newHash)).toBe(false);
     });
   });
 });
