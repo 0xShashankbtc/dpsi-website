@@ -1811,11 +1811,8 @@ export default function AdminCMS() {
               <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full">
                 Admin: {localStorage.getItem("dpsi_admin_user") || "Admin"}
               </span>
-              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 rounded-full">
-                Client: {localStorage.getItem("dpsi_admin_tenant") || "dpsi"}
-              </span>
             </div>
-            <p className="text-[11px] text-slate-500">Multi-Tenant Management Portal • Isolated MongoDB Database Scoping</p>
+            <p className="text-[11px] text-slate-500">Administrative Portal</p>
           </div>
         </div>
 
