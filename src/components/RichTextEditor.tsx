@@ -1,13 +1,10 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import {
   Bold,
   Italic,
   Underline,
   List,
   ListOrdered,
-  Heading1,
-  Heading2,
-  Heading3,
   Quote,
   Link as LinkIcon,
   AlignLeft,

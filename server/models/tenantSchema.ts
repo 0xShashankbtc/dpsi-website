@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import { Schema, Document } from "mongoose";
 import { getDbConnection } from "../lib/mongodb";
 
 export interface ITenant extends Document {

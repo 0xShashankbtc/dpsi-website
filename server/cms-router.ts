@@ -4,15 +4,12 @@ import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, publicMutation, adminMutation, adminQuery } from "./middleware";
 import { getMainModels, getGalleryModels, getTcModels, createImmutableAuditLog, checkPersistentRateLimit } from "./models/cmsSchemas";
-import crypto from "crypto";
 import { getAdminUserModel } from "./models/adminUserSchema";
 import { getTenantModel } from "./models/tenantSchema";
 import { seedDatabase } from "./lib/seedDatabase";
 import { convertImageToWebP } from "./utils/mediaConverter";
 
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "");
-const MASTER_ADMIN_USER = process.env.ADMIN_USERNAME || "admin";
-const MASTER_ADMIN_PASS = process.env.ADMIN_PASSWORD || "";
 
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -439,7 +436,7 @@ export const cmsRouter = createRouter({
         status: z.enum(["active", "suspended"]).optional(),
       })
     )
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       const Tenant = await getTenantModel();
       const updated = await Tenant.findByIdAndUpdate(input.id, input, { new: true });
       if (!updated) throw new Error("Tenant not found.");
@@ -485,7 +482,7 @@ export const cmsRouter = createRouter({
             if (input.fileType.startsWith("image/")) {
               try {
                 const webpResult = await convertImageToWebP(buffer, 85);
-                uploadBuffer = webpResult.buffer;
+                uploadBuffer = Buffer.from(webpResult.buffer);
                 uploadType = "image/webp";
                 finalFileName = input.fileName.replace(/\.[^/.]+$/, "") + ".webp";
               } catch {}

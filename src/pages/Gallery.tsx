@@ -6,8 +6,6 @@ import { trpc } from "@/providers/trpc";
 import VideoGallerySection from "@/sections/VideoGallerySection";
 import { CoverflowCarousel, type CoverflowSlide } from "@/components/ui/coverflow-carousel";
 
-const defaultCategories = ["All", "Labs", "Sports", "Library", "Events", "Campus"];
-
 export default function Gallery() {
   const { data: legacyGallery, isLoading: isLegacyLoading } = trpc.gallery.list.useQuery();
   const { data: cmsGallery, isLoading: isCmsLoading } = trpc.cms.listGalleryImages.useQuery();

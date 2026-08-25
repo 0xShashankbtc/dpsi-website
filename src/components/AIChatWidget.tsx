@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Bot, MessageSquare, GraduationCap, RotateCcw, ExternalLink, Phone, Mail, Mic, Calendar } from "lucide-react";
-import { getFormattedAcademicCalendarPrompt } from "@/lib/academicCalendarData";
 import { trpc } from "@/providers/trpc";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

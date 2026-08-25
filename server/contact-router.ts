@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createRouter, publicQuery, publicMutation, adminQuery, adminMutation } from "./middleware";
+import { createRouter, publicMutation, adminQuery, adminMutation } from "./middleware";
 
 export const contactRouter = createRouter({
   create: publicMutation
@@ -12,7 +12,7 @@ export const contactRouter = createRouter({
         message: z.string().min(5),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async () => {
       return { success: true, id: 1 };
     }),
 
@@ -22,13 +22,13 @@ export const contactRouter = createRouter({
 
   markRead: adminMutation
     .input(z.object({ id: z.any() }))
-    .mutation(async ({ input }) => {
+    .mutation(async () => {
       return { success: true };
     }),
 
   delete: adminMutation
     .input(z.object({ id: z.any() }))
-    .mutation(async ({ input }) => {
+    .mutation(async () => {
       return { success: true };
     }),
 });

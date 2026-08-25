@@ -43,7 +43,6 @@ import {
   BookOpen,
   HelpCircle,
   BarChart3,
-  Cpu,
   Eye,
   EyeOff,
   CheckCircle2,
@@ -55,7 +54,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { formatISTDate, formatISTDateTime } from "@/lib/dateUtils";
+import { formatISTDate } from "@/lib/dateUtils";
+import RichTextEditor from "@/components/RichTextEditor";
 
 type TabType =
   | "dashboard"
@@ -71,6 +71,7 @@ type TabType =
   | "testimonials"
   | "leadership"
   | "facilities"
+  | "feature_cards"
   | "departments"
   | "admission_steps"
   | "faqs"
@@ -1396,7 +1397,7 @@ export default function AdminCMS() {
 
 
   const [activityModal, setActivityModal] = useState(false);
-  const [activityForm, setActivityForm] = useState({ title: "", category: "Academics", description: "", imageUrl: "" });
+  const [activityForm, setActivityForm] = useState({ title: "", category: "Academics", description: "", eventDate: "", imageUrl: "" });
 
   const [sliderModal, setSliderModal] = useState(false);
   const [sliderForm, setSliderForm] = useState({
@@ -1466,10 +1467,6 @@ export default function AdminCMS() {
 
   const safeFormatDate = (val: any) => {
     return formatISTDate(val);
-  };
-
-  const safeFormatDateTime = (val: any) => {
-    return formatISTDateTime(val);
   };
 
   const parseBulkCsv = (text: string) => {
@@ -1869,7 +1866,7 @@ export default function AdminCMS() {
                     <button
                       key={idx}
                       onClick={() => {
-                        setActiveTab(item.tab);
+                        setActiveTab(item.tab as TabType);
                         setIsSearchOpen(false);
                       }}
                       className="w-full flex items-start justify-between gap-3 p-2.5 rounded-xl hover:bg-slate-50 text-left transition-colors cursor-pointer border border-transparent hover:border-slate-100 group"
@@ -3395,6 +3392,9 @@ export default function AdminCMS() {
                           description: "",
                           icon: "Microscope",
                           imageUrl: "",
+                          geometry: "torusKnot",
+                          color: "#10b981",
+                          accent: "#34d399",
                           order: 0,
                         });
                         setFacilityModal(true);

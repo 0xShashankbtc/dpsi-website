@@ -1,8 +1,7 @@
-import React from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { useParams, Link } from "react-router";
 import { motion } from "framer-motion";
-import { ChevronRight, Calendar, Tag, ArrowLeft, FileText, AlertCircle } from "lucide-react";
+import { ChevronRight, Calendar, ArrowLeft, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";

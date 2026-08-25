@@ -3,7 +3,6 @@ import { Routes, Route, useLocation } from 'react-router'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const Home = lazy(() => import('./pages/Home'))
-const Home2 = lazy(() => import('./pages/Home2'))
 const About = lazy(() => import('./pages/About'))
 const Academics = lazy(() => import('./pages/Academics'))
 const Admissions = lazy(() => import('./pages/Admissions'))

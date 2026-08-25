@@ -5,7 +5,7 @@ import { getTenantModel } from "../models/tenantSchema";
 
 export async function seedDatabase(
   tenantId: string = "dpsi",
-  options?: { schoolName?: string; schoolCode?: string; primaryColor?: string }
+  _options?: { schoolName?: string; schoolCode?: string; primaryColor?: string }
 ) {
   try {
     // 0. SEED DEFAULT TENANT IN dpsi_admin

@@ -30,12 +30,12 @@ export default function VideoGallerySection() {
 
   const dynamicVideos = cmsVideos
     ?.filter((v: any) => !v.isDeleted && v.isPublished !== false)
-    ?.map((v: any) => {
+    ?.map((v: any, i: number) => {
       const targetUrl = (v.youtubeUrl || v.videoUrl || "").trim();
       const yt = targetUrl ? extractYoutubeInfo(targetUrl) : null;
       if (yt) {
         return {
-          id: v._id ? String(v._id) : yt.id,
+          id: v._id ? String(v._id) : yt.id || `yt-${i}`,
           title: v.title,
           url: yt.embedUrl,
           thumbnail: v.thumbnailUrl || yt.thumbnail,
@@ -43,7 +43,7 @@ export default function VideoGallerySection() {
         };
       }
       return {
-        id: v._id ? String(v._id) : Math.random().toString(),
+        id: v._id ? String(v._id) : `vid-${i}`,
         title: v.title,
         url: v.videoUrl || v.youtubeUrl || "",
         thumbnail: v.thumbnailUrl || "",

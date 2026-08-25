@@ -3,21 +3,15 @@ import { motion } from "framer-motion";
 import {
   Award,
   Search,
-  FileCheck,
   Download,
   AlertCircle,
   ShieldCheck,
-  Calendar,
-  User,
-  GraduationCap,
-  Building2,
-  ExternalLink,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { trpc } from "@/providers/trpc";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { formatISTDate } from "@/lib/dateUtils";
 
 export default function TransferCertificate() {

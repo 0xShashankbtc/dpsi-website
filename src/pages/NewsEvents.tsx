@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, ArrowRight, MapPin, Newspaper, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -183,7 +182,7 @@ export default function NewsEvents() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {displayEvents.map((event: any, i: number) => {
-                    const evtDate = new Date(event.eventDate || event.createdAt || Date.now());
+                    const evtDate = new Date(event.eventDate || event.createdAt || 0);
                     return (
                       <motion.div key={event.id || i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
                         <Card className="overflow-hidden hover:shadow-lg transition-all h-full border border-slate-200 dark:border-slate-800">

@@ -39,7 +39,6 @@ export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [direction, setDirection] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
 
   // Safe slide index calculation
@@ -60,7 +59,7 @@ export default function HeroSection() {
 
   // Snappy Typewriter Effect (Fast 15ms typing, smooth transitions)
   useEffect(() => {
-    if (!slide || activeSlides.length === 0) return;
+    if (!slide || activeSlides.length === 0 || isPaused) return;
     let timer: NodeJS.Timeout;
 
     if (!isDeleting && displayText.length < fullText.length) {
@@ -78,17 +77,15 @@ export default function HeroSection() {
     } else if (isDeleting && displayText.length === 0) {
       timer = setTimeout(() => {
         setIsDeleting(false);
-        setDirection(1);
         setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
       }, 10);
     }
 
     return () => clearTimeout(timer);
-  }, [displayText, isDeleting, fullText, activeSlides.length, slide]);
+  }, [displayText, isDeleting, fullText, activeSlides.length, slide, isPaused]);
 
-  const handleManualSlideChange = (newIndex: number, newDir: number = 1) => {
+  const handleManualSlideChange = (newIndex: number) => {
     if (activeSlides.length === 0) return;
-    setDirection(newDir);
     setIsDeleting(false);
     setDisplayText("");
     setCurrentSlide(newIndex % activeSlides.length);
@@ -216,7 +213,7 @@ export default function HeroSection() {
           <motion.button
             whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => handleManualSlideChange((safeSlideIndex - 1 + activeSlides.length) % activeSlides.length, -1)}
+            onClick={() => handleManualSlideChange((safeSlideIndex - 1 + activeSlides.length) % activeSlides.length)}
             className="p-1.5 sm:p-2 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
             title="Previous Slide"
           >
@@ -228,7 +225,7 @@ export default function HeroSection() {
             {activeSlides.map((_, idx) => (
               <motion.button
                 key={idx}
-                onClick={() => handleManualSlideChange(idx, idx > safeSlideIndex ? 1 : -1)}
+                onClick={() => handleManualSlideChange(idx)}
                 animate={{
                   width: safeSlideIndex === idx ? 24 : 8,
                   backgroundColor: safeSlideIndex === idx ? "#38bdf8" : "rgba(255, 255, 255, 0.45)"
@@ -243,7 +240,7 @@ export default function HeroSection() {
           <motion.button
             whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => handleManualSlideChange((safeSlideIndex + 1) % activeSlides.length, 1)}
+            onClick={() => handleManualSlideChange((safeSlideIndex + 1) % activeSlides.length)}
             className="p-1.5 sm:p-2 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
             title="Next Slide"
           >

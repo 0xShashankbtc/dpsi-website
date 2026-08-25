@@ -61,7 +61,7 @@ app.use(
 import { tenantContextStorage } from "./models/cmsSchemas";
 
 const trpcHandler = async (c: any) => {
-  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers() });
+  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers(), info: {} as any });
   return tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
       endpoint: "/api/trpc",
@@ -74,7 +74,7 @@ const trpcHandler = async (c: any) => {
 
 app.all("/api/trpc/*", trpcHandler);
 app.all("/trpc/*", async (c: any) => {
-  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers() });
+  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers(), info: {} as any });
   return tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
       endpoint: "/trpc",

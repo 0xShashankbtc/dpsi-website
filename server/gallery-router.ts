@@ -1,6 +1,6 @@
 import { z } from "zod";
 import mongoose from "mongoose";
-import { createRouter, publicQuery, adminQuery, adminMutation } from "./middleware";
+import { createRouter, publicQuery, adminMutation } from "./middleware";
 import { getGalleryModels } from "./models/cmsSchemas";
 
 function escapeRegex(str: string): string {

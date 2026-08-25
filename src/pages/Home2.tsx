@@ -39,7 +39,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export default function Home2() {
-  const { data: featureCards, isLoading } = trpc.cms.listFeatureCards.useQuery(undefined, {
+  const { data: featureCards } = trpc.cms.listFeatureCards.useQuery(undefined, {
     staleTime: 60000,
   });
 

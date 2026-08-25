@@ -43,7 +43,7 @@ export const admissionRouter = createRouter({
 
   getById: adminQuery
     .input(z.object({ id: z.any() }))
-    .query(async ({ input }) => {
+    .query(async () => {
       return null;
     }),
 
@@ -54,13 +54,13 @@ export const admissionRouter = createRouter({
         status: z.enum(["pending", "reviewing", "approved", "rejected"]),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async () => {
       return { success: true };
     }),
 
   delete: adminMutation
     .input(z.object({ id: z.any() }))
-    .mutation(async ({ input }) => {
+    .mutation(async () => {
       return { success: true };
     }),
 
