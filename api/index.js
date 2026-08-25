@@ -176713,7 +176713,10 @@ var AiConfigSchema = new import_mongoose5.Schema(
     maxTokens: { type: Number, default: 700 },
     apiKey: { type: String },
     elevenlabsApiKey: { type: String },
-    elevenlabsVoiceId: { type: String, default: "EXAVITQu4vr4xnSDxMaL" }
+    elevenlabsVoiceId: { type: String, default: "EXAVITQu4vr4xnSDxMaL" },
+    ttsProvider: { type: String, enum: ["google", "elevenlabs", "auto"], default: "google" },
+    googleTtsApiKey: { type: String },
+    googleTtsVoice: { type: String, default: "en-IN-Journey-F" }
   },
   { timestamps: true }
 );
@@ -178174,57 +178177,102 @@ var aiRouter = createRouter({
     if (!isTtsAllowed) {
       return { audioBase64: null };
     }
-    let apiKey = (process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
-    let voiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
+    let ttsProvider = "google";
+    let googleApiKey = (process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_TTS_API_KEY || "").trim();
+    let googleVoice = "en-IN-Journey-F";
+    let elevenlabsApiKey = (process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
+    let elevenlabsVoiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
     try {
       const { AiConfig } = await getMainModels(ctx.tenantId);
       if (AiConfig) {
         const config2 = await AiConfig.findOne({}).sort({ updatedAt: -1 });
+        if (config2?.ttsProvider) {
+          ttsProvider = config2.ttsProvider;
+        }
+        if (config2?.googleTtsApiKey && config2.googleTtsApiKey.trim()) {
+          googleApiKey = config2.googleTtsApiKey.trim();
+        }
+        if (config2?.googleTtsVoice && config2.googleTtsVoice.trim()) {
+          googleVoice = config2.googleTtsVoice.trim();
+        }
         if (config2?.elevenlabsApiKey && config2.elevenlabsApiKey.trim().startsWith("sk_")) {
-          apiKey = config2.elevenlabsApiKey.trim();
+          elevenlabsApiKey = config2.elevenlabsApiKey.trim();
         }
         if (config2?.elevenlabsVoiceId && config2.elevenlabsVoiceId.trim()) {
-          voiceId = config2.elevenlabsVoiceId.trim();
+          elevenlabsVoiceId = config2.elevenlabsVoiceId.trim();
         }
       }
     } catch {
     }
-    if (!apiKey) {
-      return { audioBase64: null };
-    }
-    const cleanPrompt = input.text.slice(0, 200);
-    const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
-    for (const modelId of ttsModels) {
+    const cleanPrompt = input.text.slice(0, 220);
+    const hasHindi = /[\u0900-\u097F]/.test(cleanPrompt);
+    if ((ttsProvider === "google" || ttsProvider === "auto") && googleApiKey) {
       try {
-        const response = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
+        const langCode = hasHindi ? "hi-IN" : googleVoice.startsWith("hi") ? "hi-IN" : "en-IN";
+        const selectedVoice = hasHindi ? "hi-IN-Neural2-A" : googleVoice;
+        const googleRes = await fetch(
+          `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleApiKey}`,
           {
             method: "POST",
-            headers: {
-              Accept: "audio/mpeg",
-              "Content-Type": "application/json",
-              "xi-api-key": apiKey
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              text: cleanPrompt,
-              model_id: modelId,
-              voice_settings: {
-                stability: 0.45,
-                similarity_boost: 0.75,
-                style: 0,
-                use_speaker_boost: false
+              input: { text: cleanPrompt },
+              voice: {
+                languageCode: langCode,
+                name: selectedVoice,
+                ssmlGender: selectedVoice.endsWith("-D") ? "MALE" : "FEMALE"
+              },
+              audioConfig: {
+                audioEncoding: "MP3",
+                speakingRate: 1.02,
+                pitch: 0
               }
             }),
             signal: AbortSignal.timeout(4500)
-            // 4.5s fast timeout
           }
         );
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          const base643 = Buffer.from(arrayBuffer).toString("base64");
-          return { audioBase64: `data:audio/mpeg;base64,${base643}` };
+        if (googleRes.ok) {
+          const data2 = await googleRes.json();
+          if (data2?.audioContent) {
+            return { audioBase64: `data:audio/mp3;base64,${data2.audioContent}` };
+          }
         }
       } catch {
+      }
+    }
+    if (elevenlabsApiKey) {
+      const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
+      for (const modelId of ttsModels) {
+        try {
+          const response = await fetch(
+            `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabsVoiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
+            {
+              method: "POST",
+              headers: {
+                Accept: "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": elevenlabsApiKey
+              },
+              body: JSON.stringify({
+                text: cleanPrompt,
+                model_id: modelId,
+                voice_settings: {
+                  stability: 0.5,
+                  similarity_boost: 0.8,
+                  style: 0,
+                  use_speaker_boost: true
+                }
+              }),
+              signal: AbortSignal.timeout(4500)
+            }
+          );
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            const base643 = Buffer.from(arrayBuffer).toString("base64");
+            return { audioBase64: `data:audio/mpeg;base64,${base643}` };
+          }
+        } catch {
+        }
       }
     }
     return { audioBase64: null };
@@ -180542,7 +180590,10 @@ var cmsRouter = createRouter({
       maxTokens: external_exports.number().min(100).max(2e3).default(700),
       apiKey: external_exports.string().optional(),
       elevenlabsApiKey: external_exports.string().optional(),
-      elevenlabsVoiceId: external_exports.string().optional()
+      elevenlabsVoiceId: external_exports.string().optional(),
+      ttsProvider: external_exports.enum(["google", "elevenlabs", "auto"]).optional(),
+      googleTtsApiKey: external_exports.string().optional(),
+      googleTtsVoice: external_exports.string().optional()
     })
   ).mutation(async ({ input, ctx }) => {
     const { AiConfig } = await getMainModels(ctx.tenantId);

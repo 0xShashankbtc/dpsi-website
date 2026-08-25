@@ -1454,6 +1454,9 @@ export default function AdminCMS() {
   const [aiPromptEdit, setAiPromptEdit] = useState("");
   const [aiModelEdit, setAiModelEdit] = useState("llama-3.3-70b-versatile");
   const [aiTempEdit, setAiTempEdit] = useState(0.4);
+  const [aiTtsProviderEdit, setAiTtsProviderEdit] = useState<"google" | "elevenlabs" | "auto">("google");
+  const [aiGoogleKeyEdit, setAiGoogleKeyEdit] = useState("");
+  const [aiGoogleVoiceEdit, setAiGoogleVoiceEdit] = useState("en-IN-Journey-F");
   const [aiElevenlabsKeyEdit, setAiElevenlabsKeyEdit] = useState("");
   const [aiElevenlabsVoiceEdit, setAiElevenlabsVoiceEdit] = useState("EXAVITQu4vr4xnSDxMaL");
 
@@ -4218,16 +4221,61 @@ export default function AdminCMS() {
                       </div>
                     </div>
 
-                    {/* ElevenLabs Real Human Voice Synthesis Section */}
-                    <div className="border border-sky-200 bg-sky-50/50 rounded-lg p-4 space-y-3">
+                    {/* Voice Synthesis Engine Selection & Configuration */}
+                    <div className="border border-emerald-200 bg-emerald-50/50 rounded-lg p-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Volume2 className="w-4 h-4 text-sky-600" />
-                          <h3 className="text-xs font-bold text-slate-900">ElevenLabs Realistic Voice TTS</h3>
+                          <Volume2 className="w-4 h-4 text-emerald-700" />
+                          <h3 className="text-xs font-bold text-slate-900">Voice Synthesis Engine (Google Cloud Neural2 / Journey)</h3>
                         </div>
-                        <span className="text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-medium">Real Human Voice</span>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Broadcast Quality</span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-600">Active TTS Provider</label>
+                          <select
+                            value={aiTtsProviderEdit || aiConfig?.ttsProvider || "google"}
+                            onChange={(e) => setAiTtsProviderEdit(e.target.value as any)}
+                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs font-medium"
+                          >
+                            <option value="google">Google Cloud (Neural2 & Journey Indian Voices)</option>
+                            <option value="elevenlabs">ElevenLabs Turbo</option>
+                            <option value="auto">Auto (Google Cloud with ElevenLabs Fallback)</option>
+                          </select>
+                          <p className="text-[10px] text-slate-500">Google Cloud Journey voices provide warm Indian conversational speech.</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-600">Google Cloud API Key (AIza...)</label>
+                          <Input
+                            type="password"
+                            placeholder={aiConfig?.googleTtsApiKey ? "••••••••••••••••••••••••" : "Paste Google Cloud TTS API Key"}
+                            value={aiGoogleKeyEdit}
+                            onChange={(e) => setAiGoogleKeyEdit(e.target.value)}
+                            className="bg-white border-slate-200 text-slate-900 text-xs"
+                          />
+                          <p className="text-[10px] text-slate-500">Google Cloud API Key with Text-to-Speech API enabled.</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-600">Google Voice Persona</label>
+                          <select
+                            value={aiGoogleVoiceEdit || aiConfig?.googleTtsVoice || "en-IN-Journey-F"}
+                            onChange={(e) => setAiGoogleVoiceEdit(e.target.value)}
+                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs"
+                          >
+                            <option value="en-IN-Journey-F">en-IN-Journey-F (Indian English Warm Conversational Female)</option>
+                            <option value="en-IN-Journey-D">en-IN-Journey-D (Indian English Natural Male)</option>
+                            <option value="en-IN-Neural2-A">en-IN-Neural2-A (Indian English Neural2 Female)</option>
+                            <option value="en-IN-Neural2-D">en-IN-Neural2-D (Indian English Neural2 Male)</option>
+                            <option value="hi-IN-Neural2-A">hi-IN-Neural2-A (Hindi Native Female Neural2)</option>
+                            <option value="hi-IN-Neural2-D">hi-IN-Neural2-D (Hindi Native Male Neural2)</option>
+                          </select>
+                          <p className="text-[10px] text-slate-500">Bilingual automatic switching for Hindi and English questions.</p>
+                        </div>
+                      </div>
+
+                      {/* Optional ElevenLabs Configuration */}
+                      <div className="pt-2 border-t border-emerald-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-slate-600">ElevenLabs API Key (sk_...)</label>
                           <Input
@@ -4237,10 +4285,9 @@ export default function AdminCMS() {
                             onChange={(e) => setAiElevenlabsKeyEdit(e.target.value)}
                             className="bg-white border-slate-200 text-slate-900 text-xs"
                           />
-                          <p className="text-[10px] text-slate-500">Provide an active ElevenLabs API key for ultra-realistic studio quality human speech.</p>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[11px] font-semibold text-slate-600">Voice Persona</label>
+                          <label className="text-[11px] font-semibold text-slate-600">ElevenLabs Voice ID</label>
                           <select
                             value={aiElevenlabsVoiceEdit || aiConfig?.elevenlabsVoiceId || "EXAVITQu4vr4xnSDxMaL"}
                             onChange={(e) => setAiElevenlabsVoiceEdit(e.target.value)}
@@ -4248,11 +4295,9 @@ export default function AdminCMS() {
                           >
                             <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Warm, Reassuring, Professional Female)</option>
                             <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm, Gentle, Conversational)</option>
-                            <option value="AZnzlk1XvdvUeBnXmlld">Domi (Clear, Energetic)</option>
-                            <option value="JBFqnCBsd6RMkjVDRZzb">George (Warm British Storyteller)</option>
-                            <option value="CwhRBWXzGAHq8TQ4Fs17">Roger (Resonant, Confident Male)</option>
+                            <option value="9BWtsMINqrJLrRacOk9x">Aria (Expressive, Warm)</option>
+                            <option value="pFZP5JQG7iQjIQuC4Bku">Lily (Polite Educator)</option>
                           </select>
-                          <p className="text-[10px] text-slate-500">Select the voice persona for AI voice answers.</p>
                         </div>
                       </div>
                     </div>
@@ -4285,6 +4330,9 @@ export default function AdminCMS() {
                           modelId: aiModelEdit || aiConfig?.modelId || "llama-3.3-70b-versatile",
                           temperature: aiTempEdit || aiConfig?.temperature || 0.4,
                           maxTokens: 700,
+                          ttsProvider: aiTtsProviderEdit || undefined,
+                          googleTtsApiKey: aiGoogleKeyEdit.trim() || undefined,
+                          googleTtsVoice: aiGoogleVoiceEdit || undefined,
                           elevenlabsApiKey: aiElevenlabsKeyEdit.trim() || undefined,
                           elevenlabsVoiceId: aiElevenlabsVoiceEdit || undefined,
                         })}

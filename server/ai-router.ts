@@ -282,71 +282,124 @@ export const aiRouter = createRouter({
         return { audioBase64: null };
       }
 
-      let apiKey = (
+      let ttsProvider: "google" | "elevenlabs" | "auto" = "google";
+      let googleApiKey = (
+        process.env.GOOGLE_TTS_API_KEY ||
+        process.env.GOOGLE_CLOUD_API_KEY ||
+        process.env.GOOGLE_API_KEY ||
+        process.env.VITE_GOOGLE_TTS_API_KEY ||
+        ""
+      ).trim();
+      let googleVoice = "en-IN-Journey-F";
+
+      let elevenlabsApiKey = (
         process.env.ELEVENLABS_API_KEY ||
         process.env.VITE_ELEVENLABS_API_KEY ||
         process.env.DOPPLER_ELEVENLABS_API_KEY ||
         ""
       ).trim();
-
-      // Default to Sarah (EXAVITQu4vr4xnSDxMaL) - warm, reassuring, crystal-clear voice
-      let voiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
+      let elevenlabsVoiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
 
       try {
         const { AiConfig } = await getMainModels(ctx.tenantId) as any;
         if (AiConfig) {
           const config = await AiConfig.findOne({}).sort({ updatedAt: -1 });
+          if (config?.ttsProvider) {
+            ttsProvider = config.ttsProvider;
+          }
+          if (config?.googleTtsApiKey && config.googleTtsApiKey.trim()) {
+            googleApiKey = config.googleTtsApiKey.trim();
+          }
+          if (config?.googleTtsVoice && config.googleTtsVoice.trim()) {
+            googleVoice = config.googleTtsVoice.trim();
+          }
           if (config?.elevenlabsApiKey && config.elevenlabsApiKey.trim().startsWith("sk_")) {
-            apiKey = config.elevenlabsApiKey.trim();
+            elevenlabsApiKey = config.elevenlabsApiKey.trim();
           }
           if (config?.elevenlabsVoiceId && config.elevenlabsVoiceId.trim()) {
-            voiceId = config.elevenlabsVoiceId.trim();
+            elevenlabsVoiceId = config.elevenlabsVoiceId.trim();
           }
         }
       } catch {}
 
-      if (!apiKey) {
-        return { audioBase64: null };
-      }
+      // Keep prompt punchy & concise (max 220 chars) for ultra-fast generation
+      const cleanPrompt = input.text.slice(0, 220);
+      const hasHindi = /[\u0900-\u097F]/.test(cleanPrompt);
 
-      // Keep prompt punchy & concise (max 200 chars) for ultra-fast generation
-      const cleanPrompt = input.text.slice(0, 200);
-
-      // Fast low-latency models order
-      const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
-
-      for (const modelId of ttsModels) {
+      // 1. Google Cloud Text-to-Speech Engine (Journey & Neural2)
+      if ((ttsProvider === "google" || ttsProvider === "auto") && googleApiKey) {
         try {
-          const response = await fetch(
-            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
+          const langCode = hasHindi ? "hi-IN" : (googleVoice.startsWith("hi") ? "hi-IN" : "en-IN");
+          const selectedVoice = hasHindi ? "hi-IN-Neural2-A" : googleVoice;
+
+          const googleRes = await fetch(
+            `https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleApiKey}`,
             {
               method: "POST",
-              headers: {
-                Accept: "audio/mpeg",
-                "Content-Type": "application/json",
-                "xi-api-key": apiKey,
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                text: cleanPrompt,
-                model_id: modelId,
-                voice_settings: {
-                  stability: 0.45,
-                  similarity_boost: 0.75,
-                  style: 0.0,
-                  use_speaker_boost: false,
+                input: { text: cleanPrompt },
+                voice: {
+                  languageCode: langCode,
+                  name: selectedVoice,
+                  ssmlGender: selectedVoice.endsWith("-D") ? "MALE" : "FEMALE",
+                },
+                audioConfig: {
+                  audioEncoding: "MP3",
+                  speakingRate: 1.02,
+                  pitch: 0.0,
                 },
               }),
-              signal: AbortSignal.timeout(4500), // 4.5s fast timeout
+              signal: AbortSignal.timeout(4500),
             }
           );
 
-          if (response.ok) {
-            const arrayBuffer = await response.arrayBuffer();
-            const base64 = Buffer.from(arrayBuffer).toString("base64");
-            return { audioBase64: `data:audio/mpeg;base64,${base64}` };
+          if (googleRes.ok) {
+            const data = (await googleRes.json()) as { audioContent?: string };
+            if (data?.audioContent) {
+              return { audioBase64: `data:audio/mp3;base64,${data.audioContent}` };
+            }
           }
         } catch {
-          // Try next model fallback
+          // Fall through to ElevenLabs if Google Cloud encounters an error
+        }
+      }
+
+      // 2. ElevenLabs Engine Fallback
+      if (elevenlabsApiKey) {
+        const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
+
+        for (const modelId of ttsModels) {
+          try {
+            const response = await fetch(
+              `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabsVoiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
+              {
+                method: "POST",
+                headers: {
+                  Accept: "audio/mpeg",
+                  "Content-Type": "application/json",
+                  "xi-api-key": elevenlabsApiKey,
+                },
+                body: JSON.stringify({
+                  text: cleanPrompt,
+                  model_id: modelId,
+                  voice_settings: {
+                    stability: 0.50,
+                    similarity_boost: 0.80,
+                    style: 0.0,
+                    use_speaker_boost: true,
+                  },
+                }),
+                signal: AbortSignal.timeout(4500),
+              }
+            );
+
+            if (response.ok) {
+              const arrayBuffer = await response.arrayBuffer();
+              const base64 = Buffer.from(arrayBuffer).toString("base64");
+              return { audioBase64: `data:audio/mpeg;base64,${base64}` };
+            }
+          } catch {}
         }
       }
 

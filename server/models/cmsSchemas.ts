@@ -356,6 +356,9 @@ export interface IAiConfig extends Document {
   apiKey?: string;
   elevenlabsApiKey?: string;
   elevenlabsVoiceId?: string;
+  ttsProvider?: "google" | "elevenlabs" | "auto";
+  googleTtsApiKey?: string;
+  googleTtsVoice?: string;
 }
 
 const AiConfigSchema = new Schema<IAiConfig>(
@@ -367,6 +370,9 @@ const AiConfigSchema = new Schema<IAiConfig>(
     apiKey: { type: String },
     elevenlabsApiKey: { type: String },
     elevenlabsVoiceId: { type: String, default: "EXAVITQu4vr4xnSDxMaL" },
+    ttsProvider: { type: String, enum: ["google", "elevenlabs", "auto"], default: "google" },
+    googleTtsApiKey: { type: String },
+    googleTtsVoice: { type: String, default: "en-IN-Journey-F" },
   },
   { timestamps: true }
 );

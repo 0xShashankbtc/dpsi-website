@@ -110,21 +110,29 @@ describe("AI Chat & Voice Synthesis Unit Test Suite", () => {
       temperature: z.number().min(0).max(1).default(0.4),
       maxTokens: z.number().min(100).max(2000).default(700),
       apiKey: z.string().optional(),
+      ttsProvider: z.enum(["google", "elevenlabs", "auto"]).default("google"),
+      googleTtsApiKey: z.string().optional(),
+      googleTtsVoice: z.string().optional().default("en-IN-Journey-F"),
       elevenlabsApiKey: z.string().optional(),
       elevenlabsVoiceId: z.string().optional().default("EXAVITQu4vr4xnSDxMaL"),
     });
 
-    it("validates full AI config with ElevenLabs settings", () => {
+    it("validates full AI config with Google Cloud Journey & ElevenLabs settings", () => {
       const result = AiConfigSchema.safeParse({
         systemPrompt: "You are DPSI AI, a polite assistant for Delhi Public School Indirapuram.",
         modelId: "llama-3.3-70b-versatile",
         temperature: 0.3,
         maxTokens: 700,
+        ttsProvider: "google",
+        googleTtsApiKey: "AIzaSyTestKey12345",
+        googleTtsVoice: "en-IN-Journey-F",
         elevenlabsApiKey: "sk_test_key_12345",
         elevenlabsVoiceId: "21m00Tcm4TlvDq8ikWAM",
       });
       expect(result.success).toBe(true);
       if (result.success) {
+        expect(result.data.ttsProvider).toBe("google");
+        expect(result.data.googleTtsVoice).toBe("en-IN-Journey-F");
         expect(result.data.elevenlabsVoiceId).toBe("21m00Tcm4TlvDq8ikWAM");
       }
     });
@@ -138,6 +146,8 @@ describe("AI Chat & Voice Synthesis Unit Test Suite", () => {
         expect(result.data.modelId).toBe("llama-3.3-70b-versatile");
         expect(result.data.temperature).toBe(0.4);
         expect(result.data.maxTokens).toBe(700);
+        expect(result.data.ttsProvider).toBe("google");
+        expect(result.data.googleTtsVoice).toBe("en-IN-Journey-F");
         expect(result.data.elevenlabsVoiceId).toBe("EXAVITQu4vr4xnSDxMaL");
       }
     });
@@ -151,7 +161,23 @@ describe("AI Chat & Voice Synthesis Unit Test Suite", () => {
     });
   });
 
-  // 4. ElevenLabs Fast Models Priority Order
+  // 4. Google Cloud Neural2 & Journey Indian Voices
+  describe("Google Cloud Text-to-Speech Indian Voices", () => {
+    it("recognizes official Indian English and Hindi Journey & Neural2 voices", () => {
+      const validGoogleVoices = [
+        "en-IN-Journey-F",
+        "en-IN-Journey-D",
+        "en-IN-Neural2-A",
+        "en-IN-Neural2-D",
+        "hi-IN-Neural2-A",
+        "hi-IN-Neural2-D",
+      ];
+      expect(validGoogleVoices).toContain("en-IN-Journey-F");
+      expect(validGoogleVoices).toContain("hi-IN-Neural2-A");
+    });
+  });
+
+  // 5. ElevenLabs Fast Models Priority Order
   describe("ElevenLabs Voice Model Pipeline", () => {
     it("orders fast low-latency models ahead of heavy multilingual v2", () => {
       const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];

@@ -1576,6 +1576,9 @@ export const cmsRouter = createRouter({
         apiKey: z.string().optional(),
         elevenlabsApiKey: z.string().optional(),
         elevenlabsVoiceId: z.string().optional(),
+        ttsProvider: z.enum(["google", "elevenlabs", "auto"]).optional(),
+        googleTtsApiKey: z.string().optional(),
+        googleTtsVoice: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
