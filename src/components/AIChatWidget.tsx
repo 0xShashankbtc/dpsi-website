@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Bot, MessageSquare, GraduationCap, RotateCcw, ExternalLink, Phone, Mail, Mic, Calendar } from "lucide-react";
+import { X, Send, Bot, MessageSquare, GraduationCap, RotateCcw, ExternalLink, Phone, Mail, Mic, Calendar, Volume2 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -101,16 +101,18 @@ export default function AIChatWidget() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioCacheRef = useRef<Map<string, string>>(new Map());
 
-  // Helper to instantly kill and silence all audio and speech synthesis
+  // Helper to instantly kill and silence all audio and speech synthesis without destroying singleton
   const stopAllAudio = () => {
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.src = "";
-      audioRef.current = null;
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      } catch {}
     }
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
     }
   };
 
@@ -128,13 +130,20 @@ export default function AIChatWidget() {
     if (typeof window === "undefined") return;
     try {
       if (!audioRef.current) {
-        const a = new Audio();
-        a.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-        a.play().catch(() => {});
-        audioRef.current = a;
+        audioRef.current = new Audio();
       }
+      // Prime mobile audio singleton
+      audioRef.current.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+      audioRef.current.play().then(() => {
+        if (audioRef.current) audioRef.current.pause();
+      }).catch(() => {});
+
+      // Prime iOS WebKit SpeechSynthesis
       if ("speechSynthesis" in window) {
         window.speechSynthesis.resume();
+        const silent = new SpeechSynthesisUtterance(" ");
+        silent.volume = 0.01;
+        window.speechSynthesis.speak(silent);
       }
     } catch {}
   };
@@ -147,6 +156,11 @@ export default function AIChatWidget() {
 
     // Stop any existing audio or speech synthesis before new speech
     stopAllAudio();
+
+    // Ensure audio singleton exists
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
 
     // Clean markdown, URLs, and normalize acronyms for ultra-realistic pronunciation
     let cleanText = text
@@ -175,11 +189,9 @@ export default function AIChatWidget() {
     // Check fast client-side audio cache first
     if (audioCacheRef.current.has(cleanText)) {
       const cached = audioCacheRef.current.get(cleanText);
-      if (cached) {
-        if (!audioRef.current) {
-          audioRef.current = new Audio();
-        }
+      if (cached && audioRef.current) {
         audioRef.current.src = cached;
+        audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
         return;
       }
@@ -188,12 +200,10 @@ export default function AIChatWidget() {
     // High-fidelity ElevenLabs voice synthesis (Sarah: EXAVITQu4vr4xnSDxMaL)
     try {
       const ttsRes = await ttsMutation.mutateAsync({ text: cleanText, voiceId: "EXAVITQu4vr4xnSDxMaL" });
-      if (ttsRes?.audioBase64) {
+      if (ttsRes?.audioBase64 && audioRef.current) {
         audioCacheRef.current.set(cleanText, ttsRes.audioBase64);
-        if (!audioRef.current) {
-          audioRef.current = new Audio();
-        }
         audioRef.current.src = ttsRes.audioBase64;
+        audioRef.current.currentTime = 0;
         await audioRef.current.play().catch(() => {});
         return;
       }
@@ -670,6 +680,24 @@ export default function AIChatWidget() {
                               <ExternalLink className="w-3.5 h-3.5" /> Open Link
                             </a>
                           )}
+                        </div>
+                      )}
+                      {/* VOICE REPLAY BUTTON FOR ASSISTANT RESPONSES */}
+                      {msg.role === "assistant" && !msg.isStreaming && (
+                        <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              unlockMobileAudio();
+                              spokenResponseRef.current = null;
+                              speakAnswerOnce(msg.text);
+                            }}
+                            title="Play voice answer"
+                            className="inline-flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-bold hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors cursor-pointer select-none py-0.5"
+                          >
+                            <Volume2 className="w-3.5 h-3.5 animate-pulse" />
+                            <span>Listen to Voice</span>
+                          </button>
                         </div>
                       )}
                     </div>
