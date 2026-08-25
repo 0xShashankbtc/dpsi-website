@@ -76406,7 +76406,7 @@ var require_mongoose = __commonJS({
     var defaultConnectionSymbol = /* @__PURE__ */ Symbol("mongoose:defaultConnection");
     require_printJestWarning();
     var objectIdHexRegexp = /^[0-9A-Fa-f]{24}$/;
-    var { AsyncLocalStorage: AsyncLocalStorage2 } = __require("async_hooks");
+    var { AsyncLocalStorage: AsyncLocalStorage3 } = __require("async_hooks");
     function Mongoose(options) {
       this.connections = [];
       this.nextConnectionId = 0;
@@ -76443,7 +76443,7 @@ var require_mongoose = __commonJS({
       }
       this.Schema.prototype.base = this;
       if (options?.transactionAsyncLocalStorage) {
-        this.transactionAsyncLocalStorage = new AsyncLocalStorage2();
+        this.transactionAsyncLocalStorage = new AsyncLocalStorage3();
       }
       Object.defineProperty(this, "plugins", {
         configurable: false,
@@ -76538,7 +76538,7 @@ var require_mongoose = __commonJS({
           }
         } else if (optionKey === "transactionAsyncLocalStorage") {
           if (optionValue && !_mongoose.transactionAsyncLocalStorage) {
-            _mongoose.transactionAsyncLocalStorage = new AsyncLocalStorage2();
+            _mongoose.transactionAsyncLocalStorage = new AsyncLocalStorage3();
           } else if (!optionValue && _mongoose.transactionAsyncLocalStorage) {
             delete _mongoose.transactionAsyncLocalStorage;
           }
@@ -140988,6 +140988,7 @@ async function getDbConnection(dbName) {
 }
 
 // server/models/cmsSchemas.ts
+import { AsyncLocalStorage as AsyncLocalStorage2 } from "async_hooks";
 var PageSchema = new import_mongoose5.Schema(
   {
     title: { type: String, required: true },
@@ -141319,8 +141320,13 @@ var RateLimitSchema = new import_mongoose5.Schema(
   },
   { timestamps: true }
 );
-async function getMainModels(tenantId = "dpsi") {
-  const dbName = resolveDbName(tenantId, "main");
+var tenantContextStorage = new AsyncLocalStorage2();
+function getActiveTenantId() {
+  return tenantContextStorage.getStore() || "dpsi";
+}
+async function getMainModels(tenantId) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "main");
   const conn = await getDbConnection(dbName);
   return {
     Page: conn.models.Page || conn.model("Page", PageSchema),
@@ -141366,9 +141372,10 @@ var AuditLogSchema = new import_mongoose5.Schema(
 AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function(next) {
   next(new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy."));
 });
-async function createImmutableAuditLog(data, tenantId = "dpsi") {
+async function createImmutableAuditLog(data, tenantId) {
   try {
-    const { AuditLog } = await getMainModels(tenantId);
+    const targetTenant = tenantId || getActiveTenantId();
+    const { AuditLog } = await getMainModels(targetTenant);
     const lastLog = await AuditLog.findOne().sort({ sequenceNumber: -1 });
     const sequenceNumber = (lastLog?.sequenceNumber || 0) + 1;
     const previousHash = lastLog?.currentHash || "GENESIS_BLOCK_00000000000000000000000000000000000000000000000000000000";
@@ -141391,9 +141398,10 @@ async function createImmutableAuditLog(data, tenantId = "dpsi") {
     console.error("Failed to write immutable audit log:", err);
   }
 }
-async function checkPersistentRateLimit(key, limit = 40, windowSeconds = 60, tenantId = "dpsi") {
+async function checkPersistentRateLimit(key, limit = 40, windowSeconds = 60, tenantId) {
   try {
-    const { RateLimit } = await getMainModels(tenantId);
+    const targetTenant = tenantId || getActiveTenantId();
+    const { RateLimit } = await getMainModels(targetTenant);
     const expiresAt = new Date(Date.now() + windowSeconds * 1e3);
     const doc = await RateLimit.findOneAndUpdate(
       { key },
@@ -141411,8 +141419,9 @@ async function checkPersistentRateLimit(key, limit = 40, windowSeconds = 60, ten
     return true;
   }
 }
-async function getGalleryModels(tenantId = "dpsi") {
-  const dbName = resolveDbName(tenantId, "gallery");
+async function getGalleryModels(tenantId) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "gallery");
   const conn = await getDbConnection(dbName);
   return {
     GalleryCategory: conn.models.GalleryCategory || conn.model("GalleryCategory", GalleryCategorySchema),
@@ -141420,8 +141429,9 @@ async function getGalleryModels(tenantId = "dpsi") {
     VideoGallery: conn.models.VideoGallery || conn.model("VideoGallery", VideoGallerySchema)
   };
 }
-async function getTcModels(tenantId = "dpsi") {
-  const dbName = resolveDbName(tenantId, "tc");
+async function getTcModels(tenantId) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "tc");
   const conn = await getDbConnection(dbName);
   return {
     TransferCertificate: conn.models.TransferCertificate || conn.model("TransferCertificate", TransferCertificateSchema)
@@ -141803,9 +141813,9 @@ function escapeRegex2(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 var galleryRouter = createRouter({
-  list: publicQuery.query(async () => {
+  list: publicQuery.query(async ({ ctx }) => {
     try {
-      const { GalleryImage } = await getGalleryModels();
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 });
       return images.map((img, idx) => ({
         id: img._id?.toString() || idx + 1,
@@ -141818,9 +141828,9 @@ var galleryRouter = createRouter({
       return [];
     }
   }),
-  byCategory: publicQuery.input(external_exports.object({ category: external_exports.string() })).query(async ({ input }) => {
+  byCategory: publicQuery.input(external_exports.object({ category: external_exports.string() })).query(async ({ input, ctx }) => {
     try {
-      const { GalleryImage } = await getGalleryModels();
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       const safeCat = escapeRegex2(input.category.trim());
       const query = { isDeleted: false };
       if (safeCat.toLowerCase() !== "all") {
@@ -141838,9 +141848,9 @@ var galleryRouter = createRouter({
       return [];
     }
   }),
-  featured: publicQuery.query(async () => {
+  featured: publicQuery.query(async ({ ctx }) => {
     try {
-      const { GalleryImage } = await getGalleryModels();
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8);
       const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8);
       return docs.map((img, idx) => ({
@@ -141854,7 +141864,7 @@ var galleryRouter = createRouter({
       return [];
     }
   }),
-  create: adminQuery.input(
+  create: adminMutation.input(
     external_exports.object({
       title: external_exports.string().min(2).max(255),
       description: external_exports.string().optional(),
@@ -141863,12 +141873,12 @@ var galleryRouter = createRouter({
       category: external_exports.string().min(1).max(100),
       featured: external_exports.boolean().default(false)
     })
-  ).mutation(async ({ input }) => {
-    const { GalleryImage } = await getGalleryModels();
+  ).mutation(async ({ input, ctx }) => {
+    const { GalleryImage } = await getGalleryModels(ctx.tenantId);
     const doc = await GalleryImage.create(input);
     return { success: true, id: doc._id.toString() };
   }),
-  update: adminQuery.input(
+  update: adminMutation.input(
     external_exports.object({
       id: external_exports.string(),
       title: external_exports.string().min(2).max(255),
@@ -141878,14 +141888,14 @@ var galleryRouter = createRouter({
       category: external_exports.string().min(1).max(100),
       featured: external_exports.boolean().default(false)
     })
-  ).mutation(async ({ input }) => {
+  ).mutation(async ({ input, ctx }) => {
     const { id, ...data } = input;
-    const { GalleryImage } = await getGalleryModels();
+    const { GalleryImage } = await getGalleryModels(ctx.tenantId);
     await GalleryImage.findByIdAndUpdate(id, data);
     return { success: true };
   }),
-  delete: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input }) => {
-    const { GalleryImage } = await getGalleryModels();
+  delete: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
+    const { GalleryImage } = await getGalleryModels(ctx.tenantId);
     const rawId = input.id?._id || input.id;
     const imageId = String(rawId);
     let deleted = null;
@@ -143621,7 +143631,7 @@ async function convertImageToWebP(inputBuffer, quality = 80, maxWidth) {
 }
 
 // server/cms-router.ts
-var JWT_SECRET = process.env.JWT_SECRET || "dpsi_cms_super_secret_jwt_key_2026_99x";
+var JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "");
 var MASTER_ADMIN_USER = process.env.ADMIN_USERNAME || "admin";
 var MASTER_ADMIN_PASS = process.env.ADMIN_PASSWORD || "";
 function escapeRegex3(str) {
@@ -143663,12 +143673,13 @@ var cmsRouter = createRouter({
     })
   ).mutation(async ({ input, ctx }) => {
     const clientIp = ctx?.req?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() || ctx?.req?.headers?.get("x-real-ip") || ctx?.req?.headers?.get("cf-connecting-ip") || "admin-login-ip";
-    const rateCheck = checkLoginRateLimit(clientIp);
-    if (!rateCheck.allowed) {
-      const minsLeft = Math.ceil((rateCheck.remainingWaitMs || 0) / 6e4);
+    const isPersistentAllowed = await checkPersistentRateLimit(`login_ip:${clientIp}`, 10, 600, "dpsi");
+    const inMemoryRate = checkLoginRateLimit(clientIp);
+    if (!isPersistentAllowed || !inMemoryRate.allowed) {
+      const minsLeft = Math.ceil((inMemoryRate.remainingWaitMs || 6e5) / 6e4);
       return {
         success: false,
-        error: `Too many failed login attempts. Account locked for ${minsLeft} minute(s).`
+        error: `Too many login attempts. Account temporarily locked for ${minsLeft} minute(s).`
       };
     }
     const trimmedUser = input.username.trim().toLowerCase();
@@ -145606,10 +145617,13 @@ var appRouter = createRouter({
 
 // server/context.ts
 var import_jsonwebtoken2 = __toESM(require_jsonwebtoken(), 1);
-var JWT_SECRET2 = process.env.JWT_SECRET || "dpsi_cms_super_secret_jwt_key_2026_99x";
+var JWT_SECRET2 = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "");
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  console.warn("[Security] WARNING: JWT_SECRET environment variable is missing in production.");
+}
 async function createContext(opts) {
   let user = null;
-  let resolvedTenantId = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase() || "";
+  const rawHeaderTenant = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") || "";
   const authHeader = opts.req.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ") && JWT_SECRET2) {
     const token = authHeader.slice(7);
@@ -145621,15 +145635,12 @@ async function createContext(opts) {
         role: decoded.role,
         tenantId: decoded.tenantId || "dpsi"
       };
-      if (!resolvedTenantId && user.tenantId && user.tenantId !== "all") {
-        resolvedTenantId = user.tenantId;
-      }
     } catch {
     }
   }
   if (!user && process.env.NODE_ENV !== "production") {
     const adminHeader = opts.req.headers.get("x-admin-auth");
-    if (adminHeader === "true" || process.env.ENABLE_DEV_ADMIN === "true" || !process.env.JWT_SECRET) {
+    if (adminHeader === "true" || process.env.ENABLE_DEV_ADMIN === "true") {
       user = {
         id: "admin-master",
         username: "Admin",
@@ -145638,8 +145649,15 @@ async function createContext(opts) {
       };
     }
   }
-  if (!resolvedTenantId) {
-    resolvedTenantId = "dpsi";
+  let resolvedTenantId = "dpsi";
+  if (user) {
+    if (user.role === "superadmin") {
+      resolvedTenantId = rawHeaderTenant && rawHeaderTenant !== "all" ? rawHeaderTenant : user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
+    } else {
+      resolvedTenantId = user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
+    }
+  } else {
+    resolvedTenantId = rawHeaderTenant || "dpsi";
   }
   return {
     req: opts.req,
@@ -145675,29 +145693,37 @@ app.use(
   cors({
     origin: (origin) => {
       if (!origin) return "*";
-      if (origin.endsWith(".vercel.app") || ALLOWED_ORIGINS.includes(origin)) return origin;
-      return origin;
+      if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith(".vercel.app") || origin.endsWith(".dpsindirapuram.com")) {
+        return origin;
+      }
+      return null;
     },
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "x-trpc-source", "x-admin-auth", "x-tenant-id"],
     maxAge: 86400
   })
 );
-var trpcHandler = (c) => {
-  return fetchRequestHandler({
-    endpoint: "/api/trpc",
-    req: c.req.raw,
-    router: appRouter,
-    createContext
+var trpcHandler = async (c) => {
+  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers() });
+  return tenantContextStorage.run(ctx.tenantId, () => {
+    return fetchRequestHandler({
+      endpoint: "/api/trpc",
+      req: c.req.raw,
+      router: appRouter,
+      createContext: () => ctx
+    });
   });
 };
 app.all("/api/trpc/*", trpcHandler);
-app.all("/trpc/*", (c) => {
-  return fetchRequestHandler({
-    endpoint: "/trpc",
-    req: c.req.raw,
-    router: appRouter,
-    createContext
+app.all("/trpc/*", async (c) => {
+  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers() });
+  return tenantContextStorage.run(ctx.tenantId, () => {
+    return fetchRequestHandler({
+      endpoint: "/trpc",
+      req: c.req.raw,
+      router: appRouter,
+      createContext: () => ctx
+    });
   });
 });
 app.get("/api/health", (c) => c.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() }));

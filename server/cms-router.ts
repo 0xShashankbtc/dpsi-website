@@ -3,14 +3,14 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, publicMutation, adminMutation, adminQuery } from "./middleware";
-import { getMainModels, getGalleryModels, getTcModels, createImmutableAuditLog } from "./models/cmsSchemas";
+import { getMainModels, getGalleryModels, getTcModels, createImmutableAuditLog, checkPersistentRateLimit } from "./models/cmsSchemas";
 import crypto from "crypto";
 import { getAdminUserModel } from "./models/adminUserSchema";
 import { getTenantModel } from "./models/tenantSchema";
 import { seedDatabase } from "./lib/seedDatabase";
 import { convertImageToWebP } from "./utils/mediaConverter";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dpsi_cms_super_secret_jwt_key_2026_99x";
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "");
 const MASTER_ADMIN_USER = process.env.ADMIN_USERNAME || "admin";
 const MASTER_ADMIN_PASS = process.env.ADMIN_PASSWORD || "";
 
@@ -18,7 +18,7 @@ export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// Login rate limiter: Max 5 failed attempts per 10 minutes per IP
+// Login rate limiter: Max 5 failed attempts per 10 minutes per IP (In-memory + MongoDB TTL Distributed)
 const loginAttemptsMap = new Map<string, { failedCount: number; lockedUntil: number }>();
 
 function checkLoginRateLimit(ip: string): { allowed: boolean; remainingWaitMs?: number } {
@@ -66,12 +66,15 @@ export const cmsRouter = createRouter({
         ctx?.req?.headers?.get("cf-connecting-ip") ||
         "admin-login-ip";
 
-      const rateCheck = checkLoginRateLimit(clientIp);
-      if (!rateCheck.allowed) {
-        const minsLeft = Math.ceil((rateCheck.remainingWaitMs || 0) / 60000);
+      // 1. Check Distributed Persistent Rate Limiting (Serverless & Cold-Start Safe)
+      const isPersistentAllowed = await checkPersistentRateLimit(`login_ip:${clientIp}`, 10, 600, "dpsi");
+      const inMemoryRate = checkLoginRateLimit(clientIp);
+
+      if (!isPersistentAllowed || !inMemoryRate.allowed) {
+        const minsLeft = Math.ceil((inMemoryRate.remainingWaitMs || 600000) / 60000);
         return {
           success: false,
-          error: `Too many failed login attempts. Account locked for ${minsLeft} minute(s).`,
+          error: `Too many login attempts. Account temporarily locked for ${minsLeft} minute(s).`,
         };
       }
 

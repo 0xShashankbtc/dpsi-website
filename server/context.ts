@@ -15,13 +15,16 @@ export type TrpcContext = {
   tenantId: string;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET || "dpsi_cms_super_secret_jwt_key_2026_99x";
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "");
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  console.warn("[Security] WARNING: JWT_SECRET environment variable is missing in production.");
+}
 
 export async function createContext(
   opts: FetchCreateContextFnOptions,
 ): Promise<TrpcContext> {
   let user: AuthUser | null = null;
-  let resolvedTenantId = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase() || "";
+  const rawHeaderTenant = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") || "";
 
   // Extract JWT from Authorization header
   const authHeader = opts.req.headers.get("authorization");
@@ -35,18 +38,15 @@ export async function createContext(
         role: decoded.role,
         tenantId: decoded.tenantId || "dpsi",
       };
-      if (!resolvedTenantId && user.tenantId && user.tenantId !== "all") {
-        resolvedTenantId = user.tenantId;
-      }
     } catch {
       // Token expired or invalid signature
     }
   }
 
-  // Fallback: Support local development mode only
+  // Fallback: Support local development mode ONLY
   if (!user && process.env.NODE_ENV !== "production") {
     const adminHeader = opts.req.headers.get("x-admin-auth");
-    if (adminHeader === "true" || process.env.ENABLE_DEV_ADMIN === "true" || !process.env.JWT_SECRET) {
+    if (adminHeader === "true" || process.env.ENABLE_DEV_ADMIN === "true") {
       user = {
         id: "admin-master",
         username: "Admin",
@@ -56,8 +56,18 @@ export async function createContext(
     }
   }
 
-  if (!resolvedTenantId) {
-    resolvedTenantId = "dpsi";
+  // Strict Tenant Resolution & IDOR Prevention
+  let resolvedTenantId = "dpsi";
+  if (user) {
+    if (user.role === "superadmin") {
+      resolvedTenantId = (rawHeaderTenant && rawHeaderTenant !== "all") ? rawHeaderTenant : (user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi");
+    } else {
+      // Non-superadmin users are strictly locked to their token's tenantId
+      resolvedTenantId = (user.tenantId && user.tenantId !== "all") ? user.tenantId : "dpsi";
+    }
+  } else {
+    // Public queries can route to requested tenant or default to "dpsi"
+    resolvedTenantId = rawHeaderTenant || "dpsi";
   }
 
   return {

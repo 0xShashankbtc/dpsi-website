@@ -8,9 +8,9 @@ function escapeRegex(str: string): string {
 }
 
 export const galleryRouter = createRouter({
-  list: publicQuery.query(async () => {
+  list: publicQuery.query(async ({ ctx }) => {
     try {
-      const { GalleryImage } = await getGalleryModels();
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 });
       return images.map((img: any, idx: number) => ({
         id: img._id?.toString() || idx + 1,
@@ -26,9 +26,9 @@ export const galleryRouter = createRouter({
 
   byCategory: publicQuery
     .input(z.object({ category: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       try {
-        const { GalleryImage } = await getGalleryModels();
+        const { GalleryImage } = await getGalleryModels(ctx.tenantId);
         const safeCat = escapeRegex(input.category.trim());
         const query: any = { isDeleted: false };
         if (safeCat.toLowerCase() !== "all") {
@@ -47,9 +47,9 @@ export const galleryRouter = createRouter({
       }
     }),
 
-  featured: publicQuery.query(async () => {
+  featured: publicQuery.query(async ({ ctx }) => {
     try {
-      const { GalleryImage } = await getGalleryModels();
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8);
       const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8);
       return docs.map((img: any, idx: number) => ({
@@ -64,7 +64,7 @@ export const galleryRouter = createRouter({
     }
   }),
 
-  create: adminQuery
+  create: adminMutation
     .input(
       z.object({
         title: z.string().min(2).max(255),
@@ -75,13 +75,13 @@ export const galleryRouter = createRouter({
         featured: z.boolean().default(false),
       })
     )
-    .mutation(async ({ input }) => {
-      const { GalleryImage } = await getGalleryModels();
+    .mutation(async ({ input, ctx }) => {
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       const doc = await GalleryImage.create(input);
       return { success: true, id: doc._id.toString() };
     }),
 
-  update: adminQuery
+  update: adminMutation
     .input(
       z.object({
         id: z.string(),
@@ -93,17 +93,17 @@ export const galleryRouter = createRouter({
         featured: z.boolean().default(false),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { id, ...data } = input;
-      const { GalleryImage } = await getGalleryModels();
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       await GalleryImage.findByIdAndUpdate(id, data);
       return { success: true };
     }),
 
   delete: adminMutation
     .input(z.object({ id: z.union([z.string(), z.any()]) }))
-    .mutation(async ({ input }) => {
-      const { GalleryImage } = await getGalleryModels();
+    .mutation(async ({ input, ctx }) => {
+      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
       const rawId = input.id?._id || input.id;
       const imageId = String(rawId);
       let deleted = null;

@@ -184,4 +184,61 @@ describe("Cybersecurity & Hardening Test Suite", () => {
       expect(await bcrypt.compare("OldTemporaryPassword#123", newHash)).toBe(false);
     });
   });
+
+  describe("Multi-Tenant Scoping & AsyncLocalStorage Context", () => {
+    it("correctly isolates tenant databases through AsyncLocalStorage store", async () => {
+      const { tenantContextStorage, getActiveTenantId } = await import("../models/cmsSchemas");
+      
+      expect(getActiveTenantId()).toBe("dpsi");
+
+      await tenantContextStorage.run("gd_goenka", async () => {
+        expect(getActiveTenantId()).toBe("gd_goenka");
+      });
+
+      // Returns to default outside the scope
+      expect(getActiveTenantId()).toBe("dpsi");
+    });
+
+    it("sanitizes tenant header inputs to alphanumeric and underscore characters", () => {
+      const maliciousHeader = "dpsi_main$'; DROP DATABASE;--";
+      const sanitized = maliciousHeader.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+      expect(sanitized).toBe("dpsi_maindropdatabase");
+      expect(sanitized).not.toContain("$");
+      expect(sanitized).not.toContain(";");
+    });
+  });
+
+  describe("CORS Origin Validation Logic", () => {
+    const ALLOWED_ORIGINS = [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "https://dpsindirapuram.com",
+      "https://www.dpsindirapuram.com",
+      "https://dpsindirapuram.vercel.app",
+      "https://dpsi-website.vercel.app",
+    ];
+
+    function validateOrigin(origin: string | undefined): string | null {
+      if (!origin) return "*";
+      if (
+        ALLOWED_ORIGINS.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.endsWith(".dpsindirapuram.com")
+      ) {
+        return origin;
+      }
+      return null;
+    }
+
+    it("allows approved school domains and vercel deployments", () => {
+      expect(validateOrigin("https://dpsindirapuram.com")).toBe("https://dpsindirapuram.com");
+      expect(validateOrigin("https://app-preview.vercel.app")).toBe("https://app-preview.vercel.app");
+      expect(validateOrigin(undefined)).toBe("*");
+    });
+
+    it("strictly rejects untrusted third-party origins", () => {
+      expect(validateOrigin("https://evil-attacker.com")).toBeNull();
+      expect(validateOrigin("https://phishing-dpsi.com")).toBeNull();
+    });
+  });
 });

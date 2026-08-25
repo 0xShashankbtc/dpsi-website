@@ -655,10 +655,18 @@ const RateLimitSchema = new Schema<IRateLimit>(
 );
 
 // --- MODEL GETTERS TIED TO SPECIFIC TENANT DATABASES ---
+import { AsyncLocalStorage } from "async_hooks";
 import { resolveDbName } from "../lib/mongodb";
 
-export async function getMainModels(tenantId: string = "dpsi") {
-  const dbName = resolveDbName(tenantId, "main");
+export const tenantContextStorage = new AsyncLocalStorage<string>();
+
+export function getActiveTenantId(): string {
+  return tenantContextStorage.getStore() || "dpsi";
+}
+
+export async function getMainModels(tenantId?: string) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "main");
   const conn = await getDbConnection(dbName);
   return {
     Page: conn.models.Page || conn.model<IPage>("Page", PageSchema),
@@ -731,10 +739,11 @@ export async function createImmutableAuditLog(
     details?: string;
     ipAddress?: string;
   },
-  tenantId: string = "dpsi"
+  tenantId?: string
 ) {
   try {
-    const { AuditLog } = await getMainModels(tenantId);
+    const targetTenant = tenantId || getActiveTenantId();
+    const { AuditLog } = await getMainModels(targetTenant);
     const lastLog = await AuditLog.findOne().sort({ sequenceNumber: -1 });
     const sequenceNumber = (lastLog?.sequenceNumber || 0) + 1;
     const previousHash = lastLog?.currentHash || "GENESIS_BLOCK_00000000000000000000000000000000000000000000000000000000";
@@ -767,10 +776,11 @@ export async function checkPersistentRateLimit(
   key: string,
   limit: number = 40,
   windowSeconds: number = 60,
-  tenantId: string = "dpsi"
+  tenantId?: string
 ): Promise<boolean> {
   try {
-    const { RateLimit } = await getMainModels(tenantId);
+    const targetTenant = tenantId || getActiveTenantId();
+    const { RateLimit } = await getMainModels(targetTenant);
     const expiresAt = new Date(Date.now() + windowSeconds * 1000);
 
     const doc = await RateLimit.findOneAndUpdate(
@@ -792,8 +802,9 @@ export async function checkPersistentRateLimit(
   }
 }
 
-export async function getGalleryModels(tenantId: string = "dpsi") {
-  const dbName = resolveDbName(tenantId, "gallery");
+export async function getGalleryModels(tenantId?: string) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "gallery");
   const conn = await getDbConnection(dbName);
   return {
     GalleryCategory: conn.models.GalleryCategory || conn.model<IGalleryCategory>("GalleryCategory", GalleryCategorySchema),
@@ -802,8 +813,9 @@ export async function getGalleryModels(tenantId: string = "dpsi") {
   };
 }
 
-export async function getTcModels(tenantId: string = "dpsi") {
-  const dbName = resolveDbName(tenantId, "tc");
+export async function getTcModels(tenantId?: string) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "tc");
   const conn = await getDbConnection(dbName);
   return {
     TransferCertificate: conn.models.TransferCertificate || conn.model<ITransferCertificate>("TransferCertificate", TransferCertificateSchema),

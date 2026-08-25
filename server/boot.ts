@@ -40,8 +40,14 @@ app.use(
   cors({
     origin: (origin) => {
       if (!origin) return "*"; // allow server-to-server / curl
-      if (origin.endsWith(".vercel.app") || ALLOWED_ORIGINS.includes(origin)) return origin;
-      return origin; // Permissive for school web portals
+      if (
+        ALLOWED_ORIGINS.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.endsWith(".dpsindirapuram.com")
+      ) {
+        return origin;
+      }
+      return null; // Explicitly reject unauthorized origins
     },
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "x-trpc-source", "x-admin-auth", "x-tenant-id"],
@@ -50,22 +56,30 @@ app.use(
 );
 
 
-const trpcHandler = (c: any) => {
-  return fetchRequestHandler({
-    endpoint: "/api/trpc",
-    req: c.req.raw,
-    router: appRouter,
-    createContext,
+import { tenantContextStorage } from "./models/cmsSchemas";
+
+const trpcHandler = async (c: any) => {
+  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers() });
+  return tenantContextStorage.run(ctx.tenantId, () => {
+    return fetchRequestHandler({
+      endpoint: "/api/trpc",
+      req: c.req.raw,
+      router: appRouter,
+      createContext: () => ctx,
+    });
   });
 };
 
 app.all("/api/trpc/*", trpcHandler);
-app.all("/trpc/*", (c: any) => {
-  return fetchRequestHandler({
-    endpoint: "/trpc",
-    req: c.req.raw,
-    router: appRouter,
-    createContext,
+app.all("/trpc/*", async (c: any) => {
+  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers() });
+  return tenantContextStorage.run(ctx.tenantId, () => {
+    return fetchRequestHandler({
+      endpoint: "/trpc",
+      req: c.req.raw,
+      router: appRouter,
+      createContext: () => ctx,
+    });
   });
 });
 
