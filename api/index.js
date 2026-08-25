@@ -178167,44 +178167,49 @@ var aiRouter = createRouter({
     })
   ).mutation(async ({ input, ctx }) => {
     const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
-    const isTtsAllowed = checkRateLimit(`tts:${clientIp}`, 10, 6e4) && await checkPersistentRateLimit(`tts:${clientIp}`, 10, 60);
+    const isTtsAllowed = checkRateLimit(`tts:${clientIp}`, 20, 6e4) && await checkPersistentRateLimit(`tts:${clientIp}`, 20, 60, ctx.tenantId);
     if (!isTtsAllowed) {
       return { audioBase64: null };
     }
-    const apiKey = process.env.ELEVENLABS_API_KEY || "";
+    const apiKey = (process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
     if (!apiKey) {
       return { audioBase64: null };
     }
     const voiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
-    try {
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: "POST",
-        headers: {
-          Accept: "audio/mpeg",
-          "Content-Type": "application/json",
-          "xi-api-key": apiKey
-        },
-        body: JSON.stringify({
-          text: input.text.slice(0, 350),
-          model_id: "eleven_multilingual_v2",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.8,
-            style: 0.1,
-            use_speaker_boost: true
+    const cleanPrompt = input.text.slice(0, 260);
+    const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
+    for (const modelId of ttsModels) {
+      try {
+        const response = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
+          {
+            method: "POST",
+            headers: {
+              Accept: "audio/mpeg",
+              "Content-Type": "application/json",
+              "xi-api-key": apiKey
+            },
+            body: JSON.stringify({
+              text: cleanPrompt,
+              model_id: modelId,
+              voice_settings: {
+                stability: 0.45,
+                similarity_boost: 0.75,
+                style: 0,
+                use_speaker_boost: false
+              }
+            }),
+            signal: AbortSignal.timeout(4500)
+            // 4.5s fast timeout
           }
-        }),
-        signal: AbortSignal.timeout(7e3)
-        // 7s maximum timeout for TTS
-      });
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        const base643 = Buffer.from(arrayBuffer).toString("base64");
-        return { audioBase64: `data:audio/mpeg;base64,${base643}` };
+        );
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          const base643 = Buffer.from(arrayBuffer).toString("base64");
+          return { audioBase64: `data:audio/mpeg;base64,${base643}` };
+        }
+      } catch {
       }
-      console.warn("ElevenLabs TTS status error:", response.status);
-    } catch (error50) {
-      console.warn("Error calling ElevenLabs API on server:", error50);
     }
     return { audioBase64: null };
   })

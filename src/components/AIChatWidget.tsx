@@ -123,6 +123,22 @@ export default function AIChatWidget() {
     }
   }, []);
 
+  // Mobile Audio Unlocker for iOS Safari & Android Chrome Autoplay Policies
+  const unlockMobileAudio = () => {
+    if (typeof window === "undefined") return;
+    try {
+      if (!audioRef.current) {
+        const a = new Audio();
+        a.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        a.play().catch(() => {});
+        audioRef.current = a;
+      }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.resume();
+      }
+    } catch {}
+  };
+
   const speakAnswerOnce = async (text: string) => {
     if (typeof window === "undefined") return;
     if (spokenResponseRef.current === text) return;
@@ -145,7 +161,7 @@ export default function AIChatWidget() {
       .replace(/\bIX & XI\b/gi, "9 and 11")
       .replace(/\s+/g, " ")
       .trim()
-      .slice(0, 350);
+      .slice(0, 260);
 
     if (!cleanText) return;
 
@@ -153,9 +169,11 @@ export default function AIChatWidget() {
     if (audioCacheRef.current.has(cleanText)) {
       const cached = audioCacheRef.current.get(cleanText);
       if (cached) {
-        const audio = new Audio(cached);
-        audioRef.current = audio;
-        await audio.play().catch(() => {});
+        if (!audioRef.current) {
+          audioRef.current = new Audio();
+        }
+        audioRef.current.src = cached;
+        audioRef.current.play().catch(() => {});
         return;
       }
     }
@@ -165,17 +183,24 @@ export default function AIChatWidget() {
       const ttsRes = await ttsMutation.mutateAsync({ text: cleanText, voiceId: "EXAVITQu4vr4xnSDxMaL" });
       if (ttsRes?.audioBase64) {
         audioCacheRef.current.set(cleanText, ttsRes.audioBase64);
-        const audio = new Audio(ttsRes.audioBase64);
-        audioRef.current = audio;
-        await audio.play().catch(() => {});
+        if (!audioRef.current) {
+          audioRef.current = new Audio();
+        }
+        audioRef.current.src = ttsRes.audioBase64;
+        await audioRef.current.play().catch(() => {});
         return;
       }
     } catch {
       // Fall through to browser neural TTS fallback below
     }
 
-    // Fallback: Ultra-realistic Sweet Indian Female Browser TTS (Supporting both Hindi & English)
+    // Mobile & Desktop Fallback: Ultra-realistic Sweet Indian Female Browser TTS (Supporting both Hindi & English)
     if (!("speechSynthesis" in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
+    } catch {}
+
     const hasHindi = /[\u0900-\u097F]/.test(cleanText);
     const utterance = new SpeechSynthesisUtterance(cleanText);
     const voices = window.speechSynthesis.getVoices();
@@ -217,7 +242,7 @@ export default function AIChatWidget() {
       utterance.lang = hasHindi ? "hi-IN" : "en-IN";
     }
 
-    utterance.rate = 0.95;
+    utterance.rate = 1.0;
     utterance.pitch = 1.05;
     utterance.volume = 1.0;
 
@@ -464,6 +489,8 @@ export default function AIChatWidget() {
     if (!textToSend || isTyping || isProcessingRef.current) return;
     isProcessingRef.current = true;
 
+    // Unlock mobile audio pipeline on touch/click
+    unlockMobileAudio();
     stopAllAudio();
 
     const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -475,8 +502,12 @@ export default function AIChatWidget() {
 
     try {
       const response = await fetchGroqAIResponse(textToSend, messages);
-      const words = response.answer.split(" ");
-      let currentWordIndex = 0;
+      const fullAnswer = response.answer;
+
+      // Start voice output immediately so sound plays right away without waiting for text to finish typing
+      speakAnswerOnce(fullAnswer);
+
+      let charIndex = 0;
 
       setMessages((prev) => [
         ...prev,
@@ -486,15 +517,17 @@ export default function AIChatWidget() {
           timestamp: timeStr,
           isStreaming: true,
           actionUrl: response.actionUrl,
-          actionType: response.actionType
-        }
+          actionType: response.actionType,
+        },
       ]);
 
       if (typingTimerRef.current) clearInterval(typingTimerRef.current);
 
+      // Authentic typewriter effect: Stream 2-3 characters every 14ms
+      const step = fullAnswer.length > 180 ? 3 : 2;
       typingTimerRef.current = setInterval(() => {
-        currentWordIndex++;
-        const currentText = words.slice(0, currentWordIndex).join(" ");
+        charIndex += step;
+        const currentSlice = fullAnswer.slice(0, Math.min(charIndex, fullAnswer.length));
 
         setMessages((prev) => {
           const updated = [...prev];
@@ -502,25 +535,24 @@ export default function AIChatWidget() {
           if (lastIdx >= 0 && updated[lastIdx].role === "assistant") {
             updated[lastIdx] = {
               ...updated[lastIdx],
-              text: currentText,
-              isStreaming: currentWordIndex < words.length
+              text: currentSlice,
+              isStreaming: charIndex < fullAnswer.length,
             };
           }
           return updated;
         });
 
-        if (currentWordIndex >= words.length) {
+        if (charIndex >= fullAnswer.length) {
           if (typingTimerRef.current) clearInterval(typingTimerRef.current);
           setIsTyping(false);
           isProcessingRef.current = false;
-          speakAnswerOnce(response.answer);
         }
-      }, 8);
+      }, 14);
     } catch {
-        setIsTyping(false);
-        isProcessingRef.current = false;
-      }
-    };
+      setIsTyping(false);
+      isProcessingRef.current = false;
+    }
+  };
 
     return (
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[99999] pointer-events-none font-sans flex flex-col items-end justify-end">
@@ -676,7 +708,10 @@ export default function AIChatWidget() {
                   ].map((chip, i) => (
                     <button
                       key={i}
-                      onClick={() => handleSend(chip.query)}
+                      onClick={() => {
+                        unlockMobileAudio();
+                        handleSend(chip.query);
+                      }}
                       disabled={isTyping}
                       className="w-full px-2 py-1.5 rounded-xl bg-white/90 hover:bg-white border border-white/80 text-slate-800 font-bold text-[11px] truncate transition-all flex items-center justify-center gap-1.5 shadow-2xs hover:border-sky-400 disabled:opacity-50 cursor-pointer"
                     >
@@ -691,6 +726,7 @@ export default function AIChatWidget() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  unlockMobileAudio();
                   handleSend(input);
                 }}
                 className="relative z-20 p-3 bg-gradient-to-r from-[#1e1b4b] via-[#1e3a8a] to-[#047857] text-white shrink-0 border-t border-emerald-500/30 rounded-b-[27px] mt-auto w-full"
@@ -714,7 +750,10 @@ export default function AIChatWidget() {
                   {/* Extreme Left Mic Button */}
                   <button
                     type="button"
-                    onClick={toggleMic}
+                    onClick={(e) => {
+                      unlockMobileAudio();
+                      toggleMic(e);
+                    }}
                     title={isListening ? "Stop listening and send" : "Speak to DPSI AI"}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer shrink-0 ${
                       isListening
@@ -749,7 +788,10 @@ export default function AIChatWidget() {
             /* Floating Trigger Button - Firmly Fixed Anchor without Layout Shift */
             <motion.button
               key="dpsi-ai-trigger-button"
-              onClick={() => setIsOpen(true)}
+              onClick={() => {
+                unlockMobileAudio();
+                setIsOpen(true);
+              }}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
