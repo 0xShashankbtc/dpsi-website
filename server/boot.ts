@@ -16,12 +16,15 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-// Security headers (HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection)
+// Security headers (HSTS, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, CSP, Referrer Policy)
 app.use(
   secureHeaders({
+    strictTransportSecurity: "max-age=63072000; includeSubDomains; preload",
     xFrameOptions: "SAMEORIGIN",
     xContentTypeOptions: "nosniff",
     referrerPolicy: "strict-origin-when-cross-origin",
+    crossOriginResourcePolicy: "cross-origin",
+    crossOriginOpenerPolicy: "same-origin-allow-popups",
   })
 );
 
@@ -55,7 +58,6 @@ app.use(
   })
 );
 
-
 import { tenantContextStorage } from "./models/cmsSchemas";
 
 const trpcHandler = async (c: any) => {
@@ -83,7 +85,35 @@ app.all("/trpc/*", async (c: any) => {
   });
 });
 
-app.get("/api/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }));
+// Deep Health & Diagnostic Check
+app.get("/api/health", async (c) => {
+  const startTime = Date.now();
+  let dbStatus = "disconnected";
+  try {
+    const { getDbConnection, resolveDbName } = await import("./lib/mongodb");
+    const conn = await getDbConnection(resolveDbName("dpsi", "main"));
+    dbStatus = conn.readyState === 1 ? "connected" : "connecting";
+  } catch (err: any) {
+    dbStatus = `error: ${err.message}`;
+  }
+
+  const responseTimeMs = Date.now() - startTime;
+  const isHealthy = dbStatus === "connected" || dbStatus === "connecting";
+
+  return c.json(
+    {
+      status: isHealthy ? "ok" : "degraded",
+      environment: process.env.NODE_ENV || "production",
+      database: dbStatus,
+      r2Storage: !!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ? "configured" : "unconfigured",
+      responseTimeMs,
+      timestamp: new Date().toISOString(),
+    },
+    isHealthy ? 200 : 503
+  );
+});
+
+app.get("/api/ping", (c) => c.text("pong", 200));
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;

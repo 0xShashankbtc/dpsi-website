@@ -76885,6 +76885,82 @@ var require_mongoose2 = __commonJS({
   }
 });
 
+// server/lib/mongodb.ts
+var mongodb_exports = {};
+__export(mongodb_exports, {
+  getDbConnection: () => getDbConnection,
+  resolveDbName: () => resolveDbName
+});
+function resolveDbName(tenantId, scope) {
+  if (scope === "admin") return "dpsi_admin";
+  const cleanTenant = (tenantId || "dpsi").trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  if (cleanTenant === "dpsi" || cleanTenant === "default" || cleanTenant === "dps_indirapuram") {
+    return `dpsi_${scope}`;
+  }
+  return `tenant_${cleanTenant}_${scope}`;
+}
+async function getDbConnection(dbName) {
+  const key = dbName;
+  if (cached3.connections[key] && cached3.connections[key].readyState === 1) {
+    return cached3.connections[key];
+  }
+  const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  if (!rawUri) {
+    throw new Error("MONGODB_URI environment variable is missing.");
+  }
+  let uri = rawUri;
+  if (uri.includes("?")) {
+    const [base, query] = uri.split("?");
+    const cleanBase = base.replace(/\/+$/, "");
+    uri = `${cleanBase}/${dbName}?${query}`;
+  } else {
+    uri = `${uri.replace(/\/+$/, "")}/${dbName}`;
+  }
+  if (!cached3.promises[key]) {
+    console.log(`[MongoDB] Initializing connection to [${dbName}]...`);
+    const conn = import_mongoose4.default.createConnection(uri, {
+      serverSelectionTimeoutMS: 5e3,
+      connectTimeoutMS: 5e3,
+      socketTimeoutMS: 3e4,
+      maxPoolSize: 5,
+      minPoolSize: 0,
+      tls: true
+    });
+    conn.on("error", (err) => {
+      console.error(`MongoDB [${dbName}] error:`, err.message);
+    });
+    conn.on("disconnected", () => {
+      console.warn(`MongoDB [${dbName}] disconnected.`);
+      cached3.connections[key] = null;
+      cached3.promises[key] = null;
+    });
+    cached3.promises[key] = conn.asPromise().then((c5) => {
+      console.log(`[MongoDB] \u2705 Connected to [${dbName}]!`);
+      cached3.connections[key] = c5;
+      return c5;
+    }).catch((err) => {
+      console.error(`[MongoDB] \u274C Connection failed for [${dbName}]:`, err.message);
+      cached3.promises[key] = null;
+      cached3.connections[key] = null;
+      throw err;
+    });
+  }
+  return cached3.promises[key];
+}
+var import_mongoose4, cached3;
+var init_mongodb = __esm({
+  "server/lib/mongodb.ts"() {
+    import_mongoose4 = __toESM(require_mongoose2(), 1);
+    cached3 = global._mongoCache || {
+      connections: {},
+      promises: {}
+    };
+    if (!global._mongoCache) {
+      global._mongoCache = cached3;
+    }
+  }
+});
+
 // node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS({
   "node_modules/safe-buffer/index.js"(exports, module2) {
@@ -176452,75 +176528,9 @@ var adminMutation = t.procedure.use(enforceAdmin);
 
 // server/models/cmsSchemas.ts
 var import_mongoose5 = __toESM(require_mongoose2(), 1);
+init_mongodb();
+init_mongodb();
 import crypto2 from "crypto";
-
-// server/lib/mongodb.ts
-var import_mongoose4 = __toESM(require_mongoose2(), 1);
-function resolveDbName(tenantId, scope) {
-  if (scope === "admin") return "dpsi_admin";
-  const cleanTenant = (tenantId || "dpsi").trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
-  if (cleanTenant === "dpsi" || cleanTenant === "default" || cleanTenant === "dps_indirapuram") {
-    return `dpsi_${scope}`;
-  }
-  return `tenant_${cleanTenant}_${scope}`;
-}
-var cached3 = global._mongoCache || {
-  connections: {},
-  promises: {}
-};
-if (!global._mongoCache) {
-  global._mongoCache = cached3;
-}
-async function getDbConnection(dbName) {
-  const key = dbName;
-  if (cached3.connections[key] && cached3.connections[key].readyState === 1) {
-    return cached3.connections[key];
-  }
-  const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
-  if (!rawUri) {
-    throw new Error("MONGODB_URI environment variable is missing.");
-  }
-  let uri = rawUri;
-  if (uri.includes("?")) {
-    const [base, query] = uri.split("?");
-    const cleanBase = base.replace(/\/+$/, "");
-    uri = `${cleanBase}/${dbName}?${query}`;
-  } else {
-    uri = `${uri.replace(/\/+$/, "")}/${dbName}`;
-  }
-  if (!cached3.promises[key]) {
-    console.log(`[MongoDB] Initializing connection to [${dbName}]...`);
-    const conn = import_mongoose4.default.createConnection(uri, {
-      serverSelectionTimeoutMS: 5e3,
-      connectTimeoutMS: 5e3,
-      socketTimeoutMS: 3e4,
-      maxPoolSize: 5,
-      minPoolSize: 0,
-      tls: true
-    });
-    conn.on("error", (err) => {
-      console.error(`MongoDB [${dbName}] error:`, err.message);
-    });
-    conn.on("disconnected", () => {
-      console.warn(`MongoDB [${dbName}] disconnected.`);
-      cached3.connections[key] = null;
-      cached3.promises[key] = null;
-    });
-    cached3.promises[key] = conn.asPromise().then((c5) => {
-      console.log(`[MongoDB] \u2705 Connected to [${dbName}]!`);
-      cached3.connections[key] = c5;
-      return c5;
-    }).catch((err) => {
-      console.error(`[MongoDB] \u274C Connection failed for [${dbName}]:`, err.message);
-      cached3.promises[key] = null;
-      cached3.connections[key] = null;
-      throw err;
-    });
-  }
-  return cached3.promises[key];
-}
-
-// server/models/cmsSchemas.ts
 import { AsyncLocalStorage as AsyncLocalStorage2 } from "async_hooks";
 var PageSchema = new import_mongoose5.Schema(
   {
@@ -178197,6 +178207,7 @@ import bcrypt2 from "bcryptjs";
 
 // server/models/adminUserSchema.ts
 var import_mongoose13 = __toESM(require_mongoose2(), 1);
+init_mongodb();
 var AdminUserSchema = new import_mongoose13.Schema(
   {
     username: { type: String, required: true, unique: true },
@@ -178216,6 +178227,7 @@ async function getAdminUserModel() {
 
 // server/models/tenantSchema.ts
 var import_mongoose14 = __toESM(require_mongoose2(), 1);
+init_mongodb();
 var TenantSchema = new import_mongoose14.Schema(
   {
     tenantId: { type: String, required: true, unique: true, index: true },
@@ -181236,9 +181248,12 @@ app.use("*", async (c5, next) => {
 });
 app.use(
   secureHeaders({
+    strictTransportSecurity: "max-age=63072000; includeSubDomains; preload",
     xFrameOptions: "SAMEORIGIN",
     xContentTypeOptions: "nosniff",
-    referrerPolicy: "strict-origin-when-cross-origin"
+    referrerPolicy: "strict-origin-when-cross-origin",
+    crossOriginResourcePolicy: "cross-origin",
+    crossOriginOpenerPolicy: "same-origin-allow-popups"
   })
 );
 var ALLOWED_ORIGINS = [
@@ -181287,7 +181302,31 @@ app.all("/trpc/*", async (c5) => {
     });
   });
 });
-app.get("/api/health", (c5) => c5.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() }));
+app.get("/api/health", async (c5) => {
+  const startTime = Date.now();
+  let dbStatus = "disconnected";
+  try {
+    const { getDbConnection: getDbConnection2, resolveDbName: resolveDbName2 } = await Promise.resolve().then(() => (init_mongodb(), mongodb_exports));
+    const conn = await getDbConnection2(resolveDbName2("dpsi", "main"));
+    dbStatus = conn.readyState === 1 ? "connected" : "connecting";
+  } catch (err) {
+    dbStatus = `error: ${err.message}`;
+  }
+  const responseTimeMs = Date.now() - startTime;
+  const isHealthy = dbStatus === "connected" || dbStatus === "connecting";
+  return c5.json(
+    {
+      status: isHealthy ? "ok" : "degraded",
+      environment: process.env.NODE_ENV || "production",
+      database: dbStatus,
+      r2Storage: !!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ? "configured" : "unconfigured",
+      responseTimeMs,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    },
+    isHealthy ? 200 : 503
+  );
+});
+app.get("/api/ping", (c5) => c5.text("pong", 200));
 app.all("/api/*", (c5) => c5.json({ error: "Not Found" }, 404));
 var boot_default = app;
 
