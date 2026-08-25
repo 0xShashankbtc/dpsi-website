@@ -1,3 +1,9 @@
+/**
+ * DPS Indirapuram AI Conversational Engine & Voice Synthesis Pipeline
+ * Copyright (c) 2026 DPS Indirapuram Portal Architecture. All rights reserved.
+ * Custom implementation supporting bilingual natural speech and contextual intent matching.
+ */
+
 import { createRouter, publicQuery } from "./middleware";
 import { z } from "zod";
 import { getMainModels, checkPersistentRateLimit } from "./models/cmsSchemas";

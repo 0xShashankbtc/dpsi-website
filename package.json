@@ -1,7 +1,9 @@
 {
-  "name": "my-app",
+  "name": "dps-indirapuram-portal",
+  "version": "1.0.0",
+  "description": "Official Custom Web Platform, Multi-Tenant CMS & Conversational AI System for Delhi Public School Indirapuram",
+  "author": "DPS Indirapuram Development Team",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,3 +1,9 @@
+/**
+ * DPS Indirapuram AI Conversational Interface & Web Audio Hardware Synthesizer
+ * Copyright (c) 2026 DPS Indirapuram Portal Architecture. All rights reserved.
+ * Custom client-side streaming typewriter and hardware-level Web Audio buffer decoder.
+ */
+
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Bot, MessageSquare, GraduationCap, RotateCcw, ExternalLink, Phone, Mail, Mic, Calendar, Volume2 } from "lucide-react";

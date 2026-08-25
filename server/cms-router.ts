@@ -1,3 +1,9 @@
+/**
+ * DPS Indirapuram Multi-Tenant CMS & Administrative Operations Engine
+ * Copyright (c) 2026 DPS Indirapuram Portal Architecture. All rights reserved.
+ * Custom implementation for educational institution resource management and public verification.
+ */
+
 import { z } from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";

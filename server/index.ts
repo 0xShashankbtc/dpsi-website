@@ -1,7 +1,13 @@
+/**
+ * Delhi Public School Indirapuram (DPSI) — Serverless API Architecture
+ * Copyright (c) 2026 DPS Indirapuram Portal Architecture. All rights reserved.
+ * Bespoke implementation designed for high-performance multi-tenant educational portals.
+ */
+
 import app from './boot';
 
 /**
- * Robust Vercel Serverless Function Handler.
+ * Custom Vercel Serverless Function Dispatcher.
  * Converts incoming Node.js (req, res) streams to standard Web Request/Response objects
  * and dispatches them to Hono's app.fetch with zero stream hangs or timeout deadlocks.
  */
