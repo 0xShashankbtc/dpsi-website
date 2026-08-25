@@ -99,8 +99,10 @@ setInterval(() => {
 }, 300000);
 
 const GROQ_FALLBACK_MODELS = [
-  "openai/gpt-oss-120b",
-  "groq/compound-mini",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+  "mixtral-8x7b-32768",
+  "gemma2-9b-it",
 ];
 
 export const aiRouter = createRouter({
@@ -115,22 +117,33 @@ export const aiRouter = createRouter({
       // Extract client identifier (IP or fallback)
       const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
       
-      const isAllowed = checkRateLimit(clientIp, 40, 60000) && (await checkPersistentRateLimit(`chat:${clientIp}`, 40, 60));
+      const isAllowed = checkRateLimit(clientIp, 40, 60000) && (await checkPersistentRateLimit(`chat:${clientIp}`, 40, 60, ctx.tenantId));
       if (!isAllowed) {
         return {
           answer: "You are sending messages too quickly. Please wait a moment before asking another question.",
         };
       }
 
-      const apiKey = process.env.GROQ_API_KEY || "";
+      let apiKey =
+        process.env.GROQ_API_KEY ||
+        process.env.VITE_GROQ_API_KEY ||
+        process.env.DOPPLER_GROQ_API_KEY ||
+        "";
+      let configuredModel: string | undefined;
 
-      // Load admin-configured system prompt from MongoDB if available
+      // Load admin-configured system prompt and custom key from MongoDB if available
       let systemPrompt = DEFAULT_SYSTEM_PROMPT;
       try {
-        const { AiConfig } = await getMainModels() as any;
+        const { AiConfig } = await getMainModels(ctx.tenantId) as any;
         if (AiConfig) {
           const config = await AiConfig.findOne({}).sort({ updatedAt: -1 });
-          if (config?.systemPrompt && config.systemPrompt.trim().length > 100) {
+          if (config?.apiKey && config.apiKey.trim().startsWith("gsk_")) {
+            apiKey = config.apiKey.trim();
+          }
+          if (config?.model && config.model.trim()) {
+            configuredModel = config.model.trim();
+          }
+          if (config?.systemPrompt && config.systemPrompt.trim().length > 50) {
             systemPrompt = config.systemPrompt;
           }
         }
@@ -153,15 +166,19 @@ export const aiRouter = createRouter({
         { role: "user", content: sanitizedMsg || input.message },
       ];
 
-      // Try models in fallback order with ultra-fast timeout (4s per model)
+      const candidateModels = configuredModel
+        ? [configuredModel, ...GROQ_FALLBACK_MODELS.filter((m) => m !== configuredModel)]
+        : GROQ_FALLBACK_MODELS;
+
+      // Try models in fallback order with ultra-fast timeout (5s per model)
       if (apiKey) {
-        for (const model of GROQ_FALLBACK_MODELS) {
+        for (const model of candidateModels) {
           try {
             const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${apiKey}`,
+                Authorization: `Bearer ${apiKey.trim()}`,
               },
               body: JSON.stringify({
                 model,
