@@ -125,20 +125,79 @@ export default function AIChatWidget() {
     }
   }, []);
 
+  // Web Audio Context reference for iOS/Android low-level hardware playback
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const getAudioContext = () => {
+    if (typeof window === "undefined") return null;
+    if (!audioCtxRef.current) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        audioCtxRef.current = new AudioCtx();
+      }
+    }
+    return audioCtxRef.current;
+  };
+
+  // Convert Base64 data URL to ArrayBuffer for Web Audio decoding
+  const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
+    const raw = base64.includes(",") ? base64.split(",")[1] : base64;
+    const binaryString = window.atob(raw);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  };
+
+  const playBufferWithWebAudio = async (arrayBuf: ArrayBuffer): Promise<boolean> => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return false;
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+      const audioBuffer = await ctx.decodeAudioData(arrayBuf.slice(0));
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   // Mobile Audio Unlocker for iOS Safari & Android Chrome Autoplay Policies
   const unlockMobileAudio = () => {
     if (typeof window === "undefined") return;
     try {
+      // 1. Resume Web Audio Context
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === "suspended") {
+        ctx.resume();
+      }
+      if (ctx) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(0);
+        osc.stop(ctx.currentTime + 0.02);
+      }
+
+      // 2. Unlock HTML5 Audio Singleton
       if (!audioRef.current) {
         audioRef.current = new Audio();
       }
-      // Prime mobile audio singleton
       audioRef.current.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
       audioRef.current.play().then(() => {
         if (audioRef.current) audioRef.current.pause();
       }).catch(() => {});
 
-      // Prime iOS WebKit SpeechSynthesis
+      // 3. Unlock WebKit SpeechSynthesis
       if ("speechSynthesis" in window) {
         window.speechSynthesis.resume();
         const silent = new SpeechSynthesisUtterance(" ");
@@ -189,23 +248,38 @@ export default function AIChatWidget() {
     // Check fast client-side audio cache first
     if (audioCacheRef.current.has(cleanText)) {
       const cached = audioCacheRef.current.get(cleanText);
-      if (cached && audioRef.current) {
-        audioRef.current.src = cached;
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
-        return;
+      if (cached) {
+        const arrayBuf = base64ToArrayBuffer(cached);
+        const played = await playBufferWithWebAudio(arrayBuf);
+        if (played) return;
+
+        if (audioRef.current) {
+          audioRef.current.src = cached;
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+          return;
+        }
       }
     }
 
     // High-fidelity ElevenLabs voice synthesis (Sarah: EXAVITQu4vr4xnSDxMaL)
     try {
       const ttsRes = await ttsMutation.mutateAsync({ text: cleanText, voiceId: "EXAVITQu4vr4xnSDxMaL" });
-      if (ttsRes?.audioBase64 && audioRef.current) {
+      if (ttsRes?.audioBase64) {
         audioCacheRef.current.set(cleanText, ttsRes.audioBase64);
-        audioRef.current.src = ttsRes.audioBase64;
-        audioRef.current.currentTime = 0;
-        await audioRef.current.play().catch(() => {});
-        return;
+        
+        // 1. Web Audio API Direct Buffer Playback (iOS/Android hardware sound)
+        const arrayBuf = base64ToArrayBuffer(ttsRes.audioBase64);
+        const played = await playBufferWithWebAudio(arrayBuf);
+        if (played) return;
+
+        // 2. HTML5 Audio Element Fallback
+        if (audioRef.current) {
+          audioRef.current.src = ttsRes.audioBase64;
+          audioRef.current.currentTime = 0;
+          await audioRef.current.play().catch(() => {});
+          return;
+        }
       }
     } catch {
       // Fall through to browser neural TTS fallback below
@@ -572,7 +646,7 @@ export default function AIChatWidget() {
   };
 
     return (
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[99999] pointer-events-none font-sans flex flex-col items-end justify-end">
+      <div className="fixed bottom-[max(12px,env(safe-area-inset-bottom))] right-[max(12px,env(safe-area-inset-right))] z-[99999] pointer-events-none font-sans flex flex-col items-end justify-end">
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div
@@ -581,7 +655,7 @@ export default function AIChatWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.95 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="w-[340px] sm:w-[385px] h-[520px] max-h-[82vh] bg-gradient-to-b from-[#fce7f3] via-[#e2e8f0] to-[#047857] backdrop-blur-2xl border border-white/80 rounded-[28px] shadow-2xl shadow-slate-900/30 flex flex-col overflow-hidden text-slate-900 relative max-w-[94vw] pointer-events-auto"
+              className="w-[calc(100vw-24px)] sm:w-[385px] h-[520px] max-h-[82dvh] bg-gradient-to-b from-[#fce7f3] via-[#e2e8f0] to-[#047857] backdrop-blur-2xl border border-white/80 rounded-[26px] sm:rounded-[28px] shadow-2xl shadow-slate-900/30 flex flex-col overflow-hidden text-slate-900 relative pointer-events-auto"
             >
               {/* Ambient Silk Wave Orbs */}
               <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#fed7aa]/35 blur-3xl pointer-events-none" />
@@ -619,7 +693,7 @@ export default function AIChatWidget() {
               </div>
 
               {/* MESSAGES SCROLL AREA */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 relative z-10 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 relative z-10 custom-scrollbar overscroll-contain">
                 {messages.map((msg, idx) => (
                   <motion.div
                     key={idx}
@@ -805,6 +879,10 @@ export default function AIChatWidget() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask anything..."
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="sentences"
+                    spellCheck={false}
                     className="flex-1 bg-transparent text-[16px] sm:text-xs text-white placeholder-white/50 focus:outline-none px-2.5 py-1"
                   />
 
@@ -812,7 +890,7 @@ export default function AIChatWidget() {
                   <button
                     type="submit"
                     disabled={!input.trim() || isTyping}
-                    className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#10b981] to-[#00c6ff] text-white flex items-center justify-center transition-all disabled:opacity-40 shrink-0 shadow-sm cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#10b981] to-[#00c6ff] text-white flex items-center justify-center transition-all disabled:opacity-40 shrink-0 shadow-sm cursor-pointer touch-manipulation"
                   >
                     <Send className="w-3.5 h-3.5" />
                   </button>
@@ -833,7 +911,7 @@ export default function AIChatWidget() {
               transition={{ duration: 0.18, ease: "easeOut" }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#fce7f3] via-[#e2e8f0] to-[#ffedd5] text-slate-900 font-bold text-xs shadow-2xl shadow-slate-900/30 border border-white/90 backdrop-blur-2xl cursor-pointer pointer-events-auto select-none transition-shadow hover:shadow-emerald-500/20"
+              className="flex items-center gap-3 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-[#fce7f3] via-[#e2e8f0] to-[#ffedd5] text-slate-900 font-bold text-xs shadow-2xl shadow-slate-900/30 border border-white/90 backdrop-blur-2xl cursor-pointer pointer-events-auto select-none transition-shadow hover:shadow-emerald-500/20 touch-manipulation"
               title="Click to open DPSI AI Assistant"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#0072ff] to-[#00c6ff] flex items-center justify-center text-white shadow-md shrink-0 pointer-events-none">

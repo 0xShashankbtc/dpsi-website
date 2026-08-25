@@ -396,6 +396,7 @@ export default function Navbar() {
                   <div key={link.label}>
                     <Link
                       to={link.href}
+                      onClick={() => setIsMobileOpen(false)}
                       className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                         location.pathname === link.href
                           ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
@@ -410,6 +411,7 @@ export default function Navbar() {
                           <Link
                             key={child.label}
                             to={child.href}
+                            onClick={() => setIsMobileOpen(false)}
                             className="block px-3 py-1.5 text-sm text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
                           >
                             {child.label}
@@ -428,6 +430,7 @@ export default function Navbar() {
                   >
                     <Link
                       to="/admin"
+                      onClick={() => setIsMobileOpen(false)}
                       className="block px-3.5 py-2.5 rounded-xl text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50"
                     >
                       Admin Panel
