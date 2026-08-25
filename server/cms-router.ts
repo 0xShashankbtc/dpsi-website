@@ -473,10 +473,41 @@ export const cmsRouter = createRouter({
           return { success: false, error: "File size exceeds 15MB limit." };
         }
 
+        // 1. Cloudflare R2 Upload (Primary Enterprise CDN & Object Storage)
+        const hasR2 = !!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
+        if (hasR2) {
+          try {
+            const { uploadToR2 } = await import("./lib/cloudflareR2");
+            let uploadBuffer = buffer;
+            let uploadType = input.fileType;
+            let finalFileName = input.fileName;
+
+            if (input.fileType.startsWith("image/")) {
+              try {
+                const webpResult = await convertImageToWebP(buffer, 85);
+                uploadBuffer = webpResult.buffer;
+                uploadType = "image/webp";
+                finalFileName = input.fileName.replace(/\.[^/.]+$/, "") + ".webp";
+              } catch {}
+            }
+
+            const r2Res = await uploadToR2(uploadBuffer, finalFileName, uploadType, "dpsi_cms");
+            return {
+              success: true,
+              originalType: input.fileType,
+              convertedType: uploadType,
+              dataUrl: r2Res.url,
+              size: r2Res.size,
+            };
+          } catch (r2Err) {
+            console.warn("Cloudflare R2 upload failed, falling back to Cloudinary:", r2Err);
+          }
+        }
+
+        // 2. Cloudinary Upload (Fallback Storage)
         const { uploadToCloudinary } = await import("./lib/cloudinary");
 
         if (input.fileType.startsWith("image/")) {
-          // Pre-transcode through Sharp (validates image structure) and upload to Cloudinary CDN
           const webpResult = await convertImageToWebP(buffer, 82);
           const cloudRes = await uploadToCloudinary(webpResult.buffer, "dpsi_gallery", "image");
 
@@ -490,7 +521,6 @@ export const cmsRouter = createRouter({
             size: cloudRes.bytes || webpResult.size,
           };
         } else if (input.fileType.startsWith("video/")) {
-          // Upload video to Cloudinary with auto-WebM transcoding
           const cloudRes = await uploadToCloudinary(buffer, "dpsi_videos", "video");
           return {
             success: true,
@@ -500,7 +530,6 @@ export const cmsRouter = createRouter({
             size: cloudRes.bytes,
           };
         } else {
-          // Validate PDF magic bytes if declaring application/pdf
           if (input.fileType === "application/pdf" || lowerName.endsWith(".pdf")) {
             const isPdf = buffer.slice(0, 5).toString() === "%PDF-";
             if (!isPdf) {
@@ -508,7 +537,6 @@ export const cmsRouter = createRouter({
             }
           }
 
-          // Raw documents / TC PDFs
           const cloudRes = await uploadToCloudinary(buffer, "dpsi_docs", "raw");
           return {
             success: true,
@@ -520,7 +548,7 @@ export const cmsRouter = createRouter({
         }
       } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : "Failed to process media";
-        console.error("Cloudinary upload error:", errMsg);
+        console.error("Media upload error:", errMsg);
         return { success: false, error: errMsg };
       }
     }),
