@@ -176710,7 +176710,10 @@ var AiConfigSchema = new import_mongoose5.Schema(
     systemPrompt: { type: String, required: true },
     modelId: { type: String, default: "llama-3.3-70b-versatile" },
     temperature: { type: Number, default: 0.4 },
-    maxTokens: { type: Number, default: 700 }
+    maxTokens: { type: Number, default: 700 },
+    apiKey: { type: String },
+    elevenlabsApiKey: { type: String },
+    elevenlabsVoiceId: { type: String, default: "EXAVITQu4vr4xnSDxMaL" }
   },
   { timestamps: true }
 );
@@ -178171,12 +178174,25 @@ var aiRouter = createRouter({
     if (!isTtsAllowed) {
       return { audioBase64: null };
     }
-    const apiKey = (process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
+    let apiKey = (process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
+    let voiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
+    try {
+      const { AiConfig } = await getMainModels(ctx.tenantId);
+      if (AiConfig) {
+        const config2 = await AiConfig.findOne({}).sort({ updatedAt: -1 });
+        if (config2?.elevenlabsApiKey && config2.elevenlabsApiKey.trim().startsWith("sk_")) {
+          apiKey = config2.elevenlabsApiKey.trim();
+        }
+        if (config2?.elevenlabsVoiceId && config2.elevenlabsVoiceId.trim()) {
+          voiceId = config2.elevenlabsVoiceId.trim();
+        }
+      }
+    } catch {
+    }
     if (!apiKey) {
       return { audioBase64: null };
     }
-    const voiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
-    const cleanPrompt = input.text.slice(0, 260);
+    const cleanPrompt = input.text.slice(0, 200);
     const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
     for (const modelId of ttsModels) {
       try {
@@ -180523,10 +180539,13 @@ var cmsRouter = createRouter({
       systemPrompt: external_exports.string(),
       modelId: external_exports.string().default("llama-3.3-70b-versatile"),
       temperature: external_exports.number().min(0).max(1).default(0.4),
-      maxTokens: external_exports.number().min(100).max(2e3).default(700)
+      maxTokens: external_exports.number().min(100).max(2e3).default(700),
+      apiKey: external_exports.string().optional(),
+      elevenlabsApiKey: external_exports.string().optional(),
+      elevenlabsVoiceId: external_exports.string().optional()
     })
-  ).mutation(async ({ input }) => {
-    const { AiConfig } = await getMainModels();
+  ).mutation(async ({ input, ctx }) => {
+    const { AiConfig } = await getMainModels(ctx.tenantId);
     const existing = await AiConfig.findOne({});
     if (existing) {
       await AiConfig.findByIdAndUpdate(existing._id, input);

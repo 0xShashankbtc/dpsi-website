@@ -1573,10 +1573,13 @@ export const cmsRouter = createRouter({
         modelId: z.string().default("llama-3.3-70b-versatile"),
         temperature: z.number().min(0).max(1).default(0.4),
         maxTokens: z.number().min(100).max(2000).default(700),
+        apiKey: z.string().optional(),
+        elevenlabsApiKey: z.string().optional(),
+        elevenlabsVoiceId: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
-      const { AiConfig } = await getMainModels();
+    .mutation(async ({ input, ctx }) => {
+      const { AiConfig } = await getMainModels(ctx.tenantId);
       const existing = await AiConfig.findOne({});
       if (existing) {
         await AiConfig.findByIdAndUpdate(existing._id, input);

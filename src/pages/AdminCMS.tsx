@@ -46,6 +46,7 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Volume2,
 } from "lucide-react";
 
 import { trpc } from "@/providers/trpc";
@@ -1453,6 +1454,8 @@ export default function AdminCMS() {
   const [aiPromptEdit, setAiPromptEdit] = useState("");
   const [aiModelEdit, setAiModelEdit] = useState("llama-3.3-70b-versatile");
   const [aiTempEdit, setAiTempEdit] = useState(0.4);
+  const [aiElevenlabsKeyEdit, setAiElevenlabsKeyEdit] = useState("");
+  const [aiElevenlabsVoiceEdit, setAiElevenlabsVoiceEdit] = useState("EXAVITQu4vr4xnSDxMaL");
 
   const safeIsoDate = (val: any) => {
     if (!val) return "";
@@ -4214,6 +4217,46 @@ export default function AdminCMS() {
                         />
                       </div>
                     </div>
+
+                    {/* ElevenLabs Real Human Voice Synthesis Section */}
+                    <div className="border border-sky-200 bg-sky-50/50 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Volume2 className="w-4 h-4 text-sky-600" />
+                          <h3 className="text-xs font-bold text-slate-900">ElevenLabs Realistic Voice TTS</h3>
+                        </div>
+                        <span className="text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-medium">Real Human Voice</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-600">ElevenLabs API Key (sk_...)</label>
+                          <Input
+                            type="password"
+                            placeholder={aiConfig?.elevenlabsApiKey ? "••••••••••••••••••••••••" : "Paste ElevenLabs sk_ key here"}
+                            value={aiElevenlabsKeyEdit}
+                            onChange={(e) => setAiElevenlabsKeyEdit(e.target.value)}
+                            className="bg-white border-slate-200 text-slate-900 text-xs"
+                          />
+                          <p className="text-[10px] text-slate-500">Provide an active ElevenLabs API key for ultra-realistic studio quality human speech.</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-semibold text-slate-600">Voice Persona</label>
+                          <select
+                            value={aiElevenlabsVoiceEdit || aiConfig?.elevenlabsVoiceId || "EXAVITQu4vr4xnSDxMaL"}
+                            onChange={(e) => setAiElevenlabsVoiceEdit(e.target.value)}
+                            className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs"
+                          >
+                            <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Warm, Reassuring, Professional Female)</option>
+                            <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm, Gentle, Conversational)</option>
+                            <option value="AZnzlk1XvdvUeBnXmlld">Domi (Clear, Energetic)</option>
+                            <option value="JBFqnCBsd6RMkjVDRZzb">George (Warm British Storyteller)</option>
+                            <option value="CwhRBWXzGAHq8TQ4Fs17">Roger (Resonant, Confident Male)</option>
+                          </select>
+                          <p className="text-[10px] text-slate-500">Select the voice persona for AI voice answers.</p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <label className="text-[11px] font-semibold text-slate-600">School Knowledge Base (AI System Prompt)</label>
@@ -4242,6 +4285,8 @@ export default function AdminCMS() {
                           modelId: aiModelEdit || aiConfig?.modelId || "llama-3.3-70b-versatile",
                           temperature: aiTempEdit || aiConfig?.temperature || 0.4,
                           maxTokens: 700,
+                          elevenlabsApiKey: aiElevenlabsKeyEdit.trim() || undefined,
+                          elevenlabsVoiceId: aiElevenlabsVoiceEdit || undefined,
                         })}
                         disabled={updateAiConfigMutation.isPending}
                         className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs"

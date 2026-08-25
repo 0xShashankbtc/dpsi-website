@@ -282,20 +282,35 @@ export const aiRouter = createRouter({
         return { audioBase64: null };
       }
 
-      const apiKey = (
+      let apiKey = (
         process.env.ELEVENLABS_API_KEY ||
         process.env.VITE_ELEVENLABS_API_KEY ||
         process.env.DOPPLER_ELEVENLABS_API_KEY ||
         ""
       ).trim();
 
+      // Default to Sarah (EXAVITQu4vr4xnSDxMaL) - warm, reassuring, crystal-clear voice
+      let voiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
+
+      try {
+        const { AiConfig } = await getMainModels(ctx.tenantId) as any;
+        if (AiConfig) {
+          const config = await AiConfig.findOne({}).sort({ updatedAt: -1 });
+          if (config?.elevenlabsApiKey && config.elevenlabsApiKey.trim().startsWith("sk_")) {
+            apiKey = config.elevenlabsApiKey.trim();
+          }
+          if (config?.elevenlabsVoiceId && config.elevenlabsVoiceId.trim()) {
+            voiceId = config.elevenlabsVoiceId.trim();
+          }
+        }
+      } catch {}
+
       if (!apiKey) {
         return { audioBase64: null };
       }
 
-      // Default to Sarah (EXAVITQu4vr4xnSDxMaL) - warm, clear, professional female voice
-      const voiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
-      const cleanPrompt = input.text.slice(0, 260);
+      // Keep prompt punchy & concise (max 200 chars) for ultra-fast generation
+      const cleanPrompt = input.text.slice(0, 200);
 
       // Fast low-latency models order
       const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];

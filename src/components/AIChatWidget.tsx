@@ -149,7 +149,7 @@ export default function AIChatWidget() {
     stopAllAudio();
 
     // Clean markdown, URLs, and normalize acronyms for ultra-realistic pronunciation
-    const cleanText = text
+    let cleanText = text
       .replace(/<think>[\s\S]*?<\/think>/gi, "")
       .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
       .replace(/https?:\/\/\S+/g, "")
@@ -160,8 +160,15 @@ export default function AIChatWidget() {
       .replace(/\b3D\b/gi, "3 D")
       .replace(/\bIX & XI\b/gi, "9 and 11")
       .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 260);
+      .trim();
+
+    // Get the first 1-2 key conversational sentences (up to 180 chars) for zero-lag immediate speech
+    const firstSentenceMatch = cleanText.match(/^(.*?[.!?])\s/);
+    if (firstSentenceMatch && firstSentenceMatch[1].length > 25 && firstSentenceMatch[1].length < 180) {
+      cleanText = firstSentenceMatch[1].trim();
+    } else {
+      cleanText = cleanText.slice(0, 180).trim();
+    }
 
     if (!cleanText) return;
 
@@ -242,8 +249,8 @@ export default function AIChatWidget() {
       utterance.lang = hasHindi ? "hi-IN" : "en-IN";
     }
 
-    utterance.rate = 1.0;
-    utterance.pitch = 1.05;
+    utterance.rate = 1.02;
+    utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
     window.speechSynthesis.speak(utterance);

@@ -353,6 +353,9 @@ export interface IAiConfig extends Document {
   modelId: string;
   temperature: number;
   maxTokens: number;
+  apiKey?: string;
+  elevenlabsApiKey?: string;
+  elevenlabsVoiceId?: string;
 }
 
 const AiConfigSchema = new Schema<IAiConfig>(
@@ -361,6 +364,9 @@ const AiConfigSchema = new Schema<IAiConfig>(
     modelId: { type: String, default: "llama-3.3-70b-versatile" },
     temperature: { type: Number, default: 0.4 },
     maxTokens: { type: Number, default: 700 },
+    apiKey: { type: String },
+    elevenlabsApiKey: { type: String },
+    elevenlabsVoiceId: { type: String, default: "EXAVITQu4vr4xnSDxMaL" },
   },
   { timestamps: true }
 );
