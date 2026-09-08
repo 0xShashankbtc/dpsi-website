@@ -4187,13 +4187,14 @@ export default function AdminCMS() {
                       <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-slate-600">AI Model</label>
                         <select
-                          value={aiModelEdit || aiConfig?.modelId || "llama-3.3-70b-versatile"}
+                          value={aiModelEdit || aiConfig?.modelId || "openai/gpt-oss-120b"}
                           onChange={(e) => setAiModelEdit(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs font-medium"
                         >
-                          <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended — Fast)</option>
-                          <option value="llama-3.1-70b-versatile">Llama 3.1 70B</option>
-                          <option value="mixtral-8x7b-32768">Mixtral 8x7B (Balanced)</option>
+                          <option value="openai/gpt-oss-120b">GPT OSS 120B (Recommended — High Intelligence & Speed)</option>
+                          <option value="qwen/qwen3.8-27b">Qwen 3.8 27B (Ultra-Fast 300ms)</option>
+                          <option value="openai/gpt-oss-20b">GPT OSS 20B (Instant Compact)</option>
+                          <option value="groq/compound-mini">Compound Mini</option>
                         </select>
                       </div>
                       <div className="space-y-1">

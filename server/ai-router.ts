@@ -74,10 +74,42 @@ COMPREHENSIVE KNOWLEDGE BASE — DELHI PUBLIC SCHOOL INDIRAPURAM:
 
 If a question falls outside this knowledge base, politely provide the school contact number (+91-0120-4660000) and email (info@dpsindirapuram.com).`;
 
+// High-performance In-Memory LRU Cache with TTL for ultra-fast repeated queries
+interface CacheEntry {
+  answer: string;
+  expiresAt: number;
+}
+const aiResponseCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes cache
+const MAX_CACHE_SIZE = 500;
+
+function getCachedAnswer(query: string, tenantId?: string): string | null {
+  const normKey = `${tenantId || "default"}:${query.toLowerCase().replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim()}`;
+  const entry = aiResponseCache.get(normKey);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    aiResponseCache.delete(normKey);
+    return null;
+  }
+  return entry.answer;
+}
+
+function setCachedAnswer(query: string, answer: string, tenantId?: string) {
+  if (aiResponseCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = aiResponseCache.keys().next().value;
+    if (firstKey) aiResponseCache.delete(firstKey);
+  }
+  const normKey = `${tenantId || "default"}:${query.toLowerCase().replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim()}`;
+  aiResponseCache.set(normKey, {
+    answer,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
+}
+
 // Simple in-memory sliding window rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-function checkRateLimit(key: string, limit = 40, windowMs = 60000): boolean {
+function checkRateLimit(key: string, limit = 60, windowMs = 60000): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(key);
 
@@ -104,12 +136,36 @@ setInterval(() => {
   }
 }, 300000);
 
-const GROQ_FALLBACK_MODELS = [
-  "llama-3.3-70b-versatile",
-  "llama-3.1-8b-instant",
-  "mixtral-8x7b-32768",
-  "gemma2-9b-it",
+// Active low-latency Groq models in prioritized order
+const GROQ_FAST_MODELS = [
+  "openai/gpt-oss-120b",
+  "qwen/qwen3.8-27b",
+  "openai/gpt-oss-20b",
+  "groq/compound-mini",
+  "qwen/qwen3.6-27b",
 ];
+
+// Map legacy or deprecated model names to current active Groq fast models
+function normalizeGroqModel(model?: string): string {
+  if (!model) return GROQ_FAST_MODELS[0];
+  const m = model.trim().toLowerCase();
+  if (m.includes("llama") || m.includes("mixtral") || m.includes("gemma") || m.includes("120b")) {
+    return "openai/gpt-oss-120b";
+  }
+  if (m.includes("qwen3.8") || m.includes("qwen")) {
+    return "qwen/qwen3.8-27b";
+  }
+  if (m.includes("gpt-oss-20b") || (m.includes("20b") && !m.includes("120b"))) {
+    return "openai/gpt-oss-20b";
+  }
+  if (m.includes("compound")) {
+    return "groq/compound-mini";
+  }
+  return model.trim();
+}
+
+// Circuit breaker for external TTS services to prevent latency lag on quota/auth errors
+let elevenlabsCircuitBreakerUntil = 0;
 
 export const aiRouter = createRouter({
   chat: publicQuery
@@ -123,11 +179,17 @@ export const aiRouter = createRouter({
       // Extract client identifier (IP or fallback)
       const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
       
-      const isAllowed = checkRateLimit(clientIp, 40, 60000) && (await checkPersistentRateLimit(`chat:${clientIp}`, 40, 60, ctx.tenantId));
+      const isAllowed = checkRateLimit(clientIp, 60, 60000) && (await checkPersistentRateLimit(`chat:${clientIp}`, 60, 60, ctx.tenantId));
       if (!isAllowed) {
         return {
           answer: "You are sending messages too quickly. Please wait a moment before asking another question.",
         };
+      }
+
+      // Check high-speed in-memory response cache (< 2ms instant answer)
+      const cached = getCachedAnswer(input.message, ctx.tenantId);
+      if (cached && (!input.history || input.history.length === 0)) {
+        return { answer: cached };
       }
 
       let apiKey =
@@ -146,8 +208,10 @@ export const aiRouter = createRouter({
           if (config?.apiKey && config.apiKey.trim().startsWith("gsk_")) {
             apiKey = config.apiKey.trim();
           }
-          if (config?.model && config.model.trim()) {
-            configuredModel = config.model.trim();
+          if (config?.modelId && config.modelId.trim()) {
+            configuredModel = normalizeGroqModel(config.modelId);
+          } else if (config?.model && config.model.trim()) {
+            configuredModel = normalizeGroqModel(config.model);
           }
           if (config?.systemPrompt && config.systemPrompt.trim().length > 50) {
             systemPrompt = config.systemPrompt;
@@ -163,8 +227,8 @@ export const aiRouter = createRouter({
         .replace(/system\s+prompt\s+override/gi, "")
         .trim();
 
-      // Keep only last 6 turns for optimal speed + context accuracy
-      const recentHistory = (input.history || []).slice(-6);
+      // Keep only last 4 turns for optimal speed + context accuracy
+      const recentHistory = (input.history || []).slice(-4);
 
       const messagesPayload = [
         { role: "system", content: systemPrompt },
@@ -172,11 +236,13 @@ export const aiRouter = createRouter({
         { role: "user", content: sanitizedMsg || input.message },
       ];
 
-      const candidateModels = configuredModel
-        ? [configuredModel, ...GROQ_FALLBACK_MODELS.filter((m) => m !== configuredModel)]
-        : GROQ_FALLBACK_MODELS;
+      const primaryModel = configuredModel ? normalizeGroqModel(configuredModel) : GROQ_FAST_MODELS[0];
+      const candidateModels = [
+        primaryModel,
+        ...GROQ_FAST_MODELS.filter((m) => m !== primaryModel),
+      ];
 
-      // Try models in fallback order with ultra-fast timeout (5s per model)
+      // Try models in fallback order with ultra-fast timeout (3s per model)
       if (apiKey) {
         for (const model of candidateModels) {
           try {
@@ -193,12 +259,12 @@ export const aiRouter = createRouter({
                 max_tokens: 300,
                 stream: false,
               }),
-              signal: AbortSignal.timeout(4000), // 4s fast timeout per attempt
+              signal: AbortSignal.timeout(3000), // 3s fast timeout per attempt
             });
 
             if (!response.ok) {
               const errText = await response.text();
-              console.warn(`Groq API error with model ${model}:`, errText);
+              console.warn(`Groq API notice for model ${model}:`, errText);
               continue;
             }
 
@@ -206,70 +272,58 @@ export const aiRouter = createRouter({
             let replyText = data?.choices?.[0]?.message?.content || "";
 
             if (replyText) {
-              // Strip think tags and markdown formatting for clean voice and text output
+              // Strip think tags, reasoning logs, and markdown formatting for clean voice and text output
               replyText = replyText
                 .replace(/<think>[\s\S]*?<\/think>/gi, "")
                 .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+                .replace(/```[\s\S]*?```/g, "")
                 .replace(/\*\*(.*?)\*\*/g, "$1")
                 .replace(/\*(.*?)\*/g, "$1")
                 .replace(/#{1,6}\s+/g, "")
                 .replace(/`{1,3}/g, "")
-                .replace(/^[-*]\s+/gm, "")
+                .replace(/^[-*•]\s+/gm, "")
                 .replace(/\*/g, "")
                 .replace(/\s{2,}/g, " ")
                 .trim();
 
               if (replyText.length > 5) {
+                // Store in fast in-memory LRU cache
+                setCachedAnswer(input.message, replyText, ctx.tenantId);
                 return { answer: replyText };
               }
             }
           } catch (err) {
-            console.warn(`Error calling Groq API model ${model}:`, err);
+            console.warn(`Groq failover for model ${model}:`, err);
           }
         }
       }
 
       // Intelligent instant local keyword-based fallback if external API is unreachable or slow
       const lower = input.message.toLowerCase();
+      let fallbackAnswer = "";
+
       if (lower.includes("kaise ho") || lower.includes("how are you") || lower.includes("namaste") || lower.includes("hello") || lower.includes("hi")) {
-        return {
-          answer: "Namaste! Main DPS Indirapuram ka official AI assistant DPSI AI hoon. Admissions Session 2026-27, academics, streams, facilities ya kisi bhi query ke liye main aapki kya madad kar sakta hoon?",
-        };
-      }
-      if (lower.includes("admission") || lower.includes("apply") || lower.includes("form") || lower.includes("dakhila") || lower.includes("register")) {
-        return {
-          answer: "DPS Indirapuram mein Session 2026-27 ke liye Pre-Nursery se Class IX aur Class XI ke admissions open hain. Aap online apply kar sakte hain ya admission desk se +91-0120-4660000 par sampark kar sakte hain.",
-        };
-      }
-      if (lower.includes("stream") || lower.includes("subject") || lower.includes("class 11") || lower.includes("11th")) {
-        return {
-          answer: "Class XI mein teen streams available hain: Science (PCM/PCB with AI, Biotech, Computer Science), Commerce (Accounts, Economics, Math, Business Studies), aur Humanities (Psychology, Legal Studies, Economics, Political Science).",
-        };
-      }
-      if (lower.includes("facility") || lower.includes("campus") || lower.includes("lab") || lower.includes("sports") || lower.includes("robotics") || lower.includes("pool") || lower.includes("shooting")) {
-        return {
-          answer: "DPS Indirapuram ke 10-acre campus mein AI and Robotics Innovation Lab, Olympic-standard 50m swimming pool, ISSF certified shooting range, 80+ smart classrooms, aur digital library uplabdh hain.",
-        };
-      }
-      if (lower.includes("principal") || lower.includes("head") || lower.includes("leadership") || lower.includes("chairperson")) {
-        return {
-          answer: "DPS Indirapuram ki Principal Ms. Priya Elizabeth John hain, Pro-Vice Chairperson Ms. Santosh Bansal hain, aur Chairman Mr. V.K. Shunglu (IAS Retd.) hain.",
-        };
-      }
-      if (lower.includes("result") || lower.includes("topper") || lower.includes("board") || lower.includes("score")) {
-        return {
-          answer: "DPS Indirapuram ka CBSE Class 10 aur 12 mein 100% pass result raha hai. School toppers mein Siddhant Tiwari (99.4%), Ansh Pathak (99.4%) aur Aayush Jha (99.2%) shamil hain.",
-        };
-      }
-      if (lower.includes("fee") || lower.includes("fees") || lower.includes("cost") || lower.includes("structure")) {
-        return {
-          answer: "Fee structure grade ke according structured hai. Detail fee chart aur online payment ke liye aap school website par check kar sakte hain ya accounts desk par +91-0120-4660000 par call kar sakte hain.",
-        };
+        fallbackAnswer = "Namaste! Main DPS Indirapuram ka official AI assistant DPSI AI hoon. Admissions Session 2026-27, academics, streams, facilities ya kisi bhi query ke liye main aapki kya madad kar sakta hoon?";
+      } else if (lower.includes("admission") || lower.includes("apply") || lower.includes("form") || lower.includes("dakhila") || lower.includes("register")) {
+        fallbackAnswer = "DPS Indirapuram mein Session 2026-27 ke liye Pre-Nursery se Class IX aur Class XI ke admissions open hain. Aap online apply kar sakte hain ya admission desk se +91-0120-4660000 par sampark kar sakte hain.";
+      } else if (lower.includes("stream") || lower.includes("subject") || lower.includes("class 11") || lower.includes("11th")) {
+        fallbackAnswer = "Class XI mein teen streams available hain: Science (PCM/PCB with AI, Biotech, Computer Science), Commerce (Accounts, Economics, Math, Business Studies), aur Humanities (Psychology, Legal Studies, Economics, Political Science).";
+      } else if (lower.includes("facility") || lower.includes("campus") || lower.includes("lab") || lower.includes("sports") || lower.includes("robotics") || lower.includes("pool") || lower.includes("shooting")) {
+        fallbackAnswer = "DPS Indirapuram ke 10-acre campus mein AI and Robotics Innovation Lab, Olympic-standard 50m swimming pool, ISSF certified shooting range, 80+ smart classrooms, aur digital library uplabdh hain.";
+      } else if (lower.includes("principal") || lower.includes("head") || lower.includes("leadership") || lower.includes("chairperson")) {
+        fallbackAnswer = "DPS Indirapuram ki Principal Ms. Priya Elizabeth John hain, Pro-Vice Chairperson Ms. Santosh Bansal hain, aur Chairman Mr. V.K. Shunglu (IAS Retd.) hain.";
+      } else if (lower.includes("result") || lower.includes("topper") || lower.includes("board") || lower.includes("score")) {
+        fallbackAnswer = "DPS Indirapuram ka CBSE Class 10 aur 12 mein 100% pass result raha hai. School toppers mein Siddhant Tiwari (99.4%), Ansh Pathak (99.4%) aur Aayush Jha (99.2%) shamil hain.";
+      } else if (lower.includes("fee") || lower.includes("fees") || lower.includes("cost") || lower.includes("structure")) {
+        fallbackAnswer = "Fee structure grade ke according structured hai. Detail fee chart aur online payment ke liye aap school website par check kar sakte hain ya accounts desk par +91-0120-4660000 par call kar sakte hain.";
+      } else if (lower.includes("calendar") || lower.includes("schedule") || lower.includes("vacation") || lower.includes("summer") || lower.includes("winter")) {
+        fallbackAnswer = "Academic Year 2026-27 starts in April 2026. Summer break begins late May 2026, and Winter break starts late December 2026. Complete calendar is available on the website.";
+      } else {
+        fallbackAnswer = "Main DPS Indirapuram ka official AI assistant hoon. Admissions 2026-27, academic calendar, streams, ya campus facilities se jude kisi bhi sawal ke liye aap hume +91-0120-4660000 par call ya info@dpsindirapuram.com par email kar sakte hain.";
       }
 
-      return {
-        answer: "Main DPS Indirapuram ka official AI assistant hoon. Admissions 2026-27, academic calendar, streams, ya campus facilities se jude kisi bhi sawal ke liye aap hume +91-0120-4660000 par call ya info@dpsindirapuram.com par email kar sakte hain.",
-      };
+      setCachedAnswer(input.message, fallbackAnswer, ctx.tenantId);
+      return { answer: fallbackAnswer };
     }),
 
   synthesizeSpeech: publicQuery
@@ -371,9 +425,9 @@ export const aiRouter = createRouter({
         }
       }
 
-      // 2. ElevenLabs Engine Fallback
-      if (elevenlabsApiKey) {
-        const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
+      // 2. ElevenLabs Engine Fallback with Circuit Breaker
+      if (elevenlabsApiKey && Date.now() > elevenlabsCircuitBreakerUntil) {
+        const ttsModels = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2"];
 
         for (const modelId of ttsModels) {
           try {
@@ -396,7 +450,7 @@ export const aiRouter = createRouter({
                     use_speaker_boost: true,
                   },
                 }),
-                signal: AbortSignal.timeout(4500),
+                signal: AbortSignal.timeout(2500),
               }
             );
 
@@ -404,8 +458,14 @@ export const aiRouter = createRouter({
               const arrayBuffer = await response.arrayBuffer();
               const base64 = Buffer.from(arrayBuffer).toString("base64");
               return { audioBase64: `data:audio/mpeg;base64,${base64}` };
+            } else if (response.status === 401 || response.status === 403 || response.status === 429) {
+              // Trip circuit breaker for 15 minutes to prevent recurring latency lag
+              elevenlabsCircuitBreakerUntil = Date.now() + 15 * 60 * 1000;
+              break;
             }
-          } catch {}
+          } catch {
+            // Model failover
+          }
         }
       }
 

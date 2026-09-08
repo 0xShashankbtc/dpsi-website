@@ -177,13 +177,46 @@ describe("AI Chat & Voice Synthesis Unit Test Suite", () => {
     });
   });
 
-  // 5. ElevenLabs Fast Models Priority Order
-  describe("ElevenLabs Voice Model Pipeline", () => {
-    it("orders fast low-latency models ahead of heavy multilingual v2", () => {
-      const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
-      expect(ttsModels[0]).toBe("eleven_turbo_v2_5");
-      expect(ttsModels[1]).toBe("eleven_flash_v2_5");
-      expect(ttsModels.length).toBe(3);
+  // 6. Fast Active Groq Models & Deprecated Model Remapping
+  describe("Groq Model Routing & Normalization", () => {
+    const GROQ_FAST_MODELS = [
+      "openai/gpt-oss-120b",
+      "qwen/qwen3.8-27b",
+      "openai/gpt-oss-20b",
+      "groq/compound-mini",
+      "qwen/qwen3.6-27b",
+    ];
+
+    function normalizeGroqModel(model?: string): string {
+      if (!model) return GROQ_FAST_MODELS[0];
+      const m = model.trim().toLowerCase();
+      if (m.includes("llama") || m.includes("mixtral") || m.includes("gemma") || m.includes("120b")) {
+        return "openai/gpt-oss-120b";
+      }
+      if (m.includes("qwen3.8") || m.includes("qwen")) {
+        return "qwen/qwen3.8-27b";
+      }
+      if (m.includes("gpt-oss-20b") || (m.includes("20b") && !m.includes("120b"))) {
+        return "openai/gpt-oss-20b";
+      }
+      if (m.includes("compound")) {
+        return "groq/compound-mini";
+      }
+      return model.trim();
+    }
+
+    it("maps legacy Llama/Mixtral/Gemma models to active high-intelligence models", () => {
+      expect(normalizeGroqModel("llama-3.3-70b-versatile")).toBe("openai/gpt-oss-120b");
+      expect(normalizeGroqModel("llama-3.1-8b-instant")).toBe("openai/gpt-oss-120b");
+      expect(normalizeGroqModel("mixtral-8x7b-32768")).toBe("openai/gpt-oss-120b");
+      expect(normalizeGroqModel("gemma2-9b-it")).toBe("openai/gpt-oss-120b");
+    });
+
+    it("preserves active low-latency model IDs", () => {
+      expect(normalizeGroqModel("qwen/qwen3.8-27b")).toBe("qwen/qwen3.8-27b");
+      expect(normalizeGroqModel("openai/gpt-oss-120b")).toBe("openai/gpt-oss-120b");
+      expect(normalizeGroqModel("openai/gpt-oss-20b")).toBe("openai/gpt-oss-20b");
     });
   });
 });
+

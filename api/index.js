@@ -94642,7 +94642,7 @@ var require_dist_cjs32 = __commonJS({
     var ALGORITHM_IDENTIFIER_V4A = "AWS4-ECDSA-P256-SHA256";
     var EVENT_ALGORITHM_IDENTIFIER = "AWS4-HMAC-SHA256-PAYLOAD";
     var UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
-    var MAX_CACHE_SIZE = 50;
+    var MAX_CACHE_SIZE2 = 50;
     var KEY_TYPE_IDENTIFIER = "aws4_request";
     var MAX_PRESIGNED_TTL = 60 * 60 * 24 * 7;
     var signingKeyCache = {};
@@ -94655,7 +94655,7 @@ var require_dist_cjs32 = __commonJS({
         return signingKeyCache[cacheKey];
       }
       cacheQueue.push(cacheKey);
-      while (cacheQueue.length > MAX_CACHE_SIZE) {
+      while (cacheQueue.length > MAX_CACHE_SIZE2) {
         delete signingKeyCache[cacheQueue.shift()];
       }
       let key = `AWS4${credentials.secretAccessKey}`;
@@ -95104,7 +95104,7 @@ ${utilHexEncoding.toHex(hashedRequest)}`;
     exports.GENERATED_HEADERS = GENERATED_HEADERS;
     exports.HOST_HEADER = HOST_HEADER;
     exports.KEY_TYPE_IDENTIFIER = KEY_TYPE_IDENTIFIER;
-    exports.MAX_CACHE_SIZE = MAX_CACHE_SIZE;
+    exports.MAX_CACHE_SIZE = MAX_CACHE_SIZE2;
     exports.MAX_PRESIGNED_TTL = MAX_PRESIGNED_TTL;
     exports.PROXY_HEADER_PATTERN = PROXY_HEADER_PATTERN;
     exports.REGION_SET_PARAM = REGION_SET_PARAM;
@@ -178020,8 +178020,32 @@ COMPREHENSIVE KNOWLEDGE BASE \u2014 DELHI PUBLIC SCHOOL INDIRAPURAM:
 - Parents can pay fees and track academic progress through the SchoolsOS portal login.
 
 If a question falls outside this knowledge base, politely provide the school contact number (+91-0120-4660000) and email (info@dpsindirapuram.com).`;
+var aiResponseCache = /* @__PURE__ */ new Map();
+var CACHE_TTL_MS = 1e3 * 60 * 30;
+var MAX_CACHE_SIZE = 500;
+function getCachedAnswer(query, tenantId) {
+  const normKey = `${tenantId || "default"}:${query.toLowerCase().replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim()}`;
+  const entry = aiResponseCache.get(normKey);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    aiResponseCache.delete(normKey);
+    return null;
+  }
+  return entry.answer;
+}
+function setCachedAnswer(query, answer, tenantId) {
+  if (aiResponseCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = aiResponseCache.keys().next().value;
+    if (firstKey) aiResponseCache.delete(firstKey);
+  }
+  const normKey = `${tenantId || "default"}:${query.toLowerCase().replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim()}`;
+  aiResponseCache.set(normKey, {
+    answer,
+    expiresAt: Date.now() + CACHE_TTL_MS
+  });
+}
 var rateLimitMap = /* @__PURE__ */ new Map();
-function checkRateLimit(key, limit = 40, windowMs = 6e4) {
+function checkRateLimit(key, limit = 60, windowMs = 6e4) {
   const now = Date.now();
   const entry = rateLimitMap.get(key);
   if (!entry || now > entry.resetTime) {
@@ -178042,12 +178066,31 @@ setInterval(() => {
     }
   }
 }, 3e5);
-var GROQ_FALLBACK_MODELS = [
-  "llama-3.3-70b-versatile",
-  "llama-3.1-8b-instant",
-  "mixtral-8x7b-32768",
-  "gemma2-9b-it"
+var GROQ_FAST_MODELS = [
+  "openai/gpt-oss-120b",
+  "qwen/qwen3.8-27b",
+  "openai/gpt-oss-20b",
+  "groq/compound-mini",
+  "qwen/qwen3.6-27b"
 ];
+function normalizeGroqModel(model) {
+  if (!model) return GROQ_FAST_MODELS[0];
+  const m3 = model.trim().toLowerCase();
+  if (m3.includes("llama") || m3.includes("mixtral") || m3.includes("gemma") || m3.includes("120b")) {
+    return "openai/gpt-oss-120b";
+  }
+  if (m3.includes("qwen3.8") || m3.includes("qwen")) {
+    return "qwen/qwen3.8-27b";
+  }
+  if (m3.includes("gpt-oss-20b") || m3.includes("20b") && !m3.includes("120b")) {
+    return "openai/gpt-oss-20b";
+  }
+  if (m3.includes("compound")) {
+    return "groq/compound-mini";
+  }
+  return model.trim();
+}
+var elevenlabsCircuitBreakerUntil = 0;
 var aiRouter = createRouter({
   chat: publicQuery.input(
     external_exports.object({
@@ -178056,11 +178099,15 @@ var aiRouter = createRouter({
     })
   ).mutation(async ({ input, ctx }) => {
     const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
-    const isAllowed = checkRateLimit(clientIp, 40, 6e4) && await checkPersistentRateLimit(`chat:${clientIp}`, 40, 60, ctx.tenantId);
+    const isAllowed = checkRateLimit(clientIp, 60, 6e4) && await checkPersistentRateLimit(`chat:${clientIp}`, 60, 60, ctx.tenantId);
     if (!isAllowed) {
       return {
         answer: "You are sending messages too quickly. Please wait a moment before asking another question."
       };
+    }
+    const cached4 = getCachedAnswer(input.message, ctx.tenantId);
+    if (cached4 && (!input.history || input.history.length === 0)) {
+      return { answer: cached4 };
     }
     let apiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || process.env.DOPPLER_GROQ_API_KEY || "";
     let configuredModel;
@@ -178072,8 +178119,10 @@ var aiRouter = createRouter({
         if (config2?.apiKey && config2.apiKey.trim().startsWith("gsk_")) {
           apiKey = config2.apiKey.trim();
         }
-        if (config2?.model && config2.model.trim()) {
-          configuredModel = config2.model.trim();
+        if (config2?.modelId && config2.modelId.trim()) {
+          configuredModel = normalizeGroqModel(config2.modelId);
+        } else if (config2?.model && config2.model.trim()) {
+          configuredModel = normalizeGroqModel(config2.model);
         }
         if (config2?.systemPrompt && config2.systemPrompt.trim().length > 50) {
           systemPrompt = config2.systemPrompt;
@@ -178082,13 +178131,17 @@ var aiRouter = createRouter({
     } catch {
     }
     const sanitizedMsg = input.message.replace(/ignore\s+(all\s+)?(previous|prior)\s+instructions/gi, "").replace(/system\s+prompt\s+override/gi, "").trim();
-    const recentHistory = (input.history || []).slice(-6);
+    const recentHistory = (input.history || []).slice(-4);
     const messagesPayload = [
       { role: "system", content: systemPrompt },
       ...recentHistory.map((h5) => ({ role: h5.role, content: h5.text })),
       { role: "user", content: sanitizedMsg || input.message }
     ];
-    const candidateModels = configuredModel ? [configuredModel, ...GROQ_FALLBACK_MODELS.filter((m3) => m3 !== configuredModel)] : GROQ_FALLBACK_MODELS;
+    const primaryModel = configuredModel ? normalizeGroqModel(configuredModel) : GROQ_FAST_MODELS[0];
+    const candidateModels = [
+      primaryModel,
+      ...GROQ_FAST_MODELS.filter((m3) => m3 !== primaryModel)
+    ];
     if (apiKey) {
       for (const model of candidateModels) {
         try {
@@ -178105,66 +178158,51 @@ var aiRouter = createRouter({
               max_tokens: 300,
               stream: false
             }),
-            signal: AbortSignal.timeout(4e3)
-            // 4s fast timeout per attempt
+            signal: AbortSignal.timeout(3e3)
+            // 3s fast timeout per attempt
           });
           if (!response.ok) {
             const errText = await response.text();
-            console.warn(`Groq API error with model ${model}:`, errText);
+            console.warn(`Groq API notice for model ${model}:`, errText);
             continue;
           }
           const data2 = await response.json();
           let replyText = data2?.choices?.[0]?.message?.content || "";
           if (replyText) {
-            replyText = replyText.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<thought>[\s\S]*?<\/thought>/gi, "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/#{1,6}\s+/g, "").replace(/`{1,3}/g, "").replace(/^[-*]\s+/gm, "").replace(/\*/g, "").replace(/\s{2,}/g, " ").trim();
+            replyText = replyText.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<thought>[\s\S]*?<\/thought>/gi, "").replace(/```[\s\S]*?```/g, "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/#{1,6}\s+/g, "").replace(/`{1,3}/g, "").replace(/^[-*•]\s+/gm, "").replace(/\*/g, "").replace(/\s{2,}/g, " ").trim();
             if (replyText.length > 5) {
+              setCachedAnswer(input.message, replyText, ctx.tenantId);
               return { answer: replyText };
             }
           }
         } catch (err) {
-          console.warn(`Error calling Groq API model ${model}:`, err);
+          console.warn(`Groq failover for model ${model}:`, err);
         }
       }
     }
     const lower = input.message.toLowerCase();
+    let fallbackAnswer = "";
     if (lower.includes("kaise ho") || lower.includes("how are you") || lower.includes("namaste") || lower.includes("hello") || lower.includes("hi")) {
-      return {
-        answer: "Namaste! Main DPS Indirapuram ka official AI assistant DPSI AI hoon. Admissions Session 2026-27, academics, streams, facilities ya kisi bhi query ke liye main aapki kya madad kar sakta hoon?"
-      };
+      fallbackAnswer = "Namaste! Main DPS Indirapuram ka official AI assistant DPSI AI hoon. Admissions Session 2026-27, academics, streams, facilities ya kisi bhi query ke liye main aapki kya madad kar sakta hoon?";
+    } else if (lower.includes("admission") || lower.includes("apply") || lower.includes("form") || lower.includes("dakhila") || lower.includes("register")) {
+      fallbackAnswer = "DPS Indirapuram mein Session 2026-27 ke liye Pre-Nursery se Class IX aur Class XI ke admissions open hain. Aap online apply kar sakte hain ya admission desk se +91-0120-4660000 par sampark kar sakte hain.";
+    } else if (lower.includes("stream") || lower.includes("subject") || lower.includes("class 11") || lower.includes("11th")) {
+      fallbackAnswer = "Class XI mein teen streams available hain: Science (PCM/PCB with AI, Biotech, Computer Science), Commerce (Accounts, Economics, Math, Business Studies), aur Humanities (Psychology, Legal Studies, Economics, Political Science).";
+    } else if (lower.includes("facility") || lower.includes("campus") || lower.includes("lab") || lower.includes("sports") || lower.includes("robotics") || lower.includes("pool") || lower.includes("shooting")) {
+      fallbackAnswer = "DPS Indirapuram ke 10-acre campus mein AI and Robotics Innovation Lab, Olympic-standard 50m swimming pool, ISSF certified shooting range, 80+ smart classrooms, aur digital library uplabdh hain.";
+    } else if (lower.includes("principal") || lower.includes("head") || lower.includes("leadership") || lower.includes("chairperson")) {
+      fallbackAnswer = "DPS Indirapuram ki Principal Ms. Priya Elizabeth John hain, Pro-Vice Chairperson Ms. Santosh Bansal hain, aur Chairman Mr. V.K. Shunglu (IAS Retd.) hain.";
+    } else if (lower.includes("result") || lower.includes("topper") || lower.includes("board") || lower.includes("score")) {
+      fallbackAnswer = "DPS Indirapuram ka CBSE Class 10 aur 12 mein 100% pass result raha hai. School toppers mein Siddhant Tiwari (99.4%), Ansh Pathak (99.4%) aur Aayush Jha (99.2%) shamil hain.";
+    } else if (lower.includes("fee") || lower.includes("fees") || lower.includes("cost") || lower.includes("structure")) {
+      fallbackAnswer = "Fee structure grade ke according structured hai. Detail fee chart aur online payment ke liye aap school website par check kar sakte hain ya accounts desk par +91-0120-4660000 par call kar sakte hain.";
+    } else if (lower.includes("calendar") || lower.includes("schedule") || lower.includes("vacation") || lower.includes("summer") || lower.includes("winter")) {
+      fallbackAnswer = "Academic Year 2026-27 starts in April 2026. Summer break begins late May 2026, and Winter break starts late December 2026. Complete calendar is available on the website.";
+    } else {
+      fallbackAnswer = "Main DPS Indirapuram ka official AI assistant hoon. Admissions 2026-27, academic calendar, streams, ya campus facilities se jude kisi bhi sawal ke liye aap hume +91-0120-4660000 par call ya info@dpsindirapuram.com par email kar sakte hain.";
     }
-    if (lower.includes("admission") || lower.includes("apply") || lower.includes("form") || lower.includes("dakhila") || lower.includes("register")) {
-      return {
-        answer: "DPS Indirapuram mein Session 2026-27 ke liye Pre-Nursery se Class IX aur Class XI ke admissions open hain. Aap online apply kar sakte hain ya admission desk se +91-0120-4660000 par sampark kar sakte hain."
-      };
-    }
-    if (lower.includes("stream") || lower.includes("subject") || lower.includes("class 11") || lower.includes("11th")) {
-      return {
-        answer: "Class XI mein teen streams available hain: Science (PCM/PCB with AI, Biotech, Computer Science), Commerce (Accounts, Economics, Math, Business Studies), aur Humanities (Psychology, Legal Studies, Economics, Political Science)."
-      };
-    }
-    if (lower.includes("facility") || lower.includes("campus") || lower.includes("lab") || lower.includes("sports") || lower.includes("robotics") || lower.includes("pool") || lower.includes("shooting")) {
-      return {
-        answer: "DPS Indirapuram ke 10-acre campus mein AI and Robotics Innovation Lab, Olympic-standard 50m swimming pool, ISSF certified shooting range, 80+ smart classrooms, aur digital library uplabdh hain."
-      };
-    }
-    if (lower.includes("principal") || lower.includes("head") || lower.includes("leadership") || lower.includes("chairperson")) {
-      return {
-        answer: "DPS Indirapuram ki Principal Ms. Priya Elizabeth John hain, Pro-Vice Chairperson Ms. Santosh Bansal hain, aur Chairman Mr. V.K. Shunglu (IAS Retd.) hain."
-      };
-    }
-    if (lower.includes("result") || lower.includes("topper") || lower.includes("board") || lower.includes("score")) {
-      return {
-        answer: "DPS Indirapuram ka CBSE Class 10 aur 12 mein 100% pass result raha hai. School toppers mein Siddhant Tiwari (99.4%), Ansh Pathak (99.4%) aur Aayush Jha (99.2%) shamil hain."
-      };
-    }
-    if (lower.includes("fee") || lower.includes("fees") || lower.includes("cost") || lower.includes("structure")) {
-      return {
-        answer: "Fee structure grade ke according structured hai. Detail fee chart aur online payment ke liye aap school website par check kar sakte hain ya accounts desk par +91-0120-4660000 par call kar sakte hain."
-      };
-    }
-    return {
-      answer: "Main DPS Indirapuram ka official AI assistant hoon. Admissions 2026-27, academic calendar, streams, ya campus facilities se jude kisi bhi sawal ke liye aap hume +91-0120-4660000 par call ya info@dpsindirapuram.com par email kar sakte hain."
-    };
+    setCachedAnswer(input.message, fallbackAnswer, ctx.tenantId);
+    return { answer: fallbackAnswer };
   }),
   synthesizeSpeech: publicQuery.input(
     external_exports.object({
@@ -178240,8 +178278,8 @@ var aiRouter = createRouter({
       } catch {
       }
     }
-    if (elevenlabsApiKey) {
-      const ttsModels = ["eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"];
+    if (elevenlabsApiKey && Date.now() > elevenlabsCircuitBreakerUntil) {
+      const ttsModels = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2"];
       for (const modelId of ttsModels) {
         try {
           const response = await fetch(
@@ -178263,13 +178301,16 @@ var aiRouter = createRouter({
                   use_speaker_boost: true
                 }
               }),
-              signal: AbortSignal.timeout(4500)
+              signal: AbortSignal.timeout(2500)
             }
           );
           if (response.ok) {
             const arrayBuffer = await response.arrayBuffer();
             const base643 = Buffer.from(arrayBuffer).toString("base64");
             return { audioBase64: `data:audio/mpeg;base64,${base643}` };
+          } else if (response.status === 401 || response.status === 403 || response.status === 429) {
+            elevenlabsCircuitBreakerUntil = Date.now() + 15 * 60 * 1e3;
+            break;
           }
         } catch {
         }

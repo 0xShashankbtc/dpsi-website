@@ -109,6 +109,7 @@ export default function AIChatWidget() {
   const spokenResponseRef = useRef<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioCacheRef = useRef<Map<string, string>>(new Map());
+  const clientQueryCache = useRef<Map<string, { answer: string; actionUrl?: string; actionType?: "call" | "email" | "link" }>>(new Map());
 
   // Helper to instantly kill and silence all audio and speech synthesis without destroying singleton
   const stopAllAudio = () => {
@@ -530,10 +531,15 @@ export default function AIChatWidget() {
   };
 
   const fetchGroqAIResponse = async (query: string, currentHistory: Message[]) => {
+    const normKey = query.toLowerCase().replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, " ").trim();
+    if (clientQueryCache.current.has(normKey) && currentHistory.length <= 1) {
+      return clientQueryCache.current.get(normKey)!;
+    }
+
     try {
       const formattedHistory = currentHistory
         .filter((m) => m.text)
-        .slice(-6)
+        .slice(-4)
         .map((m) => ({
           role: m.role === "user" ? ("user" as const) : ("assistant" as const),
           text: m.text,
@@ -546,17 +552,22 @@ export default function AIChatWidget() {
 
       if (res?.answer && res.answer.trim()) {
         let text = res.answer
+          .replace(/<think>[\s\S]*?<\/think>/gi, "")
+          .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+          .replace(/```[\s\S]*?```/g, "")
           .replace(/\*\*(.*?)\*\*/g, "$1")
           .replace(/\*(.*?)\*/g, "$1")
           .replace(/#{1,6}\s+/g, "")
           .replace(/`{1,3}/g, "")
-          .replace(/^\s*[-*]\s+/gm, "• ")
+          .replace(/^\s*[-*•]\s+/gm, "• ")
           .replace(/\*/g, "")
           .replace(/\s+/g, " ")
           .trim();
 
         const action = getDynamicAction(query, text, { calendarPdfUrl, phone, email });
-        return { answer: text, actionUrl: action.actionUrl, actionType: action.actionType };
+        const result = { answer: text, actionUrl: action.actionUrl, actionType: action.actionType };
+        clientQueryCache.current.set(normKey, result);
+        return result;
       }
     } catch {
       // Gracefully fall back to local responses without console errors
@@ -565,61 +576,31 @@ export default function AIChatWidget() {
     // Comprehensive smart local fallback answers grounded in the official academic calendar and school records
     const lower = query.toLowerCase();
     const fallbackAction = getDynamicAction(query, "", { calendarPdfUrl, phone, email });
-
+    let fallbackText = "";
 
     if (lower.includes("calendar") || lower.includes("academic year") || lower.includes("schedule")) {
-      return {
-        answer: "The DPS Indirapuram Academic Year 2026-27 begins in April 2026 for all classes. It features regular Periodic Tests, Mid-Term & Half Yearly exams in September, Pre-Board exams in December/January, and Annual exams concluding in February-March 2027.",
-        actionUrl: fallbackAction.actionUrl,
-        actionType: fallbackAction.actionType
-      };
+      fallbackText = "The DPS Indirapuram Academic Year 2026-27 begins in April 2026 for all classes. It features regular Periodic Tests, Mid-Term exams in September, Pre-Board exams in December/January, and Annual exams concluding in February-March 2027.";
+    } else if (lower.includes("summer") || lower.includes("vacation")) {
+      fallbackText = "Summer break begins in late May 2026 for all classes. School reopens after summer break in June 2026 for Classes X & XII, and in July 2026 for Nursery to Class IX and Class XI.";
+    } else if (lower.includes("winter") || lower.includes("winter break")) {
+      fallbackText = "Winter break begins towards the end of December 2026 for all classes. Classes IX to XII reopen in early January 2027, followed by Nursery to Class VIII in mid-January 2027.";
+    } else if (lower.includes("exam") || lower.includes("test") || lower.includes("half yearly") || lower.includes("preboard") || lower.includes("annual")) {
+      fallbackText = "Periodic Tests are held across April, May, July, and November. Half Yearly exams take place in September 2026, Pre-Boards for Classes X & XII occur in December 2026 and January 2027, and Annual Final Exams occur in January-March 2027.";
+    } else if (lower.includes("ptm") || lower.includes("parent teacher")) {
+      fallbackText = "Parent-Teacher Meetings (PTMs) are scheduled regularly throughout the academic session following key assessment cycles with answer script viewings.";
+    } else if (lower.includes("admiss") || lower.includes("apply") || lower.includes("register")) {
+      fallbackText = "Admissions for the 2026-27 academic session are currently open from Pre-Nursery to Class IX and Class XI through the official school admission portal.";
+    } else {
+      fallbackText = "Namaste! I am DPSI AI. You can ask me about Admissions 2026-27, Academic Calendar, Exam Schedules, Streams, or Facilities in both English and Hindi. How can I assist you today?";
     }
 
-    if (lower.includes("summer") || lower.includes("vacation")) {
-      return {
-        answer: "Summer break begins in late May 2026 for all classes (Nursery to XII). School reopens after summer break in June 2026 for Classes X & XII, and in July 2026 for Nursery to Class IX and Class XI.",
-        actionUrl: fallbackAction.actionUrl,
-        actionType: fallbackAction.actionType
-      };
-    }
-
-    if (lower.includes("winter") || lower.includes("winter break")) {
-      return {
-        answer: "Winter break begins towards the end of December 2026 for all classes. Classes IX to XII reopen in early January 2027, followed by Nursery to Class VIII in mid-January 2027.",
-        actionUrl: fallbackAction.actionUrl,
-        actionType: fallbackAction.actionType
-      };
-    }
-
-    if (lower.includes("exam") || lower.includes("test") || lower.includes("half yearly") || lower.includes("preboard") || lower.includes("annual")) {
-      return {
-        answer: "Periodic Tests are held across April, May, July, and November. Half Yearly exams take place in September 2026, Pre-Boards for Classes X & XII occur in December 2026 and January 2027, and Annual Final Exams occur in January-March 2027.",
-        actionUrl: fallbackAction.actionUrl,
-        actionType: fallbackAction.actionType
-      };
-    }
-
-    if (lower.includes("ptm") || lower.includes("parent teacher")) {
-      return {
-        answer: "Parent-Teacher Meetings (PTMs) are scheduled regularly throughout the academic session following key assessment cycles with answer script viewings.",
-        actionUrl: fallbackAction.actionUrl,
-        actionType: fallbackAction.actionType
-      };
-    }
-
-    if (lower.includes("admiss") || lower.includes("apply") || lower.includes("register")) {
-      return {
-        answer: "Admissions for the 2026-27 academic session are currently open from Pre-Nursery to Class IX and Class XI through the official school admission portal.",
-        actionUrl: fallbackAction.actionUrl,
-        actionType: fallbackAction.actionType
-      };
-    }
-
-    return {
-      answer: "नमस्ते! I am DPSI AI. You can ask me about Admissions 2026-27, Academic Calendar, Exam Schedules, Streams, or Facilities in both English and Hindi. How can I assist you today?",
+    const fallbackResult = {
+      answer: fallbackText,
       actionUrl: fallbackAction.actionUrl,
-      actionType: fallbackAction.actionType
+      actionType: fallbackAction.actionType,
     };
+    clientQueryCache.current.set(normKey, fallbackResult);
+    return fallbackResult;
   };
 
   const handleSend = async (userQuery: string) => {
