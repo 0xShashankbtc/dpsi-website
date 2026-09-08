@@ -6,7 +6,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Bot, MessageSquare, GraduationCap, RotateCcw, ExternalLink, Phone, Mail, Mic, Calendar, Volume2, VolumeX } from "lucide-react";
+import { X, Send, Bot, MessageSquare, GraduationCap, RotateCcw, ExternalLink, Phone, Mail, Mic, Calendar, Volume2, VolumeX, Square } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -50,7 +50,6 @@ function getDynamicAction(query: string, text?: string, settings?: { calendarPdf
 
 export default function AIChatWidget() {
   const aiChatMutation = trpc.ai.chat.useMutation();
-  const ttsMutation = trpc.ai.synthesizeSpeech.useMutation();
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
     staleTime: 60000,
   });
@@ -151,36 +150,6 @@ export default function AIChatWidget() {
     return audioCtxRef.current;
   };
 
-  // Convert Base64 data URL to ArrayBuffer for Web Audio decoding
-  const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
-    const raw = base64.includes(",") ? base64.split(",")[1] : base64;
-    const binaryString = window.atob(raw);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer;
-  };
-
-  const playBufferWithWebAudio = async (arrayBuf: ArrayBuffer): Promise<boolean> => {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return false;
-      if (ctx.state === "suspended") {
-        await ctx.resume();
-      }
-      const audioBuffer = await ctx.decodeAudioData(arrayBuf.slice(0));
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      source.start(0);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   // Mobile Audio Unlocker for iOS Safari & Android Chrome Autoplay Policies
   const unlockMobileAudio = () => {
     if (typeof window === "undefined") return;
@@ -219,88 +188,32 @@ export default function AIChatWidget() {
     } catch {}
   };
 
-  const speakAnswerOnce = async (text: string, forcePlay = false) => {
-    if (typeof window === "undefined") return;
-    if (!forcePlay && isMuted) return;
-    if (spokenResponseRef.current === text && !forcePlay) return;
-
-    spokenResponseRef.current = text;
-
-    // Stop any existing audio or speech synthesis before new speech
-    stopAllAudio();
-
-    // Ensure audio singleton exists
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
-
-    // Clean markdown, URLs, and normalize acronyms for ultra-realistic pronunciation
-    let cleanText = text
+  // Helper to cleanly sanitize any text for natural speech synthesis
+  const sanitizeVoiceText = (text: string): string => {
+    return text
       .replace(/<think>[\s\S]*?<\/think>/gi, "")
       .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+      .replace(/```[\s\S]*?```/g, "")
       .replace(/https?:\/\/\S+/g, "")
-      .replace(/[*_#`~[\]()|]/g, " ")
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "") // Strip all emojis (👋, 🎓, etc.)
+      .replace(/[*_#`~[\]()|{}]/g, " ")
       .replace(/\bDPSI\b/gi, "DPS Indirapuram")
       .replace(/\bCBSE\b/gi, "C B S E")
       .replace(/\bAI\b/gi, "A I")
       .replace(/\b3D\b/gi, "3 D")
       .replace(/\bIX & XI\b/gi, "9 and 11")
+      .replace(/\bIX\b/g, "9")
+      .replace(/\bXI\b/g, "11")
+      .replace(/\bXII\b/g, "12")
       .replace(/\bTC\b/gi, "Transfer Certificate")
+      .replace(/\+91[- ]?0?120[- ]?4660000/g, "0 1 2 0 4 6 6 0 0 0 0")
+      .replace(/info@dpsindirapuram\.com/gi, "info at dps indirapuram dot com")
       .replace(/\s+/g, " ")
       .trim();
+  };
 
-    // Natural sentence speech length (up to 350 chars)
-    cleanText = cleanText.slice(0, 350).trim();
-    if (!cleanText) return;
-
-    // 1. Check fast client-side audio cache first
-    if (audioCacheRef.current.has(cleanText)) {
-      const cached = audioCacheRef.current.get(cleanText);
-      if (cached) {
-        setIsSpeaking(true);
-        const arrayBuf = base64ToArrayBuffer(cached);
-        const played = await playBufferWithWebAudio(arrayBuf);
-        if (played) return;
-
-        if (audioRef.current) {
-          audioRef.current.src = cached;
-          audioRef.current.currentTime = 0;
-          audioRef.current.onended = () => setIsSpeaking(false);
-          audioRef.current.onerror = () => setIsSpeaking(false);
-          await audioRef.current.play().catch(() => { setIsSpeaking(false); });
-          return;
-        }
-      }
-    }
-
-    // 2. High-fidelity ElevenLabs voice synthesis (Sarah: EXAVITQu4vr4xnSDxMaL) if API key configured
-    try {
-      const ttsRes = await ttsMutation.mutateAsync({ text: cleanText, voiceId: "EXAVITQu4vr4xnSDxMaL" });
-      if (ttsRes?.audioBase64) {
-        audioCacheRef.current.set(cleanText, ttsRes.audioBase64);
-        setIsSpeaking(true);
-        
-        // Web Audio API Direct Buffer Playback (iOS/Android hardware sound)
-        const arrayBuf = base64ToArrayBuffer(ttsRes.audioBase64);
-        const played = await playBufferWithWebAudio(arrayBuf);
-        if (played) return;
-
-        // HTML5 Audio Element Fallback
-        if (audioRef.current) {
-          audioRef.current.src = ttsRes.audioBase64;
-          audioRef.current.currentTime = 0;
-          audioRef.current.onended = () => setIsSpeaking(false);
-          audioRef.current.onerror = () => setIsSpeaking(false);
-          await audioRef.current.play().catch(() => { setIsSpeaking(false); });
-          return;
-        }
-      }
-    } catch {
-      // Fall through to browser natural voice engine
-    }
-
-    // 3. Browser Natural Human Voice Engine (Ultra-reliable on all devices)
-    if (!("speechSynthesis" in window)) return;
+  const playBrowserVoice = (cleanText: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
     try {
       window.speechSynthesis.cancel();
@@ -309,16 +222,23 @@ export default function AIChatWidget() {
 
     const hasHindi = /[\u0900-\u097F]/.test(cleanText);
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    activeUtteranceRef.current = utterance; // Prevent garbage collection in Chromium
 
-    utterance.onstart = () => setIsSpeaking(true);
+    // Attach to window and ref to prevent Chrome garbage collection
+    activeUtteranceRef.current = utterance;
+    (window as any).__dpsiActiveUtterance = utterance;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
     utterance.onend = () => {
       activeUtteranceRef.current = null;
+      (window as any).__dpsiActiveUtterance = null;
       setIsSpeaking(false);
     };
     utterance.onerror = (e) => {
       console.warn("Speech playback error:", e);
       activeUtteranceRef.current = null;
+      (window as any).__dpsiActiveUtterance = null;
       setIsSpeaking(false);
     };
 
@@ -326,7 +246,6 @@ export default function AIChatWidget() {
 
     if (voices && voices.length > 0) {
       if (hasHindi) {
-        // Natural Human Hindi voices (Microsoft Natural Swara, Madhur, Google Hindi)
         const naturalHindi =
           voices.find((v) => /hi[-_]IN/i.test(v.lang) && /natural|neural|online/i.test(v.name)) ||
           voices.find((v) => /hi[-_]IN/i.test(v.lang) && /swara|madhur|kalpana|hemant/i.test(v.name)) ||
@@ -342,50 +261,80 @@ export default function AIChatWidget() {
           utterance.lang = "hi-IN";
         }
       } else {
-        // Studio-grade Natural Human voices (Microsoft Natural, Apple Enhanced/Premium, Google Studio)
         const realPersonVoice =
           // 1. Natural Indian English
           voices.find((v) => /en[-_]IN/i.test(v.lang) && /natural|neural|online|premium|enhanced/i.test(v.name)) ||
           voices.find((v) => /en[-_]IN/i.test(v.lang) && /neerja|sonia|heera|veena|kavya|rishi|anjali/i.test(v.name)) ||
-          // 2. Apple Enhanced Human Voices (Samantha Enhanced, Ava, Serena, Karen)
+          // 2. Apple Enhanced Human Voices
           voices.find((v) => /samantha|ava|serena|moira|karen|oliver|zoe/i.test(v.name) && /enhanced|premium|natural/i.test(v.name)) ||
           // 3. Microsoft Natural Human Voices
           voices.find((v) => /en[-_](US|GB|UK)/i.test(v.lang) && /natural|neural|online/i.test(v.name) && /jenny|aria|emma|sonia|ava/i.test(v.name)) ||
-          // 4. Google UK / US Natural Voices
+          // 4. Google Natural Voices
           voices.find((v) => /google/i.test(v.name) && /uk english female|us english|india english/i.test(v.name)) ||
           // 5. Standard en-IN Regional
           voices.find((v) => /en[-_]IN/i.test(v.lang)) ||
-          // 6. Samantha / Clean English
-          voices.find((v) => /samantha/i.test(v.name)) ||
-          voices.find((v) => v.lang.startsWith("en") && /female/i.test(v.name)) ||
-          voices.find((v) => v.lang.startsWith("en"));
+          // 6. Any English voice
+          voices.find((v) => v.lang.startsWith("en")) ||
+          // 7. System default
+          voices.find((v) => v.default) ||
+          voices[0];
 
         if (realPersonVoice) {
           utterance.voice = realPersonVoice;
           utterance.lang = realPersonVoice.lang;
         } else {
-          utterance.lang = "en-IN";
+          utterance.lang = "en-US";
         }
       }
     } else {
-      utterance.lang = hasHindi ? "hi-IN" : "en-IN";
+      utterance.lang = hasHindi ? "hi-IN" : "en-US";
     }
 
-    // Warm, natural real-person conversational pacing
-    utterance.rate = 0.95;
+    // Natural human speaking rate and pitch
+    utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
-    // Small timeout avoids Chrome queue cancellation deadlock
-    setTimeout(() => {
-      try {
-        window.speechSynthesis.resume();
-        window.speechSynthesis.speak(utterance);
-      } catch (err) {
-        console.warn("Speech synthesis speak error:", err);
-        setIsSpeaking(false);
+    try {
+      window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn("Speech synthesis speak error:", err);
+      setIsSpeaking(false);
+    }
+  };
+
+  const speakAnswerOnce = (text: string, forcePlay = false) => {
+    if (typeof window === "undefined") return;
+    if (!forcePlay && isMuted) return;
+    if (spokenResponseRef.current === text && !forcePlay && isSpeaking) return;
+
+    spokenResponseRef.current = text;
+
+    // Stop any existing audio or speech synthesis before new speech
+    stopAllAudio();
+
+    const cleanText = sanitizeVoiceText(text).slice(0, 320).trim();
+    if (!cleanText) return;
+
+    // If cached high-fidelity server audio exists, play it
+    if (audioCacheRef.current.has(cleanText)) {
+      const cached = audioCacheRef.current.get(cleanText);
+      if (cached && audioRef.current) {
+        setIsSpeaking(true);
+        audioRef.current.src = cached;
+        audioRef.current.currentTime = 0;
+        audioRef.current.onended = () => setIsSpeaking(false);
+        audioRef.current.onerror = () => setIsSpeaking(false);
+        audioRef.current.play().catch(() => {
+          playBrowserVoice(cleanText);
+        });
+        return;
       }
-    }, 40);
+    }
+
+    // Instant synchronous browser voice playback (No network blocking)
+    playBrowserVoice(cleanText);
   };
 
   const isProcessingRef = useRef(false);
@@ -819,16 +768,29 @@ export default function AIChatWidget() {
                           <button
                             type="button"
                             onClick={() => {
-                              setIsMuted(false);
-                              unlockMobileAudio();
-                              spokenResponseRef.current = null;
-                              speakAnswerOnce(msg.text, true);
+                              if (isSpeaking) {
+                                stopAllAudio();
+                              } else {
+                                setIsMuted(false);
+                                unlockMobileAudio();
+                                spokenResponseRef.current = null;
+                                speakAnswerOnce(msg.text, true);
+                              }
                             }}
-                            title="Play voice answer"
+                            title={isSpeaking ? "Stop Voice" : "Play voice answer"}
                             className="inline-flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 font-bold hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors cursor-pointer select-none py-0.5"
                           >
-                            <Volume2 className="w-3.5 h-3.5 animate-pulse" />
-                            <span>Listen to Voice</span>
+                            {isSpeaking ? (
+                              <>
+                                <Square className="w-3 h-3 fill-current text-rose-500" />
+                                <span className="text-rose-600 dark:text-rose-400">Stop Voice</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 className="w-3.5 h-3.5 animate-pulse" />
+                                <span>Listen to Voice</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       )}
