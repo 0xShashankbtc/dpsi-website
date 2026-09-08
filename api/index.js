@@ -176918,8 +176918,8 @@ var AuditLogSchema = new import_mongoose5.Schema(
   },
   { timestamps: false }
 );
-AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function(next) {
-  next(new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy."));
+AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function() {
+  throw new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy.");
 });
 async function createImmutableAuditLog(data2, tenantId) {
   try {
@@ -179585,7 +179585,7 @@ var cmsRouter = createRouter({
         details: `Created new client tenant: ${input.schoolName} (${input.tenantId})`,
         ipAddress: ctx.req?.headers?.get("x-forwarded-for") || "internal"
       },
-      "dpsi"
+      input.tenantId
     );
     return newTenant;
   }),

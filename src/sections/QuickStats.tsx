@@ -29,20 +29,26 @@ function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: str
 
   useEffect(() => {
     if (!isInView || isNaN(numericValue)) return;
-    const duration = 2000;
-    const steps = 60;
-    const increment = numericValue / steps;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= numericValue) {
-        setCount(numericValue);
-        clearInterval(timer);
+    const duration = 1600;
+    let startTime: number | null = null;
+    let rafId: number;
+
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      // Cubic ease-out: 1 - (1 - progress)^3
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      setCount(easeProgress * numericValue);
+
+      if (progress < 1) {
+        rafId = requestAnimationFrame(step);
       } else {
-        setCount(current);
+        setCount(numericValue);
       }
-    }, duration / steps);
-    return () => clearInterval(timer);
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
   }, [isInView, numericValue]);
 
   if (isNaN(numericValue)) {

@@ -738,8 +738,8 @@ const AuditLogSchema = new Schema<IAuditLog>(
 
 // IMMUTABLE LEDGER PROTECTION HOOKS
 // Any update or delete action throws a strict security error
-AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function (next: any) {
-  next(new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy."));
+AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function () {
+  throw new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy.");
 });
 
 export async function createImmutableAuditLog(

@@ -420,7 +420,7 @@ export const cmsRouter = createRouter({
           details: `Created new client tenant: ${input.schoolName} (${input.tenantId})`,
           ipAddress: ctx.req?.headers?.get("x-forwarded-for") || "internal",
         },
-        "dpsi"
+        input.tenantId
       );
 
       return newTenant;

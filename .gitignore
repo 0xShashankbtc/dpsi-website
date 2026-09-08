@@ -40,3 +40,10 @@ build/
 coverage/
 .nyc_output/
 .vercel
+
+# Media scratch files
+*.mp4
+*.wav
+*.aiff
+audio_clips/
+recordings/

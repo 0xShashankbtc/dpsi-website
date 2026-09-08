@@ -99,8 +99,17 @@
     @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-slate-200/60 dark:border-slate-700/50 shadow-xl shadow-slate-900/5 hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-300;
   }
   .gpu-layer {
-    transform: translateZ(0);
+    transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform, opacity;
+  }
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  .contain-paint {
+    contain: paint layout;
   }
   .custom-scrollbar::-webkit-scrollbar {
     width: 5px;
