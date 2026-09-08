@@ -602,7 +602,10 @@ export const cmsRouter = createRouter({
     .input(z.object({ showTrash: z.boolean().default(false) }).optional())
     .query(async ({ input }) => {
       const { Page } = await getMainModels();
-      return Page.find({ isDeleted: input?.showTrash ?? false }).sort({ createdAt: -1 });
+      if (input?.showTrash) {
+        return Page.find({ isDeleted: true }).sort({ createdAt: -1 });
+      }
+      return Page.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     }),
   getPageBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
@@ -612,7 +615,7 @@ export const cmsRouter = createRouter({
       const safeSlug = escapeRegex(cleanSlug);
       const page = await Page.findOne({
         slug: { $regex: new RegExp(`^${safeSlug}$`, "i") },
-        isDeleted: false,
+        isDeleted: { $ne: true },
       });
       return page || null;
     }),
@@ -630,7 +633,10 @@ export const cmsRouter = createRouter({
     )
     .mutation(async ({ input }) => {
       const { Page } = await getMainModels();
-      return Page.create(input);
+      return Page.create({
+        ...input,
+        isDeleted: false,
+      });
     }),
   updatePage: adminMutation
     .input(
@@ -655,8 +661,8 @@ export const cmsRouter = createRouter({
     .input(z.object({ id: z.union([z.string(), z.any()]) }))
     .mutation(async ({ input, ctx }) => {
       const { Page } = await getMainModels();
-      const rawId = input.id?._id || input.id;
-      const pageId = String(rawId);
+      const rawId = input.id?._id || input.id?.$oid || input.id?.id || input.id;
+      const pageId = typeof rawId === "object" ? String(rawId._id || rawId) : String(rawId);
 
       let deleted: any = null;
       if (mongoose.Types.ObjectId.isValid(pageId)) {
@@ -667,11 +673,20 @@ export const cmsRouter = createRouter({
           $or: [{ _id: pageId }, { id: pageId }, { slug: pageId }, { title: pageId }],
         }).catch(() => null);
       }
+      if (!deleted && pageId) {
+        const clean = pageId.replace(/^\/+/, "").trim();
+        deleted = await Page.findOneAndDelete({
+          $or: [
+            { slug: clean },
+            { title: pageId.trim() },
+          ],
+        }).catch(() => null);
+      }
       if (!deleted) {
         deleted = await Page.findOneAndUpdate(
           { $or: [{ _id: pageId }, { slug: pageId }, { title: pageId }] },
           { isDeleted: true },
-          { returnDocument: "after" }
+          { new: true }
         ).catch(() => null);
       }
 

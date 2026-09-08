@@ -179741,7 +179741,10 @@ var cmsRouter = createRouter({
   // --- 3. MANAGE PAGES ---
   listPages: publicQuery.input(external_exports.object({ showTrash: external_exports.boolean().default(false) }).optional()).query(async ({ input }) => {
     const { Page } = await getMainModels();
-    return Page.find({ isDeleted: input?.showTrash ?? false }).sort({ createdAt: -1 });
+    if (input?.showTrash) {
+      return Page.find({ isDeleted: true }).sort({ createdAt: -1 });
+    }
+    return Page.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
   }),
   getPageBySlug: publicQuery.input(external_exports.object({ slug: external_exports.string() })).query(async ({ input }) => {
     const { Page } = await getMainModels();
@@ -179749,7 +179752,7 @@ var cmsRouter = createRouter({
     const safeSlug = escapeRegex3(cleanSlug);
     const page = await Page.findOne({
       slug: { $regex: new RegExp(`^${safeSlug}$`, "i") },
-      isDeleted: false
+      isDeleted: { $ne: true }
     });
     return page || null;
   }),
@@ -179765,7 +179768,10 @@ var cmsRouter = createRouter({
     })
   ).mutation(async ({ input }) => {
     const { Page } = await getMainModels();
-    return Page.create(input);
+    return Page.create({
+      ...input,
+      isDeleted: false
+    });
   }),
   updatePage: adminMutation.input(
     external_exports.object({
@@ -179786,8 +179792,8 @@ var cmsRouter = createRouter({
   }),
   deletePage: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
     const { Page } = await getMainModels();
-    const rawId = input.id?._id || input.id;
-    const pageId = String(rawId);
+    const rawId = input.id?._id || input.id?.$oid || input.id?.id || input.id;
+    const pageId = typeof rawId === "object" ? String(rawId._id || rawId) : String(rawId);
     let deleted = null;
     if (import_mongoose15.default.Types.ObjectId.isValid(pageId)) {
       deleted = await Page.findByIdAndDelete(pageId).catch(() => null);
@@ -179797,11 +179803,20 @@ var cmsRouter = createRouter({
         $or: [{ _id: pageId }, { id: pageId }, { slug: pageId }, { title: pageId }]
       }).catch(() => null);
     }
+    if (!deleted && pageId) {
+      const clean = pageId.replace(/^\/+/, "").trim();
+      deleted = await Page.findOneAndDelete({
+        $or: [
+          { slug: clean },
+          { title: pageId.trim() }
+        ]
+      }).catch(() => null);
+    }
     if (!deleted) {
       deleted = await Page.findOneAndUpdate(
         { $or: [{ _id: pageId }, { slug: pageId }, { title: pageId }] },
         { isDeleted: true },
-        { returnDocument: "after" }
+        { new: true }
       ).catch(() => null);
     }
     await createImmutableAuditLog({

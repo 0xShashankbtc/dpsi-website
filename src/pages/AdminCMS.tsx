@@ -2150,7 +2150,7 @@ export default function AdminCMS() {
                                 title="Delete Page"
                                 disabled={deletePage.isPending}
                                 onClick={() => {
-                                  const pageId = String(p._id || p.id);
+                                  const pageId = String(p._id?._id || p._id || p.id || p.slug);
                                   if (confirm(`Are you sure you want to delete "${p.title || 'this page'}"?`)) {
                                     deletePage.mutate({ id: pageId });
                                   }
