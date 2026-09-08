@@ -8,6 +8,7 @@ import { z } from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
+import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, publicMutation, adminMutation, adminQuery } from "./middleware";
 import { getMainModels, getGalleryModels, getTcModels, createImmutableAuditLog, checkPersistentRateLimit } from "./models/cmsSchemas";
 import { getAdminUserModel } from "./models/adminUserSchema";
@@ -622,21 +623,60 @@ export const cmsRouter = createRouter({
   createPage: adminMutation
     .input(
       z.object({
-        title: z.string(),
-        slug: z.string(),
-        content: z.string(),
+        title: z.string().min(1, "Title is required"),
+        slug: z.string().min(1, "Slug is required"),
+        content: z.string().default(""),
         category: z.string().optional(),
         metaTitle: z.string().optional(),
         metaDescription: z.string().optional(),
         isPublished: z.boolean().default(true),
       })
     )
-    .mutation(async ({ input }) => {
-      const { Page } = await getMainModels();
-      return Page.create({
-        ...input,
-        isDeleted: false,
-      });
+    .mutation(async ({ input, ctx }) => {
+      const { Page } = await getMainModels(ctx?.tenantId);
+      const cleanSlug = input.slug.replace(/^\/+/, "").trim().toLowerCase();
+
+      const existing = await Page.findOne({ slug: cleanSlug });
+      let pageDoc: any;
+      if (existing) {
+        if (existing.isDeleted) {
+          pageDoc = await Page.findByIdAndUpdate(
+            existing._id,
+            {
+              ...input,
+              slug: cleanSlug,
+              isDeleted: false,
+              isPublished: input.isPublished ?? true,
+            },
+            { new: true }
+          );
+        } else {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `A page with URL slug "/${cleanSlug}" already exists. Please choose a different slug.`,
+          });
+        }
+      } else {
+        pageDoc = await Page.create({
+          ...input,
+          slug: cleanSlug,
+          isDeleted: false,
+        });
+      }
+
+      await createImmutableAuditLog(
+        {
+          action: "PAGE_CREATED",
+          module: "PAGES_CMS",
+          performedBy: ctx.user?.username || "Admin",
+          documentId: pageDoc?._id?.toString(),
+          details: `Published custom dynamic page: "${pageDoc?.title}" (/${cleanSlug})`,
+          ipAddress: ctx.req?.headers?.get("x-forwarded-for") || undefined,
+        },
+        ctx.tenantId
+      );
+
+      return pageDoc;
     }),
   updatePage: adminMutation
     .input(
@@ -652,10 +692,27 @@ export const cmsRouter = createRouter({
         isDeleted: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input }) => {
-      const { Page } = await getMainModels();
+    .mutation(async ({ input, ctx }) => {
+      const { Page } = await getMainModels(ctx?.tenantId);
       const { id, ...data } = input;
-      return Page.findByIdAndUpdate(id, data, { new: true });
+      if (data.slug) {
+        data.slug = data.slug.replace(/^\/+/, "").trim().toLowerCase();
+      }
+      const updated = await Page.findByIdAndUpdate(id, data, { new: true });
+      if (updated) {
+        await createImmutableAuditLog(
+          {
+            action: "PAGE_UPDATED",
+            module: "PAGES_CMS",
+            performedBy: ctx.user?.username || "Admin",
+            documentId: id,
+            details: `Updated page: "${updated.title}"`,
+            ipAddress: ctx.req?.headers?.get("x-forwarded-for") || undefined,
+          },
+          ctx.tenantId
+        );
+      }
+      return updated;
     }),
   deletePage: adminMutation
     .input(z.object({ id: z.union([z.string(), z.any()]) }))

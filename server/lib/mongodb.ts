@@ -42,6 +42,12 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
     return cached.connections[key]!;
   }
 
+  // If connection is in broken/disconnected state, reset promise cache
+  if (cached.connections[key] && cached.connections[key]!.readyState !== 2) {
+    cached.connections[key] = null;
+    cached.promises[key] = null;
+  }
+
   const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
   if (!rawUri) {
     throw new Error("MONGODB_URI environment variable is missing.");
@@ -60,12 +66,14 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
   if (!cached.promises[key]) {
     console.log(`[MongoDB] Initializing connection to [${dbName}]...`);
     const conn = mongoose.createConnection(uri, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
-      socketTimeoutMS: 30000,
-      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
       minPoolSize: 0,
       tls: true,
+      retryWrites: true,
+      w: "majority",
     });
 
     conn.on("error", (err) => {

@@ -76904,6 +76904,10 @@ async function getDbConnection(dbName) {
   if (cached3.connections[key] && cached3.connections[key].readyState === 1) {
     return cached3.connections[key];
   }
+  if (cached3.connections[key] && cached3.connections[key].readyState !== 2) {
+    cached3.connections[key] = null;
+    cached3.promises[key] = null;
+  }
   const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
   if (!rawUri) {
     throw new Error("MONGODB_URI environment variable is missing.");
@@ -76919,12 +76923,14 @@ async function getDbConnection(dbName) {
   if (!cached3.promises[key]) {
     console.log(`[MongoDB] Initializing connection to [${dbName}]...`);
     const conn = import_mongoose4.default.createConnection(uri, {
-      serverSelectionTimeoutMS: 5e3,
-      connectTimeoutMS: 5e3,
-      socketTimeoutMS: 3e4,
-      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 1e4,
+      connectTimeoutMS: 1e4,
+      socketTimeoutMS: 45e3,
+      maxPoolSize: 10,
       minPoolSize: 0,
-      tls: true
+      tls: true,
+      retryWrites: true,
+      w: "majority"
     });
     conn.on("error", (err) => {
       console.error(`MongoDB [${dbName}] error:`, err.message);
@@ -179799,20 +179805,56 @@ var cmsRouter = createRouter({
   }),
   createPage: adminMutation.input(
     external_exports.object({
-      title: external_exports.string(),
-      slug: external_exports.string(),
-      content: external_exports.string(),
+      title: external_exports.string().min(1, "Title is required"),
+      slug: external_exports.string().min(1, "Slug is required"),
+      content: external_exports.string().default(""),
       category: external_exports.string().optional(),
       metaTitle: external_exports.string().optional(),
       metaDescription: external_exports.string().optional(),
       isPublished: external_exports.boolean().default(true)
     })
-  ).mutation(async ({ input }) => {
-    const { Page } = await getMainModels();
-    return Page.create({
-      ...input,
-      isDeleted: false
-    });
+  ).mutation(async ({ input, ctx }) => {
+    const { Page } = await getMainModels(ctx?.tenantId);
+    const cleanSlug = input.slug.replace(/^\/+/, "").trim().toLowerCase();
+    const existing = await Page.findOne({ slug: cleanSlug });
+    let pageDoc;
+    if (existing) {
+      if (existing.isDeleted) {
+        pageDoc = await Page.findByIdAndUpdate(
+          existing._id,
+          {
+            ...input,
+            slug: cleanSlug,
+            isDeleted: false,
+            isPublished: input.isPublished ?? true
+          },
+          { new: true }
+        );
+      } else {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: `A page with URL slug "/${cleanSlug}" already exists. Please choose a different slug.`
+        });
+      }
+    } else {
+      pageDoc = await Page.create({
+        ...input,
+        slug: cleanSlug,
+        isDeleted: false
+      });
+    }
+    await createImmutableAuditLog(
+      {
+        action: "PAGE_CREATED",
+        module: "PAGES_CMS",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: pageDoc?._id?.toString(),
+        details: `Published custom dynamic page: "${pageDoc?.title}" (/${cleanSlug})`,
+        ipAddress: ctx.req?.headers?.get("x-forwarded-for") || void 0
+      },
+      ctx.tenantId
+    );
+    return pageDoc;
   }),
   updatePage: adminMutation.input(
     external_exports.object({
@@ -179826,10 +179868,27 @@ var cmsRouter = createRouter({
       isPublished: external_exports.boolean().optional(),
       isDeleted: external_exports.boolean().optional()
     })
-  ).mutation(async ({ input }) => {
-    const { Page } = await getMainModels();
+  ).mutation(async ({ input, ctx }) => {
+    const { Page } = await getMainModels(ctx?.tenantId);
     const { id, ...data2 } = input;
-    return Page.findByIdAndUpdate(id, data2, { new: true });
+    if (data2.slug) {
+      data2.slug = data2.slug.replace(/^\/+/, "").trim().toLowerCase();
+    }
+    const updated = await Page.findByIdAndUpdate(id, data2, { new: true });
+    if (updated) {
+      await createImmutableAuditLog(
+        {
+          action: "PAGE_UPDATED",
+          module: "PAGES_CMS",
+          performedBy: ctx.user?.username || "Admin",
+          documentId: id,
+          details: `Updated page: "${updated.title}"`,
+          ipAddress: ctx.req?.headers?.get("x-forwarded-for") || void 0
+        },
+        ctx.tenantId
+      );
+    }
+    return updated;
   }),
   deletePage: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
     const { Page } = await getMainModels();
