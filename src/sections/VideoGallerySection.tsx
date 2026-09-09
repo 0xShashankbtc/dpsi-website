@@ -8,7 +8,6 @@ function extractYoutubeInfo(url: string) {
   const cleanUrl = url.trim();
   if (!cleanUrl) return null;
 
-  // Match YouTube URLs: watch?v=, youtu.be/, embed/, shorts/, live/, v/
   const match = cleanUrl.match(
     /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?(?:.*&)?v=))([\w-]{11})/i
   );
@@ -76,8 +75,8 @@ export default function VideoGallerySection() {
 
   return (
     <div className="w-full flex flex-col">
-      {/* SKY BLUE VERY LIGHT GRADIENT SECTION BEFORE YOUTUBE LINK */}
-      <div className="w-full py-14 sm:py-16 bg-gradient-to-r from-sky-100 via-sky-50 to-blue-100 border-y border-sky-200/70 text-slate-900 relative overflow-hidden">
+      {/* MINIMALIST VIDEO GALLERY HEADER (NO HARDCODED BLUE) */}
+      <div className="w-full py-16 bg-white dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -85,48 +84,31 @@ export default function VideoGallerySection() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-600/10 border border-sky-300 text-sky-800 text-xs font-bold uppercase tracking-wider mb-3 shadow-2xs">
-              School Video Showcase
+            <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-3">
+              Video Showcase
             </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-sky-950 tracking-tight font-serif">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Experience Life at DPS Indirapuram
             </h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-sky-400 to-blue-600 mx-auto mt-3.5 rounded-full" />
-            <p className="text-sky-900/80 mt-3 max-w-2xl mx-auto text-sm sm:text-base font-medium">
-              Explore our state-of-the-art AI & Robotics Innovation Lab, Annual Cultural Celebrations, and campus achievements in video.
+            <div className="w-16 h-1 bg-slate-900 dark:bg-slate-100 mx-auto mt-4 rounded-full" />
+            <p className="text-slate-600 dark:text-slate-400 mt-3 max-w-2xl mx-auto text-sm sm:text-base font-normal">
+              Explore our state-of-the-art AI & Robotics Innovation Lab, Annual Cultural Celebrations, and campus achievements.
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* YOUTUBE VIDEO GALLERY SECTION WITH LIGHT SKY BLUE GRADIENT BACKGROUND */}
-      <section className="relative py-16 sm:py-20 bg-gradient-to-br from-sky-200 via-sky-100 to-blue-50 text-slate-900 overflow-hidden border-b border-sky-200/80">
-        {/* Background ambient glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.25),transparent_70%)] pointer-events-none" />
-
+      {/* VIDEO PLAYER SECTION (CLEAN MINIMALIST NEUTRAL SLATE) */}
+      <section className="relative py-16 sm:py-20 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-10 sm:mb-14"
-          >
-            <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-wider text-sky-950 font-serif drop-shadow-xs">
-              VIDEO GALLERY
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 mx-auto mt-3 rounded-full" />
-          </motion.div>
-
           {/* Video Player Carousel Container */}
           <div className="relative max-w-4xl mx-auto flex items-center justify-center">
             {/* Left Arrow Button */}
             <motion.button
-              whileHover={{ scale: 1.15 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={handlePrev}
-              className="absolute left-2 sm:-left-14 z-20 p-2.5 sm:p-3.5 rounded-full bg-white/90 hover:bg-sky-600 text-sky-900 hover:text-white backdrop-blur-md border border-sky-200 shadow-2xl transition-colors cursor-pointer"
+              className="absolute left-2 sm:-left-14 z-20 p-3 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xl transition-colors cursor-pointer"
               title="Previous Video"
               aria-label="Previous Video"
             >
@@ -134,7 +116,7 @@ export default function VideoGallerySection() {
             </motion.button>
 
             {/* Video Player Box */}
-            <div className="w-full aspect-video rounded-3xl overflow-hidden bg-slate-950 border-2 border-sky-400/50 shadow-2xl shadow-sky-950/20 relative group">
+            <div className="w-full aspect-video rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-200 dark:border-slate-700 shadow-2xl relative group">
               <AnimatePresence mode="wait">
                 {isPlaying ? (
                   activeVideo.isDirectVideo ? (
@@ -168,35 +150,30 @@ export default function VideoGallerySection() {
                     <img
                       src={activeVideo.thumbnail}
                       alt={activeVideo.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-700 ease-out"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex flex-col justify-between p-4 sm:p-6">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent flex flex-col justify-between p-4 sm:p-6">
                       {/* Top Title Overlay */}
-                      <div className="bg-slate-950/75 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 max-w-xl self-start shadow-lg">
-                        <p className="font-extrabold text-sm sm:text-base text-white line-clamp-1">
+                      <div className="bg-slate-950/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 max-w-xl self-start shadow-md">
+                        <p className="font-bold text-sm sm:text-base text-white line-clamp-1">
                           {activeVideo.title}
                         </p>
-                        <p className="text-[11px] text-sky-400 font-semibold">DPS Indirapuram Official Channel</p>
+                        <p className="text-[11px] text-slate-300 font-medium">DPS Indirapuram Official Channel</p>
                       </div>
 
-                      {/* Center Big Red YouTube Play Button with Pulsing Wave */}
+                      {/* Center Minimalist Play Button */}
                       <div className="self-center my-auto relative">
-                        <motion.div
-                          animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                          className="absolute inset-0 rounded-2xl bg-red-500 blur-md pointer-events-none"
-                        />
                         <motion.div
                           whileHover={{ scale: 1.15 }}
                           whileTap={{ scale: 0.95 }}
-                          className="relative w-16 h-12 sm:w-20 sm:h-14 rounded-2xl bg-red-600 hover:bg-red-500 flex items-center justify-center shadow-2xl shadow-red-950/80 transition-colors"
+                          className="w-16 h-12 sm:w-20 sm:h-14 rounded-2xl bg-red-600 hover:bg-red-500 flex items-center justify-center shadow-2xl transition-colors"
                         >
                           <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-white text-white ml-0.5" />
                         </motion.div>
                       </div>
 
                       {/* Bottom Watch prompt */}
-                      <div className="self-end text-xs font-bold text-white bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-md">
+                      <div className="self-end text-xs font-semibold text-white/90 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-sm">
                         Click to Watch Video ▶
                       </div>
                     </div>
@@ -207,10 +184,10 @@ export default function VideoGallerySection() {
 
             {/* Right Arrow Button */}
             <motion.button
-              whileHover={{ scale: 1.15 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={handleNext}
-              className="absolute right-2 sm:-right-14 z-20 p-2.5 sm:p-3.5 rounded-full bg-white/90 hover:bg-sky-600 text-sky-900 hover:text-white backdrop-blur-md border border-sky-200 shadow-2xl transition-colors cursor-pointer"
+              className="absolute right-2 sm:-right-14 z-20 p-3 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xl transition-colors cursor-pointer"
               title="Next Video"
               aria-label="Next Video"
             >
@@ -219,20 +196,20 @@ export default function VideoGallerySection() {
           </div>
 
           {/* Thumbnail Selector Strip */}
-          <div className="mt-8 flex items-center justify-center gap-3 sm:gap-4 overflow-x-auto max-w-3xl mx-auto py-2">
+          <div className="mt-8 flex items-center justify-center gap-3 overflow-x-auto max-w-3xl mx-auto py-2">
             {videos.map((vid, index) => (
               <motion.button
                 key={vid.id}
-                whileHover={{ scale: 1.06 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   setCurrentIndex(index);
                   setIsPlaying(false);
                 }}
-                className={`relative rounded-2xl overflow-hidden border-2 transition-all shrink-0 w-28 sm:w-36 aspect-video cursor-pointer ${
+                className={`relative rounded-xl overflow-hidden border-2 transition-all shrink-0 w-28 sm:w-36 aspect-video cursor-pointer ${
                   safeIndex === index
-                    ? "border-sky-500 shadow-xl shadow-sky-400/40 ring-4 ring-sky-400/40"
-                    : "border-sky-200/80 opacity-70 hover:opacity-100"
+                    ? "border-slate-900 dark:border-white shadow-lg ring-2 ring-slate-400"
+                    : "border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100"
                 }`}
               >
                 <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover" />

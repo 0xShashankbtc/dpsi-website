@@ -14,10 +14,7 @@ export default function TestimonialsSection() {
   const prev = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 
   return (
-    <section className="py-20 bg-slate-50 relative overflow-hidden">
-      {/* Subtle blue strip at top */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-blue-700 opacity-20" />
-
+    <section className="py-20 bg-slate-50 dark:bg-slate-900 relative overflow-hidden border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -26,15 +23,14 @@ export default function TestimonialsSection() {
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-14"
         >
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold uppercase tracking-wider mb-3 border border-rose-200">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-3 border border-slate-200 dark:border-slate-700">
             <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
             Parent & Alumni Voices
           </span>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             What They Say About Us
           </h2>
-          {/* Cobalt underline */}
-          <div className="w-14 h-1 bg-blue-700 mx-auto mt-4 rounded-full" />
+          <div className="w-14 h-1 bg-slate-900 dark:bg-slate-100 mx-auto mt-4 rounded-full" />
         </motion.div>
 
         <div className="relative max-w-3xl mx-auto">
@@ -52,20 +48,20 @@ export default function TestimonialsSection() {
                 if (info.offset.x < -50) next();
                 else if (info.offset.x > 50) prev();
               }}
-              className="flat-card p-8 sm:p-12 text-center cursor-grab active:cursor-grabbing relative"
+              className="flat-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 sm:p-12 text-center cursor-grab active:cursor-grabbing relative shadow-sm rounded-3xl"
             >
               {/* Quote icon */}
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center mx-auto mb-6">
-                <Quote className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center mx-auto mb-6 shadow-xs">
+                <Quote className="w-5 h-5" />
               </div>
-              <p className="text-base sm:text-xl text-slate-700 leading-relaxed mb-8 font-medium italic select-none">
+              <p className="text-base sm:text-xl text-slate-700 dark:text-slate-200 leading-relaxed mb-8 font-medium italic select-none">
                 "{testimonials[current].content}"
               </p>
               <div>
-                <h4 className="font-black text-slate-900 text-lg tracking-tight">
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight">
                   {testimonials[current].name}
                 </h4>
-                <p className="text-blue-700 font-bold text-xs mt-1 uppercase tracking-wider">
+                <p className="text-slate-500 dark:text-slate-400 font-bold text-xs mt-1 uppercase tracking-wider">
                   {testimonials[current].role}
                 </p>
               </div>
@@ -79,10 +75,10 @@ export default function TestimonialsSection() {
                 variant="outline"
                 size="icon"
                 onClick={prev}
-                className="rounded-full w-10 h-10 border-slate-200 bg-white shadow-sm cursor-pointer hover:border-blue-300 hover:bg-blue-50"
+                className="rounded-full w-10 h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
                 title="Previous"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-5 h-5 text-slate-700 dark:text-slate-200" />
               </Button>
             </motion.div>
 
@@ -93,7 +89,7 @@ export default function TestimonialsSection() {
                   onClick={() => setCurrent(i)}
                   animate={{
                     width: i === current ? 24 : 8,
-                    backgroundColor: i === current ? "#1d4ed8" : "rgba(148, 163, 184, 0.5)",
+                    backgroundColor: i === current ? "#0f172a" : "rgba(148, 163, 184, 0.4)",
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   className="h-1.5 rounded-full cursor-pointer"
@@ -107,10 +103,10 @@ export default function TestimonialsSection() {
                 variant="outline"
                 size="icon"
                 onClick={next}
-                className="rounded-full w-10 h-10 border-slate-200 bg-white shadow-sm cursor-pointer hover:border-blue-300 hover:bg-blue-50"
+                className="rounded-full w-10 h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
                 title="Next"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5 text-slate-700 dark:text-slate-200" />
               </Button>
             </motion.div>
           </div>

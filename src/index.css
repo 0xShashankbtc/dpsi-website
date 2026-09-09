@@ -4,35 +4,35 @@
 
 @layer base {
   :root {
-    /* Bright Minimal — Cobalt Blue Theme */
+    /* Minimalist Balanced Theme (Neutral & School Identity) */
     --background: 0 0% 100%;
-    --foreground: 220 25% 10%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
-    --primary: 221 83% 40%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 158 64% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 221 83% 96%;
-    --secondary-foreground: 221 83% 30%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
     --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 25 95% 53%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 38 92% 50%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 14% 91%;
-    --input: 220 14% 91%;
-    --ring: 221 83% 40%;
-    --radius: 0.5rem;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 158 64% 28%;
+    --radius: 0.75rem;
     --sidebar-background: 0 0% 99%;
-    --sidebar-foreground: 220 25% 10%;
-    --sidebar-primary: 221 83% 40%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 158 64% 28%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 221 83% 96%;
-    --sidebar-accent-foreground: 221 83% 30%;
-    --sidebar-border: 220 14% 91%;
-    --sidebar-ring: 221 83% 40%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 158 64% 28%;
   }
 
   .dark {
@@ -42,27 +42,27 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 221 83% 55%;
+    --primary: 158 64% 35%;
     --primary-foreground: 0 0% 100%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 15%;
     --muted-foreground: 215 20% 65%;
-    --accent: 25 95% 53%;
+    --accent: 38 92% 50%;
     --accent-foreground: 222 47% 7%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
     --border: 217 33% 18%;
     --input: 217 33% 18%;
-    --ring: 221 83% 55%;
+    --ring: 158 64% 35%;
     --sidebar-background: 222 47% 9%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 55%;
+    --sidebar-primary: 158 64% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 18%;
-    --sidebar-ring: 221 83% 55%;
+    --sidebar-ring: 158 64% 35%;
   }
 }
 
@@ -82,26 +82,23 @@
     letter-spacing: -0.02em;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-blue-500/20 selection:text-blue-700;
+    @apply bg-background text-foreground antialiased selection:bg-emerald-500/20 selection:text-emerald-700;
     overflow-x: hidden;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500;
-  }
-  .text-gradient-coral {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-orange-400 to-amber-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 dark:from-white dark:to-slate-300;
   }
   .glass {
-    @apply bg-white/90 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-sm;
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-slate-800/80 shadow-sm;
   }
   .glass-card {
     @apply bg-white dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/50 shadow-md hover:shadow-xl transition-all duration-300;
   }
   .flat-card {
-    @apply bg-white border border-slate-200 shadow-[0_2px_16px_0_rgba(30,58,138,0.06)] hover:shadow-[0_6px_32px_0_rgba(30,58,138,0.13)] transition-all duration-200 rounded-2xl;
+    @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl;
   }
   .gpu-layer {
     transform: translate3d(0, 0, 0);

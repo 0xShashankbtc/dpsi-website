@@ -29,22 +29,18 @@ export default function PrincipalMessage() {
   );
 
   return (
-    <section className="py-20 bg-slate-50 relative overflow-hidden">
-      {/* Vertical blue rule decoration */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-700 via-blue-400 to-transparent pointer-events-none" />
-
+    <section className="py-20 bg-slate-50 dark:bg-slate-900 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* LEFT — Principal Photo */}
           <motion.div
-            initial={{ opacity: 0, x: -32 }}
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="relative"
           >
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-200 shadow-[0_8px_40px_0_rgba(30,58,138,0.14)] border border-slate-200">
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-800">
               <img
                 src={image}
                 alt={name}
@@ -52,14 +48,14 @@ export default function PrincipalMessage() {
                 loading="lazy"
                 decoding="async"
               />
-              {/* Name plate — clean flat style */}
-              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-5 py-4 flex items-center justify-between">
+              {/* Name plate */}
+              <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
                 <div>
-                  <p className="font-black text-slate-900 text-sm tracking-tight">{name}</p>
-                  <p className="text-xs text-blue-700 font-semibold mt-0.5">{title}</p>
+                  <p className="font-extrabold text-slate-900 dark:text-white text-sm tracking-tight">{name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{title}</p>
                 </div>
-                <div className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center shrink-0">
-                  <GraduationCap className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-4 h-4" />
                 </div>
               </div>
             </div>
@@ -67,26 +63,28 @@ export default function PrincipalMessage() {
 
           {/* RIGHT — Message */}
           <motion.div
-            initial={{ opacity: 0, x: 32 }}
+            initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.65, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold mb-5 border border-blue-200">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold mb-5 border border-slate-200 dark:border-slate-700">
               <GraduationCap className="w-3.5 h-3.5" />
               {badge}
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 tracking-tight leading-tight">
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-5 tracking-tight leading-tight">
               {headline}
             </h2>
-            {/* Blue left border quote block */}
-            <div className="border-l-4 border-blue-700 pl-5 space-y-4 text-slate-600 text-sm sm:text-base leading-relaxed mb-8">
+
+            <div className="border-l-2 border-slate-300 dark:border-slate-700 pl-5 space-y-4 text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
               <p>{p1}</p>
               {p2 && <p>{p2}</p>}
             </div>
+
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-max">
               <Button
-                className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2.5 rounded-xl shadow-md shadow-blue-700/20 cursor-pointer"
+                className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all"
                 asChild
               >
                 <Link to="/about">
@@ -99,8 +97,8 @@ export default function PrincipalMessage() {
 
         {/* UPCOMING EVENTS */}
         {events && events.length > 0 && (
-          <div className="mt-20 pt-16 border-t border-slate-200">
-            <h3 className="text-2xl font-black text-slate-900 mb-6 tracking-tight">
+          <div className="mt-16 pt-12 border-t border-slate-200 dark:border-slate-800">
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight">
               Upcoming Events
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -112,25 +110,24 @@ export default function PrincipalMessage() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, duration: 0.4 }}
                   whileHover={{ y: -4 }}
-                  className="flat-card flex items-center gap-4 p-4 cursor-pointer group"
+                  className="flat-card bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-2xl flex items-center gap-4 p-4 cursor-pointer group shadow-sm hover:shadow-md transition-all"
                 >
-                  {/* Date block */}
-                  <div className="w-14 h-14 bg-blue-700 text-white rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm">
-                    <span className="text-xl font-black leading-none">
+                  <div className="w-13 h-13 bg-slate-900 dark:bg-slate-700 text-white rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm">
+                    <span className="text-lg font-black leading-none">
                       {new Date(event.eventDate).getDate()}
                     </span>
-                    <span className="text-[10px] font-bold uppercase mt-0.5 opacity-80">
+                    <span className="text-[10px] font-bold uppercase mt-0.5 text-slate-400">
                       {new Date(event.eventDate).toLocaleString("default", { month: "short" })}
                     </span>
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-blue-700 transition-colors">
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-snug group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                       {event.title}
                     </h4>
                     <div className="flex items-center gap-2 text-xs text-slate-400 mt-1.5 font-medium">
-                      <CalendarDays className="w-3.5 h-3.5 text-blue-400" />
+                      <CalendarDays className="w-3.5 h-3.5 text-slate-500" />
                       {formatISTDate(event.eventDate)}
-                      <MapPin className="w-3.5 h-3.5 ml-1 text-blue-400" />
+                      <MapPin className="w-3.5 h-3.5 ml-1 text-slate-500" />
                       {event.location}
                     </div>
                   </div>

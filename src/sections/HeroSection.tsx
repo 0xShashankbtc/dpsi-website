@@ -1,83 +1,22 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
 
 const DEFAULT_HERO_SLIDES = [
   {
     image: "/images/dps/slider_1.webp",
+    videoUrl: "/videos/campus_hero.mp4",
+    mediaType: "video" as const,
     title: "Delhi Public School Indirapuram",
-    subtitle: "Premier CBSE School in Ghaziabad",
+    subtitle: "Premier CBSE Day School in Ghaziabad • Nursery to Class XII",
     badge: "Admissions Open 2026-27",
     buttonText: "Apply Now",
     buttonLink: "/admissions",
   },
 ];
-
-// High-Performance Isolated Typewriter Sub-Component (Zero Parent Re-renders)
-const HeroTypewriter = memo(function HeroTypewriter({
-  fullText,
-  onSlideComplete,
-  isPaused,
-}: {
-  fullText: string;
-  onSlideComplete: () => void;
-  isPaused: boolean;
-}) {
-  const [displayText, setDisplayText] = useState("");
-  const [isFading, setIsFading] = useState(false);
-
-  useEffect(() => {
-    if (!fullText) return;
-    setDisplayText("");
-    setIsFading(false);
-
-    let charIndex = 0;
-    let timer: any = null;
-    let holdTimer: any = null;
-    let fadeTimer: any = null;
-
-    const step = fullText.length > 50 ? 3 : 2;
-    timer = setInterval(() => {
-      if (isPaused) return;
-      charIndex += step;
-      if (charIndex >= fullText.length) {
-        setDisplayText(fullText);
-        clearInterval(timer);
-
-        holdTimer = setTimeout(() => {
-          setIsFading(true);
-          fadeTimer = setTimeout(() => {
-            onSlideComplete();
-          }, 500);
-        }, 3200);
-        return;
-      }
-      setDisplayText(fullText.slice(0, Math.min(charIndex, fullText.length)));
-    }, 16);
-
-    return () => {
-      clearInterval(timer);
-      clearTimeout(holdTimer);
-      clearTimeout(fadeTimer);
-    };
-  }, [fullText, isPaused]);
-
-  return (
-    <motion.span
-      animate={{ opacity: isFading ? 0 : 1 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="font-semibold text-slate-800 text-sm sm:text-base leading-snug tracking-tight"
-    >
-      {displayText}
-      {!isFading && displayText.length < fullText.length && (
-        <span className="inline-block w-0.5 h-4 bg-blue-700 ml-0.5 animate-pulse" />
-      )}
-    </motion.span>
-  );
-});
 
 export default function HeroSection() {
   const { data: cmsSliders } = trpc.cms.listSliders.useQuery(undefined, {
@@ -89,8 +28,8 @@ export default function HeroSection() {
       ? cmsSliders
           .filter((s: any) => !s.isDeleted && s.isActive !== false)
           .map((s: any) => ({
-            image: s.imageUrl || "",
-            videoUrl: s.videoUrl || "",
+            image: s.imageUrl || "/images/dps/slider_1.webp",
+            videoUrl: s.videoUrl || (s.mediaType === "video" ? "/videos/campus_hero.mp4" : ""),
             mediaType: (s.mediaType || (s.videoUrl ? "video" : "image")) as "image" | "video",
             title: s.title,
             subtitle: s.subtitle || "",
@@ -98,159 +37,201 @@ export default function HeroSection() {
             buttonText: s.buttonText || "Apply Now",
             buttonLink: s.buttonLink || "/admissions",
           }))
-      : DEFAULT_HERO_SLIDES.map((s) => ({ ...s, videoUrl: "", mediaType: "image" as const }));
+      : DEFAULT_HERO_SLIDES;
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const safeSlideIndex = activeSlides.length > 0 ? currentSlide % activeSlides.length : 0;
   const slide = activeSlides[safeSlideIndex] || DEFAULT_HERO_SLIDES[0];
 
-  useEffect(() => {
-    activeSlides.forEach((s) => {
-      if (s.image) {
-        const img = new Image();
-        img.src = s.image;
-      }
-    });
-  }, [activeSlides]);
-
-  const fullText = slide ? (slide.subtitle ? `${slide.title} — ${slide.subtitle}` : slide.title) : "";
+  const hasVideo = Boolean(slide.videoUrl || slide.mediaType === "video");
+  const videoSource = slide.videoUrl || (hasVideo ? "/videos/campus_hero.mp4" : "");
 
   const handleNextSlide = () => {
-    if (activeSlides.length === 0) return;
+    if (activeSlides.length <= 1) return;
     setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
   };
 
-  const handleManualSlideChange = (newIndex: number) => {
-    if (activeSlides.length === 0) return;
-    setCurrentSlide(newIndex % activeSlides.length);
+  const handlePrevSlide = () => {
+    if (activeSlides.length <= 1) return;
+    setCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
   };
 
-  if (activeSlides.length === 0) return null;
+  const toggleVideoPlayback = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play().then(() => setIsPlayingVideo(true)).catch(() => {});
+      } else {
+        videoRef.current.pause();
+        setIsPlayingVideo(false);
+      }
+    }
+  };
 
   return (
-    <div
-      className="w-full flex flex-col bg-white contain-layout"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      {/* TOP ANNOUNCEMENT BAR — cobalt blue with typewriter */}
-      <div className="relative z-30 bg-blue-700 text-white py-3 px-4 sm:px-8 border-b border-blue-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
-            <span className="inline-flex items-center px-2.5 py-1 rounded bg-white/20 text-white text-[10px] font-bold tracking-widest uppercase shrink-0 w-max border border-white/30">
-              {slide.badge}
-            </span>
-            <HeroTypewriter
-              fullText={fullText}
-              onSlideComplete={handleNextSlide}
-              isPaused={isPaused}
+    <section className="relative min-h-[75vh] sm:min-h-[85vh] lg:min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white">
+      {/* BACKGROUND VIDEO / IMAGE */}
+      <AnimatePresence initial={false} mode="wait">
+        <motion.div
+          key={safeSlideIndex + (hasVideo ? "-vid" : "-img")}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 z-0 overflow-hidden"
+        >
+          {hasVideo && videoSource ? (
+            <video
+              ref={videoRef}
+              src={videoSource}
+              poster={slide.image || "/images/dps/slider_1.webp"}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              className="w-full h-full object-cover object-center"
             />
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-auto">
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              <Button
-                size="sm"
-                className="bg-white hover:bg-blue-50 text-blue-700 font-bold px-4 py-2 rounded-lg transition-all text-xs shadow-sm cursor-pointer flex items-center gap-1 border border-white/80"
-                asChild
-              >
-                <Link to={slide.buttonLink || "/admissions"}>
-                  {slide.buttonText || "Apply Now"} <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              <Button
-                size="sm"
-                className="border border-white/50 bg-transparent hover:bg-white/10 text-white px-4 py-2 rounded-lg font-semibold transition-all text-xs cursor-pointer"
-                asChild
-              >
-                <Link to="/about">Explore Campus</Link>
-              </Button>
-            </motion.div>
-          </div>
-        </div>
+          ) : (
+            <img
+              src={slide.image || "/images/dps/slider_1.webp"}
+              alt={slide.title}
+              className="w-full h-full object-cover object-center"
+              loading="eager"
+            />
+          )}
+
+          {/* Minimalist Cinematic Scrim */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/40" />
+          <div className="absolute inset-0 bg-slate-950/20 backdrop-brightness-90" />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* MINIMALIST HERO CONTENT OVERLAY */}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center flex flex-col items-center">
+        {/* Subtle minimalist badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-xs font-semibold tracking-wide mb-6 shadow-sm"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <span>{slide.badge || "Admissions Open 2026-27"}</span>
+        </motion.div>
+
+        {/* Minimalist Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] mb-5 max-w-4xl"
+        >
+          {slide.title}
+        </motion.h1>
+
+        {/* Minimalist Subtitle */}
+        {slide.subtitle && (
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-base sm:text-xl text-slate-300 font-normal max-w-2xl mx-auto mb-9 leading-relaxed"
+          >
+            {slide.subtitle}
+          </motion.p>
+        )}
+
+        {/* Clean, Sorted Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex flex-wrap items-center justify-center gap-3.5"
+        >
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+            <Button
+              size="lg"
+              className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-lg shadow-black/20 cursor-pointer flex items-center gap-2"
+              asChild
+            >
+              <Link to={slide.buttonLink || "/admissions"}>
+                {slide.buttonText || "Apply Now"} <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border border-white/30 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md px-7 py-3 rounded-xl font-semibold transition-all text-sm cursor-pointer"
+              asChild
+            >
+              <Link to="/about">Explore Campus</Link>
+            </Button>
+          </motion.div>
+        </motion.div>
       </div>
 
-      {/* HERO IMAGE SLIDER — full bleed, clean crossfade */}
-      <section className="relative min-h-[50vh] sm:min-h-[65vh] lg:min-h-[78vh] overflow-hidden bg-slate-100">
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={(slide.videoUrl || slide.image) + safeSlideIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0 will-change-transform"
+      {/* MINIMALIST BOTTOM CONTROLS */}
+      <div className="absolute bottom-6 inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-6">
+        {/* Video Play/Pause Control */}
+        {hasVideo && (
+          <button
+            type="button"
+            onClick={toggleVideoPlayback}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer"
+            title={isPlayingVideo ? "Pause Background Video" : "Play Background Video"}
           >
-            {slide.mediaType === "video" && slide.videoUrl ? (
-              <video
-                src={slide.videoUrl}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                className="w-full h-full object-cover object-center"
-              />
+            {isPlayingVideo ? (
+              <>
+                <Pause className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Pause Video</span>
+              </>
             ) : (
-              <img
-                src={slide.image}
-                alt={slide.title}
-                className="w-full h-full object-cover object-center"
-                loading={safeSlideIndex === 0 ? "eager" : "lazy"}
-                decoding="async"
-                {...(safeSlideIndex === 0 ? { fetchPriority: "high" } : {})}
-              />
+              <>
+                <Play className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Play Video</span>
+              </>
             )}
-            {/* Subtle dark overlay at bottom for nav controls readability */}
-            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-          </motion.div>
-        </AnimatePresence>
+          </button>
+        )}
 
-        {/* Slide Controls */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/25 shadow-xl">
-          <motion.button
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() =>
-              handleManualSlideChange(
-                (safeSlideIndex - 1 + activeSlides.length) % activeSlides.length
-              )
-            }
-            className="p-1.5 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
-            title="Previous Slide"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </motion.button>
-
-          <div className="flex items-center gap-1.5 px-1">
-            {activeSlides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleManualSlideChange(idx)}
-                className={`h-1.5 rounded-full cursor-pointer transition-all duration-300 ${
-                  safeSlideIndex === idx
-                    ? "w-6 bg-white"
-                    : "w-1.5 bg-white/45 hover:bg-white/70"
-                }`}
-                title={`Go to slide ${idx + 1}`}
-              />
-            ))}
+        {/* Multi-Slide Navigation (Only shown if >1 slide) */}
+        {activeSlides.length > 1 && (
+          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 ml-auto">
+            <button
+              onClick={handlePrevSlide}
+              className="p-1 rounded-full text-white/70 hover:text-white transition-colors cursor-pointer"
+              title="Previous Slide"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1.5 px-1">
+              {activeSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    safeSlideIndex === idx ? "w-5 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
+                  }`}
+                  title={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={handleNextSlide}
+              className="p-1 rounded-full text-white/70 hover:text-white transition-colors cursor-pointer"
+              title="Next Slide"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-
-          <motion.button
-            whileHover={{ scale: 1.15 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => handleManualSlideChange((safeSlideIndex + 1) % activeSlides.length)}
-            className="p-1.5 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
-            title="Next Slide"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </motion.button>
-        </div>
-      </section>
-    </div>
+        )}
+      </div>
+    </section>
   );
 }

@@ -43,6 +43,7 @@ coverage/
 
 # Media scratch files
 *.mp4
+!public/videos/*.mp4
 *.wav
 *.aiff
 audio_clips/

@@ -91,20 +91,20 @@ export default function QuickStats() {
               whileHover={{ y: -4 }}
               className="flat-card text-center p-6 sm:p-7 flex flex-col items-center justify-center min-h-[150px] group cursor-default"
             >
-              {/* Icon with cobalt blue */}
-              <div className="text-blue-700 mb-3 flex justify-center group-hover:scale-110 transition-transform duration-200">
+              {/* Icon with clean styling */}
+              <div className="text-amber-500 mb-3 flex justify-center group-hover:scale-110 transition-transform duration-200">
                 {iconMap[stat.icon || "Award"] || <Award className="w-7 h-7" />}
               </div>
               {/* Large bold number */}
-              <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mb-1.5 tracking-tight leading-none">
+              <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-1.5 tracking-tight leading-none">
                 <AnimatedCounter
                   target={stat.value}
                   suffix={stat.value.includes("%") ? "%" : stat.value.includes("+") ? "+" : ""}
                 />
               </h3>
-              {/* Cobalt underline accent */}
-              <div className="w-8 h-0.5 bg-blue-700 rounded-full mb-2 group-hover:w-12 transition-all duration-300" />
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
+              {/* Minimalist underline accent */}
+              <div className="w-8 h-0.5 bg-slate-900 dark:bg-white rounded-full mb-2 group-hover:w-12 transition-all duration-300" />
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {stat.label}
               </p>
             </motion.div>

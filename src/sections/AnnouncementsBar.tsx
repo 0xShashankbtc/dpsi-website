@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Radio } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 
 export default function AnnouncementsBar() {
@@ -19,8 +19,6 @@ export default function AnnouncementsBar() {
       textColor: m.textColor,
       badgeText: m.badgeText,
       isTransparent: !!m.isTransparent,
-      shape: m.shape || "rectangle",
-      borderRadius: m.borderRadius || "none",
     }));
 
   const items =
@@ -35,8 +33,6 @@ export default function AnnouncementsBar() {
           textColor: undefined,
           badgeText: undefined,
           isTransparent: false,
-          shape: "rectangle",
-          borderRadius: "none",
         }))
       : [];
 
@@ -44,7 +40,7 @@ export default function AnnouncementsBar() {
     if (!items.length) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % items.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [items.length]);
 
@@ -54,59 +50,40 @@ export default function AnnouncementsBar() {
   const current = items[safeIndex];
   if (!current) return null;
 
-  // Use custom CMS colors if provided, otherwise fall back to cobalt blue
-  const hasCmsColor = !current.isTransparent && current.bgColor;
+  const hasCmsBg = !current.isTransparent && Boolean(current.bgColor);
 
   return (
     <div
-      className="py-2 px-4 relative overflow-hidden border-b"
-      style={
-        hasCmsColor
-          ? {
-              backgroundColor: current.bgColor,
-              color: current.textColor || "#ffffff",
-              borderColor: "transparent",
-            }
-          : current.isTransparent
-          ? { backgroundColor: "transparent", color: current.textColor || "#1e3a8a" }
-          : { backgroundColor: "#f0f4ff", color: "#1e3a8a", borderColor: "#dbeafe" }
-      }
+      className="py-2 px-4 relative overflow-hidden text-xs transition-colors duration-300 border-b border-slate-800"
+      style={{
+        backgroundColor: hasCmsBg ? current.bgColor : "#0f172a",
+        color: current.textColor || "#f8fafc",
+      }}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-3">
-        {/* Live indicator dot */}
-        <span className="relative flex h-2 w-2 shrink-0">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-700" />
-        </span>
-
-        <span
-          className="text-[10px] font-black uppercase tracking-widest shrink-0 opacity-70"
-          style={{ color: hasCmsColor ? (current.textColor || "#fff") : "#2563eb" }}
-        >
-          <Radio className="inline w-3 h-3 mr-1 -mt-0.5" />
-          LIVE
-        </span>
-
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id + safeIndex}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-center"
+            className="flex items-center gap-2 font-medium text-center truncate"
           >
-            {current.badgeText && (
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-700/15 text-blue-800 shrink-0 border border-blue-200">
+            {current.badgeText ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/15 text-white shrink-0 border border-white/20">
                 {current.badgeText}
               </span>
+            ) : (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
             )}
-            <span>{current.title}</span>
+
+            <span className="truncate">{current.title}</span>
 
             {current.link && (
               <Link
                 to={current.link}
-                className="inline-flex items-center gap-1 underline underline-offset-4 hover:opacity-70 font-bold ml-1 shrink-0 text-blue-700"
+                className="inline-flex items-center gap-1 text-white/90 hover:text-white underline underline-offset-4 font-semibold ml-1 shrink-0 transition-opacity"
               >
                 Know More <ArrowRight className="w-3 h-3" />
               </Link>
