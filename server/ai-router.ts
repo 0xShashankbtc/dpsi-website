@@ -16,20 +16,20 @@ interface GroqApiResponse {
   }[];
 }
 
+const MANDATORY_SANITIZATION_RULES = `
+CRITICAL FORMATTING & SANITIZATION RULES (MANDATORY & STRICT):
+- Output in clean, pure text ONLY.
+- NEVER generate markdown tables, ASCII tables, grid matrices, pipe characters (|), or plus signs (+).
+- NEVER generate dashes, hyphens (-, —, –), underscores (_), or separator lines (such as ---------- or =====).
+- NEVER use bullet points, list dashes, numbered lists, markdown asterisks (*, **), brackets, or hashtags.
+- Do not write hyphenated session years like 2026-27 (write 2026 to 2027 instead). Write Pre Nursery instead of Pre-Nursery.
+- When asked about Class 11 streams, NEVER output a table or matrix. Present the three streams (Science, Commerce, Humanities) in fluent, elegant sentences using connecting words like "and", "along with", "as well as".
+- Provide comprehensive, accurate answers in 2 to 4 clear, well-spoken sentences.
+`;
+
 const DEFAULT_SYSTEM_PROMPT = `You are DPSI AI, the official and intelligent AI assistant for Delhi Public School Indirapuram (DPS Indirapuram), located in Ghaziabad, Uttar Pradesh.
 
-LANGUAGE, TONE & SANITIZATION INSTRUCTIONS:
-- You are warm, polite, professional, and extremely helpful.
-- If the user talks in Hindi or Hinglish (e.g. "kaise ho", "admission kab start hoga", "fees kitni hai"), reply in fluent, natural Hindi or Hinglish.
-- If the user talks in English, reply in crisp, articulate, professional English.
-- CRITICAL OUTPUT SANITIZATION:
-  * Output in clean, pure text ONLY.
-  * NEVER use hyphens or dashes (- or — or –) anywhere in your response.
-  * NEVER use bullet points, list dashes, numbered lists, or markdown formatting.
-  * NEVER use asterisks (* or **), hashtags (#), brackets ([ ] or ( )), or backticks.
-  * Do not write hyphenated session years like 2026-27 (write 2026 to 2027 instead). Write Pre Nursery instead of Pre-Nursery.
-  * Connect items smoothly using natural language words such as "and", "along with", "as well as".
-  * Provide comprehensive, accurate answers in 2 to 4 clear, well-spoken sentences.
+${MANDATORY_SANITIZATION_RULES}
 
 COMPREHENSIVE KNOWLEDGE BASE — DELHI PUBLIC SCHOOL INDIRAPURAM:
 
@@ -220,7 +220,7 @@ export const aiRouter = createRouter({
             configuredModel = normalizeGroqModel(config.model);
           }
           if (config?.systemPrompt && config.systemPrompt.trim().length > 50) {
-            systemPrompt = config.systemPrompt;
+            systemPrompt = `${MANDATORY_SANITIZATION_RULES}\n\n${config.systemPrompt}`;
           }
         }
       } catch {
@@ -278,12 +278,14 @@ export const aiRouter = createRouter({
             let replyText = data?.choices?.[0]?.message?.content || "";
 
             if (replyText) {
-              // Strip think tags, reasoning logs, markdown formatting, hyphens, and extra symbols
+              // Strip think tags, reasoning logs, markdown tables, hyphens, and extra symbols
               replyText = replyText
                 .replace(/<think>[\s\S]*?<\/think>/gi, "")
                 .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
                 .replace(/```[\s\S]*?```/g, "")
                 .replace(/https?:\/\/\S+/g, "")
+                // Strip markdown / ASCII table row and column dividers (e.g. |---+---| or ----------+-----)
+                .replace(/[|\s]*[-—–_=]{2,}[+|\s\-—–_=]*/g, " ")
                 .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
                 .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
                 .replace(/\bClass(es)?\s*IX\s*&?\s*XI\b/gi, "Classes 9 and 11")
@@ -291,8 +293,10 @@ export const aiRouter = createRouter({
                 .replace(/\*(.*?)\*/g, "$1")
                 .replace(/#{1,6}\s+/g, "")
                 .replace(/`{1,3}/g, "")
+                // Remove all remaining hyphens, en-dashes, em-dashes, underscores
                 .replace(/[-—–_]/g, " ")
-                .replace(/[*#`~[\](){}<>|\\]/g, "")
+                // Remove pipes, pluses, markdown symbols, brackets
+                .replace(/[|*#`~[\](){}<>\\+]/g, " ")
                 .replace(/^[•*·▪▫◦\s-]+/gm, "")
                 .replace(/\s{2,}/g, " ")
                 .trim();
@@ -400,6 +404,7 @@ export const aiRouter = createRouter({
         .replace(/```[\s\S]*?```/g, "")
         .replace(/https?:\/\/\S+/g, "")
         .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, " ")
+        .replace(/[|\s]*[-—–_=]{2,}[+|\s\-—–_=]*/g, " ")
         .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
         .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
         .replace(/\bIX\s*&\s*XI\b/gi, "9 and 11")

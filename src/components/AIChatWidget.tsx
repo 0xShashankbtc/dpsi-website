@@ -207,6 +207,8 @@ export default function AIChatWidget() {
       .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
       .replace(/```[\s\S]*?```/g, "")
       .replace(/https?:\/\/\S+/g, "")
+      // Strip markdown / ASCII table dividers like |----+----| or ----------+-----
+      .replace(/[|\s]*[-—–_=]{2,}[+|\s\-—–_=]*/g, " ")
       .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
       .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
       .replace(/\bClass(es)?\s*IX\s*&?\s*XI\b/gi, "Classes 9 and 11")
@@ -214,10 +216,10 @@ export default function AIChatWidget() {
       .replace(/\*(.*?)\*/g, "$1")
       .replace(/#{1,6}\s+/g, "")
       .replace(/`{1,3}/g, "")
-      // Remove all hyphens, en-dashes, em-dashes
+      // Remove all remaining hyphens, en-dashes, em-dashes, underscores
       .replace(/[-—–_]/g, " ")
-      // Remove all markdown and symbols
-      .replace(/[*#`~[\](){}<>|\\]/g, "")
+      // Remove pipes, pluses, markdown symbols, brackets
+      .replace(/[|*#`~[\](){}<>\\+]/g, " ")
       .replace(/^[•*·▪▫◦\s-]+/gm, "")
       .replace(/:\s*(\.|\s*$)/g, ".")
       .replace(/\s{2,}/g, " ")
@@ -234,6 +236,8 @@ export default function AIChatWidget() {
       .replace(/```[\s\S]*?```/g, "")
       .replace(/https?:\/\/\S+/g, "")
       .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, " ") // Strip all emojis
+      // Strip markdown / ASCII table dividers like |----+----| or ----------+-----
+      .replace(/[|\s]*[-—–_=]{2,}[+|\s\-—–_=]*/g, " ")
       .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
       .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
       .replace(/\bIX\s*&\s*XI\b/gi, "9 and 11")
@@ -567,6 +571,8 @@ export default function AIChatWidget() {
       fallbackText = "Periodic Tests are held across April, May, July, and November. Half Yearly exams take place in September 2026, Pre Boards for Classes 10 and 12 occur in December 2026 and January 2027, and Annual Final Exams occur in January to March 2027.";
     } else if (lower.includes("ptm") || lower.includes("parent teacher")) {
       fallbackText = "Parent Teacher Meetings PTMs are scheduled regularly throughout the academic session following key assessment cycles with answer script viewings.";
+    } else if (lower.includes("stream") || lower.includes("subject") || lower.includes("class 11") || lower.includes("11th")) {
+      fallbackText = "Delhi Public School Indirapuram offers three primary academic streams for Class 11 and Class 12: Science, Commerce, and Humanities. In Science, students take English Core, Physics, and Chemistry, with electives including Mathematics, Biology, Computer Science with Python, Artificial Intelligence, and Biotechnology. In Commerce, students take English Core, Accountancy, Business Studies, and Economics, with electives such as Mathematics and Informatics Practices. In Humanities, students take English Core along with electives like Psychology, Political Science, History, Economics, and Legal Studies.";
     } else if (lower.includes("admiss") || lower.includes("apply") || lower.includes("register")) {
       fallbackText = "Admissions for the 2026 to 2027 academic session are currently open from Pre Nursery to Class 9 and Class 11 through the official school admission portal.";
     } else {
