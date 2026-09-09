@@ -18,12 +18,18 @@ interface GroqApiResponse {
 
 const DEFAULT_SYSTEM_PROMPT = `You are DPSI AI, the official and intelligent AI assistant for Delhi Public School Indirapuram (DPS Indirapuram), located in Ghaziabad, Uttar Pradesh.
 
-LANGUAGE & TONE INSTRUCTIONS:
+LANGUAGE, TONE & SANITIZATION INSTRUCTIONS:
 - You are warm, polite, professional, and extremely helpful.
 - If the user talks in Hindi or Hinglish (e.g. "kaise ho", "admission kab start hoga", "fees kitni hai"), reply in fluent, natural Hindi or Hinglish.
 - If the user talks in English, reply in crisp, articulate, professional English.
-- Keep your answers speech-friendly: DO NOT use markdown formatting like asterisks (* or **), hashtags (#), brackets, or backticks. Write in clear, natural sentences that sound wonderful when spoken aloud by voice assistants.
-- Provide comprehensive, accurate answers in 2 to 4 concise sentences.
+- CRITICAL OUTPUT SANITIZATION:
+  * Output in clean, pure text ONLY.
+  * NEVER use hyphens or dashes (- or — or –) anywhere in your response.
+  * NEVER use bullet points, list dashes, numbered lists, or markdown formatting.
+  * NEVER use asterisks (* or **), hashtags (#), brackets ([ ] or ( )), or backticks.
+  * Do not write hyphenated session years like 2026-27 (write 2026 to 2027 instead). Write Pre Nursery instead of Pre-Nursery.
+  * Connect items smoothly using natural language words such as "and", "along with", "as well as".
+  * Provide comprehensive, accurate answers in 2 to 4 clear, well-spoken sentences.
 
 COMPREHENSIVE KNOWLEDGE BASE — DELHI PUBLIC SCHOOL INDIRAPURAM:
 
@@ -272,17 +278,22 @@ export const aiRouter = createRouter({
             let replyText = data?.choices?.[0]?.message?.content || "";
 
             if (replyText) {
-              // Strip think tags, reasoning logs, and markdown formatting for clean voice and text output
+              // Strip think tags, reasoning logs, markdown formatting, hyphens, and extra symbols
               replyText = replyText
                 .replace(/<think>[\s\S]*?<\/think>/gi, "")
                 .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
                 .replace(/```[\s\S]*?```/g, "")
+                .replace(/https?:\/\/\S+/g, "")
+                .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
+                .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
+                .replace(/\bClass(es)?\s*IX\s*&?\s*XI\b/gi, "Classes 9 and 11")
                 .replace(/\*\*(.*?)\*\*/g, "$1")
                 .replace(/\*(.*?)\*/g, "$1")
                 .replace(/#{1,6}\s+/g, "")
                 .replace(/`{1,3}/g, "")
-                .replace(/^[-*•]\s+/gm, "")
-                .replace(/\*/g, "")
+                .replace(/[-—–_]/g, " ")
+                .replace(/[*#`~[\](){}<>|\\]/g, "")
+                .replace(/^[•*·▪▫◦\s-]+/gm, "")
                 .replace(/\s{2,}/g, " ")
                 .trim();
 
@@ -298,28 +309,28 @@ export const aiRouter = createRouter({
         }
       }
 
-      // Intelligent instant local keyword-based fallback if external API is unreachable or slow
+      // Intelligent instant local keyword-based fallback if external API is unreachable or slow (Strictly no hyphens or extra symbols)
       const lower = input.message.toLowerCase();
       let fallbackAnswer = "";
 
       if (lower.includes("kaise ho") || lower.includes("how are you") || lower.includes("namaste") || lower.includes("hello") || lower.includes("hi")) {
-        fallbackAnswer = "Namaste! Main DPS Indirapuram ka official AI assistant DPSI AI hoon. Admissions Session 2026-27, academics, streams, facilities ya kisi bhi query ke liye main aapki kya madad kar sakta hoon?";
+        fallbackAnswer = "Namaste! Main DPS Indirapuram ka official AI assistant DPSI AI hoon. Admissions Session 2026 to 2027, academics, streams, facilities ya kisi bhi query ke liye main aapki kya madad kar sakta hoon?";
       } else if (lower.includes("admission") || lower.includes("apply") || lower.includes("form") || lower.includes("dakhila") || lower.includes("register")) {
-        fallbackAnswer = "DPS Indirapuram mein Session 2026-27 ke liye Pre-Nursery se Class IX aur Class XI ke admissions open hain. Aap online apply kar sakte hain ya admission desk se +91-0120-4660000 par sampark kar sakte hain.";
+        fallbackAnswer = "DPS Indirapuram mein Session 2026 to 2027 ke liye Pre Nursery se Class 9 aur Class 11 ke admissions open hain. Aap online apply kar sakte hain ya admission desk se 0120 4660000 par sampark kar sakte hain.";
       } else if (lower.includes("stream") || lower.includes("subject") || lower.includes("class 11") || lower.includes("11th")) {
-        fallbackAnswer = "Class XI mein teen streams available hain: Science (PCM/PCB with AI, Biotech, Computer Science), Commerce (Accounts, Economics, Math, Business Studies), aur Humanities (Psychology, Legal Studies, Economics, Political Science).";
+        fallbackAnswer = "Class 11 mein teen streams available hain: Science with AI, Biotech, and Computer Science, Commerce with Accounts, Economics, Math, and Business Studies, aur Humanities with Psychology, Legal Studies, and Political Science.";
       } else if (lower.includes("facility") || lower.includes("campus") || lower.includes("lab") || lower.includes("sports") || lower.includes("robotics") || lower.includes("pool") || lower.includes("shooting")) {
-        fallbackAnswer = "DPS Indirapuram ke 10-acre campus mein AI and Robotics Innovation Lab, Olympic-standard 50m swimming pool, ISSF certified shooting range, 80+ smart classrooms, aur digital library uplabdh hain.";
+        fallbackAnswer = "DPS Indirapuram ke 10 acre campus mein AI and Robotics Innovation Lab, Olympic standard 50 meter swimming pool, shooting range, 80 plus smart classrooms, aur digital library uplabdh hain.";
       } else if (lower.includes("principal") || lower.includes("head") || lower.includes("leadership") || lower.includes("chairperson")) {
-        fallbackAnswer = "DPS Indirapuram ki Principal Ms. Priya Elizabeth John hain, Pro-Vice Chairperson Ms. Santosh Bansal hain, aur Chairman Mr. V.K. Shunglu (IAS Retd.) hain.";
+        fallbackAnswer = "DPS Indirapuram ki Principal Ms Priya Elizabeth John hain, Pro Vice Chairperson Ms Santosh Bansal hain, aur Chairman Mr V K Shunglu hain.";
       } else if (lower.includes("result") || lower.includes("topper") || lower.includes("board") || lower.includes("score")) {
-        fallbackAnswer = "DPS Indirapuram ka CBSE Class 10 aur 12 mein 100% pass result raha hai. School toppers mein Siddhant Tiwari (99.4%), Ansh Pathak (99.4%) aur Aayush Jha (99.2%) shamil hain.";
+        fallbackAnswer = "DPS Indirapuram ka CBSE Class 10 aur 12 mein 100 percent pass result raha hai. School toppers mein Siddhant Tiwari 99.4 percent, Ansh Pathak 99.4 percent aur Aayush Jha 99.2 percent shamil hain.";
       } else if (lower.includes("fee") || lower.includes("fees") || lower.includes("cost") || lower.includes("structure")) {
-        fallbackAnswer = "Fee structure grade ke according structured hai. Detail fee chart aur online payment ke liye aap school website par check kar sakte hain ya accounts desk par +91-0120-4660000 par call kar sakte hain.";
+        fallbackAnswer = "Fee structure grade ke according structured hai. Detail fee chart aur online payment ke liye aap school website par check kar sakte hain ya accounts desk par 0120 4660000 par call kar sakte hain.";
       } else if (lower.includes("calendar") || lower.includes("schedule") || lower.includes("vacation") || lower.includes("summer") || lower.includes("winter")) {
-        fallbackAnswer = "Academic Year 2026-27 starts in April 2026. Summer break begins late May 2026, and Winter break starts late December 2026. Complete calendar is available on the website.";
+        fallbackAnswer = "Academic Year 2026 to 2027 starts in April 2026. Summer break begins late May 2026, and Winter break starts late December 2026. Complete calendar is available on the website.";
       } else {
-        fallbackAnswer = "Main DPS Indirapuram ka official AI assistant hoon. Admissions 2026-27, academic calendar, streams, ya campus facilities se jude kisi bhi sawal ke liye aap hume +91-0120-4660000 par call ya info@dpsindirapuram.com par email kar sakte hain.";
+        fallbackAnswer = "Main DPS Indirapuram ka official AI assistant hoon. Admissions 2026 to 2027, academic calendar, streams, ya campus facilities se jude kisi bhi sawal ke liye aap hume 0120 4660000 par call ya info at dpsindirapuram com par email kar sakte hain.";
       }
 
       setCachedAnswer(input.message, fallbackAnswer, ctx.tenantId);
@@ -382,8 +393,27 @@ export const aiRouter = createRouter({
         }
       } catch {}
 
-      // Keep prompt punchy & concise (max 220 chars) for ultra-fast generation
-      const cleanPrompt = input.text.slice(0, 220);
+      // Keep prompt punchy, natural & strictly strip punctuation marks so TTS never vocalizes them
+      const cleanPrompt = input.text
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+        .replace(/```[\s\S]*?```/g, "")
+        .replace(/https?:\/\/\S+/g, "")
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, " ")
+        .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
+        .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
+        .replace(/\bIX\s*&\s*XI\b/gi, "9 and 11")
+        .replace(/\bIX\b/g, "9")
+        .replace(/\bXI\b/g, "11")
+        .replace(/\bXII\b/g, "12")
+        .replace(/\bDPSI\b/gi, "DPS Indirapuram")
+        .replace(/\+?91[- ]?0?120[- ]?4660000/g, "0 1 2 0 4 6 6 0 0 0 0")
+        .replace(/info@dpsindirapuram\.com/gi, "info at dps indirapuram com")
+        .replace(/([0-9]+)\.([0-9]+)%?/g, "$1 point $2 percent")
+        .replace(/[,.;:!?'"“”‘’`~@#$%^&*()_+=\-[\]{}|\\/<>•·▪▫◦]/g, " ")
+        .replace(/\s+/g, " ")
+        .slice(0, 220)
+        .trim();
       const hasHindi = /[\u0900-\u097F]/.test(cleanPrompt);
 
       // 1. Google Cloud Text-to-Speech Engine (Journey & Neural2)

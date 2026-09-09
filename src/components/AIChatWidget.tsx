@@ -199,26 +199,57 @@ export default function AIChatWidget() {
     } catch {}
   };
 
-  // Helper to cleanly sanitize any text for natural speech synthesis
-  const sanitizeVoiceText = (text: string): string => {
+  // Helper to cleanly sanitize text displayed in chat bubbles (removes hyphens, markdown, bullets, and symbols)
+  const sanitizeDisplayText = (text: string): string => {
+    if (!text) return "";
     return text
       .replace(/<think>[\s\S]*?<\/think>/gi, "")
       .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
       .replace(/```[\s\S]*?```/g, "")
       .replace(/https?:\/\/\S+/g, "")
-      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, "") // Strip all emojis (👋, 🎓, etc.)
-      .replace(/[*_#`~[\]()|{}]/g, " ")
-      .replace(/\bDPSI\b/gi, "DPS Indirapuram")
-      .replace(/\bCBSE\b/gi, "C B S E")
-      .replace(/\bAI\b/gi, "A I")
-      .replace(/\b3D\b/gi, "3 D")
-      .replace(/\bIX & XI\b/gi, "9 and 11")
+      .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
+      .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
+      .replace(/\bClass(es)?\s*IX\s*&?\s*XI\b/gi, "Classes 9 and 11")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/#{1,6}\s+/g, "")
+      .replace(/`{1,3}/g, "")
+      // Remove all hyphens, en-dashes, em-dashes
+      .replace(/[-—–_]/g, " ")
+      // Remove all markdown and symbols
+      .replace(/[*#`~[\](){}<>|\\]/g, "")
+      .replace(/^[•*·▪▫◦\s-]+/gm, "")
+      .replace(/:\s*(\.|\s*$)/g, ".")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  };
+
+  // Helper to cleanly sanitize any text for natural speech synthesis
+  // CRITICAL: Strips commas, periods, hyphens, and symbols so the speech engine NEVER pronounces "comma", "dot", "period", "hyphen"
+  const sanitizeVoiceText = (text: string): string => {
+    if (!text) return "";
+    return text
+      .replace(/<think>[\s\S]*?<\/think>/gi, "")
+      .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, " ") // Strip all emojis
+      .replace(/\b2026[-–—]27\b/g, "2026 to 2027")
+      .replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery")
+      .replace(/\bIX\s*&\s*XI\b/gi, "9 and 11")
       .replace(/\bIX\b/g, "9")
       .replace(/\bXI\b/g, "11")
       .replace(/\bXII\b/g, "12")
+      .replace(/\bDPSI\b/gi, "DPS Indirapuram")
+      .replace(/\bCBSE\b/gi, "CBSE")
+      .replace(/\bAI\b/gi, "A I")
+      .replace(/\b3D\b/gi, "3 D")
       .replace(/\bTC\b/gi, "Transfer Certificate")
-      .replace(/\+91[- ]?0?120[- ]?4660000/g, "0 1 2 0 4 6 6 0 0 0 0")
-      .replace(/info@dpsindirapuram\.com/gi, "info at dps indirapuram dot com")
+      .replace(/\+?91[- ]?0?120[- ]?4660000/g, "0 1 2 0 4 6 6 0 0 0 0")
+      .replace(/info@dpsindirapuram\.com/gi, "info at dps indirapuram com")
+      .replace(/([0-9]+)\.([0-9]+)%?/g, "$1 point $2 percent")
+      // STRIP ALL PUNCTUATION MARKS SO TTS NEVER VOCALIZES THEM
+      .replace(/[,.;:!?'"“”‘’`~@#$%^&*()_+=\-[\]{}|\\/<>•·▪▫◦]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
   };
@@ -511,19 +542,7 @@ export default function AIChatWidget() {
       });
 
       if (res?.answer && res.answer.trim()) {
-        let text = res.answer
-          .replace(/<think>[\s\S]*?<\/think>/gi, "")
-          .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
-          .replace(/```[\s\S]*?```/g, "")
-          .replace(/\*\*(.*?)\*\*/g, "$1")
-          .replace(/\*(.*?)\*/g, "$1")
-          .replace(/#{1,6}\s+/g, "")
-          .replace(/`{1,3}/g, "")
-          .replace(/^\s*[-*•]\s+/gm, "• ")
-          .replace(/\*/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
-
+        const text = sanitizeDisplayText(res.answer);
         const action = getDynamicAction(query, text, { calendarPdfUrl, phone, email });
         const result = { answer: text, actionUrl: action.actionUrl, actionType: action.actionType };
         clientQueryCache.current.set(normKey, result);
@@ -539,23 +558,24 @@ export default function AIChatWidget() {
     let fallbackText = "";
 
     if (lower.includes("calendar") || lower.includes("academic year") || lower.includes("schedule")) {
-      fallbackText = "The DPS Indirapuram Academic Year 2026-27 begins in April 2026 for all classes. It features regular Periodic Tests, Mid-Term exams in September, Pre-Board exams in December/January, and Annual exams concluding in February-March 2027.";
+      fallbackText = "The DPS Indirapuram Academic Year 2026 to 2027 begins in April 2026 for all classes. It features regular Periodic Tests, Mid Term exams in September, Pre Board exams in December and January, and Annual exams concluding in February to March 2027.";
     } else if (lower.includes("summer") || lower.includes("vacation")) {
-      fallbackText = "Summer break begins in late May 2026 for all classes. School reopens after summer break in June 2026 for Classes X & XII, and in July 2026 for Nursery to Class IX and Class XI.";
+      fallbackText = "Summer break begins in late May 2026 for all classes. School reopens after summer break in June 2026 for Classes 10 and 12, and in July 2026 for Nursery to Class 9 and Class 11.";
     } else if (lower.includes("winter") || lower.includes("winter break")) {
-      fallbackText = "Winter break begins towards the end of December 2026 for all classes. Classes IX to XII reopen in early January 2027, followed by Nursery to Class VIII in mid-January 2027.";
+      fallbackText = "Winter break begins towards the end of December 2026 for all classes. Classes 9 to 12 reopen in early January 2027, followed by Nursery to Class 8 in mid January 2027.";
     } else if (lower.includes("exam") || lower.includes("test") || lower.includes("half yearly") || lower.includes("preboard") || lower.includes("annual")) {
-      fallbackText = "Periodic Tests are held across April, May, July, and November. Half Yearly exams take place in September 2026, Pre-Boards for Classes X & XII occur in December 2026 and January 2027, and Annual Final Exams occur in January-March 2027.";
+      fallbackText = "Periodic Tests are held across April, May, July, and November. Half Yearly exams take place in September 2026, Pre Boards for Classes 10 and 12 occur in December 2026 and January 2027, and Annual Final Exams occur in January to March 2027.";
     } else if (lower.includes("ptm") || lower.includes("parent teacher")) {
-      fallbackText = "Parent-Teacher Meetings (PTMs) are scheduled regularly throughout the academic session following key assessment cycles with answer script viewings.";
+      fallbackText = "Parent Teacher Meetings PTMs are scheduled regularly throughout the academic session following key assessment cycles with answer script viewings.";
     } else if (lower.includes("admiss") || lower.includes("apply") || lower.includes("register")) {
-      fallbackText = "Admissions for the 2026-27 academic session are currently open from Pre-Nursery to Class IX and Class XI through the official school admission portal.";
+      fallbackText = "Admissions for the 2026 to 2027 academic session are currently open from Pre Nursery to Class 9 and Class 11 through the official school admission portal.";
     } else {
-      fallbackText = "Namaste! I am DPSI AI. You can ask me about Admissions 2026-27, Academic Calendar, Exam Schedules, Streams, or Facilities in both English and Hindi. How can I assist you today?";
+      fallbackText = "Namaste! I am DPSI AI. You can ask me about Admissions 2026 to 2027, Academic Calendar, Exam Schedules, Streams, or Facilities in both English and Hindi. How can I assist you today?";
     }
 
+    const cleanFallback = sanitizeDisplayText(fallbackText);
     const fallbackResult = {
-      answer: fallbackText,
+      answer: cleanFallback,
       actionUrl: fallbackAction.actionUrl,
       actionType: fallbackAction.actionType,
     };
@@ -581,17 +601,7 @@ export default function AIChatWidget() {
 
     try {
       const response = await fetchGroqAIResponse(textToSend, messages);
-      // Clean markdown and formatting artifacts once in memory
-      const cleanAnswer = (response.answer || "")
-        .replace(/\*\*(.*?)\*\*/g, "$1")
-        .replace(/\*(.*?)\*/g, "$1")
-        .replace(/\*/g, "")
-        .replace(/#{1,6}\s+/g, "")
-        .replace(/`{1,3}/g, "")
-        .replace(/https?:\/\/\S+/g, "")
-        .replace(/:\s*(\.|\s*$)/g, ".")
-        .replace(/\s+/g, " ")
-        .trim();
+      const cleanAnswer = sanitizeDisplayText(response.answer || "");
 
       // Start voice output immediately so sound plays right away
       speakAnswerOnce(cleanAnswer);
