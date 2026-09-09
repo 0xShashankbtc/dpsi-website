@@ -352,7 +352,7 @@ export default function Navbar() {
                   transition={{ type: "spring", stiffness: 350, damping: 25 }}
                   src="/images/dps/international_logo.webp"
                   alt="British Council International Dimension in Schools 2020-23"
-                  className="h-11 sm:h-14 lg:h-16 w-auto object-contain rounded-md drop-shadow-sm hover:drop-shadow-md transition-all cursor-pointer"
+                  className="h-12 sm:h-16 lg:h-[72px] w-auto object-contain rounded-md drop-shadow-sm hover:drop-shadow-md transition-all cursor-pointer"
                   title="British Council International Dimension in Schools 2020-23"
                 />
               </div>
@@ -455,7 +455,7 @@ export default function Navbar() {
                   <img
                     src="/images/dps/international_logo.webp"
                     alt="British Council International Dimension in Schools"
-                    className="h-12 w-auto object-contain rounded drop-shadow-xs"
+                    className="h-14 w-auto object-contain rounded drop-shadow-xs"
                   />
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
