@@ -11,12 +11,12 @@ import {
 import { trpc } from "@/providers/trpc";
 
 const iconMap: Record<string, React.ReactNode> = {
-  Calendar: <Calendar className="w-8 h-8" />,
-  Users: <Users className="w-8 h-8" />,
-  GraduationCap: <GraduationCap className="w-8 h-8" />,
-  Network: <Network className="w-8 h-8" />,
-  Award: <Award className="w-8 h-8" />,
-  Trophy: <Trophy className="w-8 h-8" />,
+  Calendar: <Calendar className="w-7 h-7" />,
+  Users: <Users className="w-7 h-7" />,
+  GraduationCap: <GraduationCap className="w-7 h-7" />,
+  Network: <Network className="w-7 h-7" />,
+  Award: <Award className="w-7 h-7" />,
+  Trophy: <Trophy className="w-7 h-7" />,
 };
 
 function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: string }) {
@@ -29,17 +29,15 @@ function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: str
 
   useEffect(() => {
     if (!isInView || isNaN(numericValue)) return;
-    const duration = 1600;
+    const duration = 1400;
     let startTime: number | null = null;
     let rafId: number;
 
     const step = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      // Cubic ease-out: 1 - (1 - progress)^3
       const easeProgress = 1 - Math.pow(1 - progress, 3);
       setCount(easeProgress * numericValue);
-
       if (progress < 1) {
         rafId = requestAnimationFrame(step);
       } else {
@@ -64,7 +62,6 @@ export default function QuickStats() {
 
   if (!stats?.length) return null;
 
-  // Compute symmetric grid columns based on item count
   const getGridClasses = (count: number) => {
     if (count === 1) return "grid-cols-1 max-w-sm";
     if (count === 2) return "grid-cols-2 max-w-2xl";
@@ -75,53 +72,39 @@ export default function QuickStats() {
   };
 
   return (
-    <section className="py-14 sm:py-16 bg-gradient-to-b from-sky-50/70 via-emerald-50/40 to-white text-slate-900 relative overflow-hidden border-y border-emerald-100/80">
-      {/* Subtle Ambient Light Floating Glows */}
-      <motion.div
-        animate={{
-          scale: [1, 1.15, 1],
-          opacity: [0.35, 0.55, 0.35],
-        }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[900px] h-[300px] bg-gradient-to-r from-sky-200/30 via-emerald-200/30 to-teal-200/20 blur-3xl pointer-events-none rounded-full"
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="py-14 sm:py-16 bg-slate-50 border-y border-slate-200 text-slate-900 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 25 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className={`grid ${getGridClasses(stats.length)} gap-4 sm:gap-6 mx-auto justify-center`}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className={`grid ${getGridClasses(stats.length)} gap-4 sm:gap-5 mx-auto justify-center`}
         >
           {stats.map((stat, i) => (
             <motion.div
               key={stat.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{
-                y: -6,
-                scale: 1.03,
-                boxShadow: "0 20px 35px -10px rgba(16, 185, 129, 0.18)"
-              }}
-              className="text-center p-5 sm:p-6 bg-white/90 backdrop-blur-xl rounded-2xl border border-emerald-200/70 hover:border-emerald-400 shadow-md shadow-emerald-950/5 transition-all duration-300 group cursor-default flex flex-col items-center justify-center min-h-[140px]"
+              transition={{ duration: 0.45, delay: i * 0.07 }}
+              whileHover={{ y: -4 }}
+              className="flat-card text-center p-6 sm:p-7 flex flex-col items-center justify-center min-h-[150px] group cursor-default"
             >
-              <motion.div
-                whileHover={{ scale: 1.15, rotate: [0, -8, 8, 0] }}
-                transition={{ duration: 0.4 }}
-                className="text-amber-500 mb-2.5 flex justify-center group-hover:text-amber-600 transition-colors"
-              >
-                {iconMap[stat.icon || "Award"] || <Award className="w-7 h-7 sm:w-8 sm:h-8" />}
-              </motion.div>
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 mb-1 tracking-tight">
+              {/* Icon with cobalt blue */}
+              <div className="text-blue-700 mb-3 flex justify-center group-hover:scale-110 transition-transform duration-200">
+                {iconMap[stat.icon || "Award"] || <Award className="w-7 h-7" />}
+              </div>
+              {/* Large bold number */}
+              <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mb-1.5 tracking-tight leading-none">
                 <AnimatedCounter
                   target={stat.value}
                   suffix={stat.value.includes("%") ? "%" : stat.value.includes("+") ? "+" : ""}
                 />
               </h3>
-              <p className="text-[10px] sm:text-xs font-bold text-emerald-800 uppercase tracking-wider">
+              {/* Cobalt underline accent */}
+              <div className="w-8 h-0.5 bg-blue-700 rounded-full mb-2 group-hover:w-12 transition-all duration-300" />
+              <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
                 {stat.label}
               </p>
             </motion.div>

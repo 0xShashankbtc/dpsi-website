@@ -14,32 +14,37 @@ export default function TestimonialsSection() {
   const prev = () => setCurrent((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 
   return (
-    <section className="py-24 bg-gradient-to-b from-white via-sky-50/40 to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="py-20 bg-slate-50 relative overflow-hidden">
+      {/* Subtle blue strip at top */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-blue-700 opacity-20" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-14"
         >
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3">
-            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> Parent & Alumni Voices
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold uppercase tracking-wider mb-3 border border-rose-200">
+            <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
+            Parent & Alumni Voices
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
             What They Say About Us
           </h2>
-          <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-sky-500 mx-auto mt-4 rounded-full" />
+          {/* Cobalt underline */}
+          <div className="w-14 h-1 bg-blue-700 mx-auto mt-4 rounded-full" />
         </motion.div>
 
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative max-w-3xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={current}
-              initial={{ opacity: 0, scale: 0.96, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: -20 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.2}
@@ -47,33 +52,35 @@ export default function TestimonialsSection() {
                 if (info.offset.x < -50) next();
                 else if (info.offset.x > 50) prev();
               }}
-              className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-200/80 dark:border-slate-700/80 text-center cursor-grab active:cursor-grabbing relative"
+              className="flat-card p-8 sm:p-12 text-center cursor-grab active:cursor-grabbing relative"
             >
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-6 shadow-xs">
-                <Quote className="w-7 h-7" />
+              {/* Quote icon */}
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center mx-auto mb-6">
+                <Quote className="w-6 h-6" />
               </div>
-              <p className="text-base sm:text-xl text-slate-700 dark:text-slate-200 leading-relaxed mb-8 font-medium italic select-none">
+              <p className="text-base sm:text-xl text-slate-700 leading-relaxed mb-8 font-medium italic select-none">
                 "{testimonials[current].content}"
               </p>
               <div>
-                <h4 className="font-black text-slate-900 dark:text-white text-lg tracking-tight">
+                <h4 className="font-black text-slate-900 text-lg tracking-tight">
                   {testimonials[current].name}
                 </h4>
-                <p className="text-emerald-700 dark:text-emerald-400 font-bold text-xs mt-1 uppercase tracking-wider">
+                <p className="text-blue-700 font-bold text-xs mt-1 uppercase tracking-wider">
                   {testimonials[current].role}
                 </p>
               </div>
             </motion.div>
           </AnimatePresence>
 
+          {/* Controls */}
           <div className="flex items-center justify-center gap-4 mt-8">
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={prev}
-                className="rounded-full w-10 h-10 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md cursor-pointer"
-                title="Previous testimonial"
+                className="rounded-full w-10 h-10 border-slate-200 bg-white shadow-sm cursor-pointer hover:border-blue-300 hover:bg-blue-50"
+                title="Previous"
               >
                 <ChevronLeft className="w-5 h-5" />
               </Button>
@@ -86,22 +93,22 @@ export default function TestimonialsSection() {
                   onClick={() => setCurrent(i)}
                   animate={{
                     width: i === current ? 24 : 8,
-                    backgroundColor: i === current ? "#059669" : "rgba(148, 163, 184, 0.5)"
+                    backgroundColor: i === current ? "#1d4ed8" : "rgba(148, 163, 184, 0.5)",
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className="h-2 rounded-full cursor-pointer"
-                  title={`Go to testimonial ${i + 1}`}
+                  className="h-1.5 rounded-full cursor-pointer"
+                  title={`Testimonial ${i + 1}`}
                 />
               ))}
             </div>
 
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={next}
-                className="rounded-full w-10 h-10 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md cursor-pointer"
-                title="Next testimonial"
+                className="rounded-full w-10 h-10 border-slate-200 bg-white shadow-sm cursor-pointer hover:border-blue-300 hover:bg-blue-50"
+                title="Next"
               >
                 <ChevronRight className="w-5 h-5" />
               </Button>

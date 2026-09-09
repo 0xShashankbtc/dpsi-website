@@ -25,52 +25,36 @@ export default function CTASection() {
   const address = getSetting("contact_address", "526/1, Ahinsa Khand-II, Indirapuram, Ghaziabad, U.P. - 201014");
 
   return (
-    <section className="relative py-20 bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-950 text-white overflow-hidden">
-      {/* Background patterns */}
-      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px]" />
-
-      {/* Dynamic Animated Ambient Orbs */}
-      <motion.div
-        animate={{
-          scale: [1, 1.25, 1],
-          opacity: [0.2, 0.4, 0.2],
-        }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-32 -right-32 w-96 h-96 bg-emerald-500/20 blur-3xl pointer-events-none rounded-full"
-      />
-      <motion.div
-        animate={{
-          scale: [1.2, 1, 1.2],
-          opacity: [0.15, 0.35, 0.15],
-        }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -bottom-32 -left-32 w-96 h-96 bg-amber-500/15 blur-3xl pointer-events-none rounded-full"
-      />
+    <section className="relative py-20 bg-blue-700 text-white overflow-hidden">
+      {/* Subtle dot-grid background texture */}
+      <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
+      {/* Right orange accent glow */}
+      <div className="absolute -top-24 right-0 w-80 h-80 bg-orange-500/20 blur-3xl rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+          {/* LEFT — CTA text */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
-              <span>{badge}</span>
+            <div className="inline-flex items-center px-3 py-1 rounded-lg bg-white/15 text-white text-xs font-bold uppercase tracking-wider mb-5 border border-white/25">
+              {badge}
             </div>
-
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-5 tracking-tight text-white leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-5 tracking-tight leading-tight">
               {title}
             </h2>
-            <p className="text-emerald-100/90 mb-8 text-base sm:text-lg leading-relaxed font-medium">
+            <p className="text-blue-100 mb-9 text-base sm:text-lg leading-relaxed font-medium">
               {subtitle}
             </p>
-
             <div className="flex flex-wrap items-center gap-4">
-              <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black px-7 py-3.5 rounded-2xl shadow-xl shadow-amber-950/40 cursor-pointer flex items-center gap-2 text-sm"
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-black px-8 py-3.5 rounded-xl shadow-xl shadow-orange-900/30 cursor-pointer flex items-center gap-2 text-sm transition-colors"
                   asChild
                 >
                   <Link to={buttonLink}>
@@ -78,11 +62,10 @@ export default function CTASection() {
                   </Link>
                 </Button>
               </motion.div>
-
-              <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
                 <Button
                   size="lg"
-                  className="border-2 border-white/80 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-7 py-3.5 rounded-2xl font-bold transition-all duration-300 shadow-md cursor-pointer text-sm"
+                  className="border-2 border-white/60 bg-white/10 hover:bg-white/20 text-white px-8 py-3.5 rounded-xl font-bold text-sm cursor-pointer"
                   asChild
                 >
                   <Link to="/contact">Contact Office</Link>
@@ -91,53 +74,57 @@ export default function CTASection() {
             </div>
           </motion.div>
 
+          {/* RIGHT — Contact info cards */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-4"
+            transition={{ duration: 0.65, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-3"
           >
+            {/* Phone */}
             <motion.a
               href={`tel:${phone.split(",")[0].replace(/[^0-9+]/g, "")}`}
-              whileHover={{ x: 6, backgroundColor: "rgba(255, 255, 255, 0.16)" }}
+              whileHover={{ x: 4, backgroundColor: "rgba(255,255,255,0.18)" }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="flex items-center gap-4 p-5 bg-white/10 rounded-2xl backdrop-blur-md border border-white/15 shadow-lg cursor-pointer transition-colors block"
+              className="flex items-center gap-4 p-5 bg-white/10 rounded-2xl border border-white/15 shadow-sm cursor-pointer transition-colors block"
             >
-              <div className="w-12 h-12 bg-emerald-500/30 text-emerald-300 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                <Phone className="w-6 h-6" />
+              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                <Phone className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-emerald-300">Direct Admission Desk</p>
+                <p className="text-xs font-semibold text-blue-200">Direct Admission Desk</p>
                 <p className="font-extrabold text-base text-white">{phone}</p>
               </div>
             </motion.a>
 
+            {/* Email */}
             <motion.a
               href={`mailto:${email}`}
-              whileHover={{ x: 6, backgroundColor: "rgba(255, 255, 255, 0.16)" }}
+              whileHover={{ x: 4, backgroundColor: "rgba(255,255,255,0.18)" }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="flex items-center gap-4 p-5 bg-white/10 rounded-2xl backdrop-blur-md border border-white/15 shadow-lg cursor-pointer transition-colors block"
+              className="flex items-center gap-4 p-5 bg-white/10 rounded-2xl border border-white/15 shadow-sm cursor-pointer transition-colors block"
             >
-              <div className="w-12 h-12 bg-emerald-500/30 text-emerald-300 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                <Mail className="w-6 h-6" />
+              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                <Mail className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-emerald-300">Email Admissions Desk</p>
+                <p className="text-xs font-semibold text-blue-200">Email Admissions Desk</p>
                 <p className="font-extrabold text-base text-white">{email}</p>
               </div>
             </motion.a>
 
+            {/* Address */}
             <motion.div
-              whileHover={{ x: 6, backgroundColor: "rgba(255, 255, 255, 0.16)" }}
+              whileHover={{ x: 4, backgroundColor: "rgba(255,255,255,0.18)" }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="flex items-center gap-4 p-5 bg-white/10 rounded-2xl backdrop-blur-md border border-white/15 shadow-lg transition-colors"
+              className="flex items-center gap-4 p-5 bg-white/10 rounded-2xl border border-white/15 shadow-sm transition-colors"
             >
-              <div className="w-12 h-12 bg-emerald-500/30 text-emerald-300 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                <MapPin className="w-6 h-6" />
+              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                <MapPin className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-emerald-300">Campus Location</p>
+                <p className="text-xs font-semibold text-blue-200">Campus Location</p>
                 <p className="font-extrabold text-base text-white">{address}</p>
               </div>
             </motion.div>
