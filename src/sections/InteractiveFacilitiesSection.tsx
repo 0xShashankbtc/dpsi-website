@@ -149,9 +149,50 @@ const FACILITIES_DATA: FacilityItem[] = [
   },
 ];
 
+const ICON_LOOKUP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Cpu,
+  Waves,
+  FlaskConical,
+  BookOpen,
+  Trophy,
+  GraduationCap,
+  Microscope: FlaskConical,
+  Default: Sparkles,
+};
+
+import { trpc } from "@/providers/trpc";
+
 export default function InteractiveFacilitiesSection() {
-  const [activeTab, setActiveTab] = useState(FACILITIES_DATA[0].id);
-  const activeFacility = FACILITIES_DATA.find((f) => f.id === activeTab) || FACILITIES_DATA[0];
+  const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery(undefined, {
+    staleTime: 60000,
+  });
+
+  const facilities: FacilityItem[] =
+    cmsFacilities && cmsFacilities.length > 0
+      ? cmsFacilities
+          .filter((f: any) => !f.isDeleted && f.isActive !== false)
+          .map((f: any, idx: number) => {
+            const fallback = FACILITIES_DATA[idx % FACILITIES_DATA.length];
+            const IconComp = ICON_LOOKUP[f.icon] || fallback?.icon || Sparkles;
+            return {
+              id: f._id?.toString() || f.id || `fac-${idx}`,
+              name: f.title,
+              category: f.category || "Campus",
+              icon: IconComp,
+              image: f.imageUrl || fallback?.image || "/images/facilities/ai_robotics_lab.webp",
+              tagline: f.tagline || fallback?.tagline || "World-Class Learning Environment",
+              description: f.description || fallback?.description || "",
+              highlights: Array.isArray(f.highlights) && f.highlights.length > 0 ? f.highlights : fallback?.highlights || [],
+              metrics: Array.isArray(f.metrics) && f.metrics.length > 0 ? f.metrics : fallback?.metrics || [
+                { value: "100%", label: "Hands-on Practical" },
+                { value: "A+", label: "Safety Rating" },
+              ],
+            };
+          })
+      : FACILITIES_DATA;
+
+  const [activeTab, setActiveTab] = useState(facilities[0]?.id || FACILITIES_DATA[0].id);
+  const activeFacility = facilities.find((f) => f.id === activeTab) || facilities[0] || FACILITIES_DATA[0];
   const IconComponent = activeFacility.icon;
 
   return (
@@ -177,7 +218,7 @@ export default function InteractiveFacilitiesSection() {
 
         {/* Interactive Tab Switcher */}
         <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto pb-4 mb-10 no-scrollbar">
-          {FACILITIES_DATA.map((facility) => {
+          {facilities.map((facility) => {
             const TabIcon = facility.icon;
             const isSelected = facility.id === activeTab;
             return (
