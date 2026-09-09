@@ -1,7 +1,19 @@
-import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useCallback } from "react";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link } from "react-router";
-import { ArrowRight, ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  Sparkles,
+  Bot,
+  Compass,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
 
@@ -41,13 +53,40 @@ export default function HeroSection() {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlayingVideo, setIsPlayingVideo] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const containerRef = useRef<HTMLElement | null>(null);
 
   const safeSlideIndex = activeSlides.length > 0 ? currentSlide % activeSlides.length : 0;
   const slide = activeSlides[safeSlideIndex] || DEFAULT_HERO_SLIDES[0];
 
   const hasVideo = Boolean(slide.videoUrl || slide.mediaType === "video");
   const videoSource = slide.videoUrl || (hasVideo ? "/videos/campus_hero.mp4" : "");
+
+  // Mouse Parallax Physics for Super Smooth 3D Tilt
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springConfig = { damping: 25, stiffness: 200, mass: 0.5 };
+  const smoothX = useSpring(mouseX, springConfig);
+  const smoothY = useSpring(mouseY, springConfig);
+  const rotateX = useTransform(smoothY, [-0.5, 0.5], [5, -5]);
+  const rotateY = useTransform(smoothX, [-0.5, 0.5], [-6, 6]);
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      mouseX.set(x);
+      mouseY.set(y);
+    },
+    [mouseX, mouseY]
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    mouseX.set(0);
+    mouseY.set(0);
+  }, [mouseX, mouseY]);
 
   const handleNextSlide = () => {
     if (activeSlides.length <= 1) return;
@@ -70,17 +109,54 @@ export default function HeroSection() {
     }
   };
 
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
+
+  const openAIChat = (promptText?: string) => {
+    window.dispatchEvent(
+      new CustomEvent("dpsi:open-ai-chat", {
+        detail: { prompt: promptText || "Can you tell me about the admission procedure for 2026-27?" },
+      })
+    );
+  };
+
+  const scrollToSection = (elementId: string) => {
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
-    <section className="relative min-h-[75vh] sm:min-h-[85vh] lg:min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white">
-      {/* BACKGROUND VIDEO / IMAGE */}
+    <section
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative min-h-[78vh] sm:min-h-[86vh] lg:min-h-[92vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white select-none contain-paint"
+      style={{ perspective: "1000px" }}
+    >
+      {/* GPU-ACCELERATED BACKGROUND MEDIA */}
       <AnimatePresence initial={false} mode="wait">
         <motion.div
           key={safeSlideIndex + (hasVideo ? "-vid" : "-img")}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 z-0 overflow-hidden"
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 z-0 overflow-hidden will-change-transform"
         >
           {hasVideo && videoSource ? (
             <video
@@ -88,11 +164,11 @@ export default function HeroSection() {
               src={videoSource}
               poster={slide.image || "/images/dps/slider_1.webp"}
               autoPlay
-              muted
+              muted={isMuted}
               loop
               playsInline
               preload="auto"
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-cover object-center scale-[1.02] will-change-transform"
             />
           ) : (
             <img
@@ -104,30 +180,36 @@ export default function HeroSection() {
           )}
 
           {/* Minimalist Cinematic Scrim */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/40" />
-          <div className="absolute inset-0 bg-slate-950/20 backdrop-brightness-90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-slate-950/40" />
+          <div className="absolute inset-0 bg-slate-950/20 backdrop-brightness-95" />
         </motion.div>
       </AnimatePresence>
 
-      {/* MINIMALIST HERO CONTENT OVERLAY */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center flex flex-col items-center">
-        {/* Subtle minimalist badge */}
+      {/* 3D TILT INTERACTIVE HERO OVERLAY */}
+      <motion.div
+        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center flex flex-col items-center will-change-transform"
+      >
+        {/* Subtle Interactive Badge */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-xs font-semibold tracking-wide mb-6 shadow-sm"
+          whileHover={{ scale: 1.06 }}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 text-white/90 text-xs font-semibold tracking-wide mb-6 shadow-sm cursor-default transition-colors"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>{slide.badge || "Admissions Open 2026-27"}</span>
+          <span className="text-white/40">|</span>
+          <span className="text-[11px] text-white/70">CBSE Affiliation No. 2130541</span>
         </motion.div>
 
-        {/* Minimalist Title */}
+        {/* Minimalist Bold Title */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] mb-5 max-w-4xl"
+          className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08] mb-5 max-w-4xl drop-shadow-sm"
         >
           {slide.title}
         </motion.h1>
@@ -138,71 +220,115 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-base sm:text-xl text-slate-300 font-normal max-w-2xl mx-auto mb-9 leading-relaxed"
+            className="text-base sm:text-xl text-slate-200 font-normal max-w-2xl mx-auto mb-8 leading-relaxed drop-shadow-xs"
           >
             {slide.subtitle}
           </motion.p>
         )}
 
-        {/* Clean, Sorted Action Buttons */}
+        {/* Main Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-wrap items-center justify-center gap-3.5"
+          className="flex flex-wrap items-center justify-center gap-3.5 mb-8"
         >
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               size="lg"
-              className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-lg shadow-black/20 cursor-pointer flex items-center gap-2"
+              className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-xl shadow-black/25 cursor-pointer flex items-center gap-2"
               asChild
             >
               <Link to={slide.buttonLink || "/admissions"}>
-                {slide.buttonText || "Apply Now"} <ArrowRight className="w-4 h-4" />
+                {slide.buttonText || "Apply Online"} <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               size="lg"
               variant="outline"
+              onClick={() => scrollToSection("interactive-facilities")}
               className="border border-white/30 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md px-7 py-3 rounded-xl font-semibold transition-all text-sm cursor-pointer"
-              asChild
             >
-              <Link to="/about">Explore Campus</Link>
+              <Compass className="w-4 h-4 mr-1.5" />
+              Explore Campus
             </Button>
           </motion.div>
         </motion.div>
-      </div>
 
-      {/* MINIMALIST BOTTOM CONTROLS */}
-      <div className="absolute bottom-6 inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-6">
-        {/* Video Play/Pause Control */}
-        {hasVideo && (
+        {/* INTERACTIVE VISITOR QUICK CHIPS */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="flex flex-wrap items-center justify-center gap-2 pt-2"
+        >
           <button
-            type="button"
-            onClick={toggleVideoPlayback}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer"
-            title={isPlayingVideo ? "Pause Background Video" : "Play Background Video"}
+            onClick={() => openAIChat("Tell me about Nursery to Class XI admission criteria.")}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
           >
-            {isPlayingVideo ? (
-              <>
-                <Pause className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Pause Video</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Play Video</span>
-              </>
-            )}
+            <Bot className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Ask AI About Admissions</span>
           </button>
+
+          <button
+            onClick={() => scrollToSection("interactive-facilities")}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Interactive Campus Lab & Sports</span>
+          </button>
+
+          <Link
+            to="/transfer-certificate"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
+          >
+            <span>Verify TC Online</span>
+          </Link>
+        </motion.div>
+      </motion.div>
+
+      {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM) */}
+      <div className="absolute bottom-5 inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Left: Video Play & Audio Controls */}
+        {hasVideo && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleVideoPlayback}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 hover:bg-black/70 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
+              title={isPlayingVideo ? "Pause Video" : "Play Video"}
+            >
+              {isPlayingVideo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{isPlayingVideo ? "Pause" : "Play"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 hover:bg-black/70 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
+              title={isMuted ? "Unmute Video Audio" : "Mute Video Audio"}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+              <span className="hidden sm:inline">{isMuted ? "Sound Off" : "Sound On"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="p-1.5 rounded-full bg-black/45 hover:bg-black/70 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs transition-all cursor-pointer hidden md:inline-flex shadow-sm"
+              title="Toggle Fullscreen"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
 
-        {/* Multi-Slide Navigation (Only shown if >1 slide) */}
+        {/* Right: Slide Controls (If Multiple Slides) */}
         {activeSlides.length > 1 && (
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 ml-auto">
+          <div className="flex items-center gap-2 bg-black/45 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 ml-auto shadow-sm">
             <button
               onClick={handlePrevSlide}
               className="p-1 rounded-full text-white/70 hover:text-white transition-colors cursor-pointer"

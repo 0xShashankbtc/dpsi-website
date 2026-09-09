@@ -9,6 +9,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
+import { Spotlight } from "@/components/ui/spotlight";
 
 const iconMap: Record<string, React.ReactNode> = {
   Calendar: <Calendar className="w-7 h-7" />,
@@ -72,14 +73,14 @@ export default function QuickStats() {
   };
 
   return (
-    <section className="py-14 sm:py-16 bg-slate-50 border-y border-slate-200 text-slate-900 relative overflow-hidden">
+    <section className="py-16 sm:py-20 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className={`grid ${getGridClasses(stats.length)} gap-4 sm:gap-5 mx-auto justify-center`}
+          className={`grid ${getGridClasses(stats.length)} gap-4 sm:gap-6 mx-auto justify-center`}
         >
           {stats.map((stat, i) => (
             <motion.div
@@ -88,22 +89,34 @@ export default function QuickStats() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: i * 0.07 }}
-              whileHover={{ y: -4 }}
-              className="flat-card text-center p-6 sm:p-7 flex flex-col items-center justify-center min-h-[150px] group cursor-default"
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="flat-card relative overflow-hidden bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 text-center p-6 sm:p-7 flex flex-col items-center justify-center min-h-[160px] group cursor-default shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl"
             >
-              {/* Icon with clean styling */}
-              <div className="text-amber-500 mb-3 flex justify-center group-hover:scale-110 transition-transform duration-200">
+              <Spotlight
+                className="from-amber-400/20 via-emerald-400/10 to-transparent"
+                size={180}
+              />
+
+              {/* Icon with interactive spring bounce on card hover */}
+              <motion.div
+                whileHover={{ rotate: [0, -10, 10, -5, 0], scale: 1.15 }}
+                transition={{ duration: 0.4 }}
+                className="text-amber-500 mb-3 flex justify-center cursor-pointer"
+              >
                 {iconMap[stat.icon || "Award"] || <Award className="w-7 h-7" />}
-              </div>
-              {/* Large bold number */}
+              </motion.div>
+
+              {/* Large bold number with count-up */}
               <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-1.5 tracking-tight leading-none">
                 <AnimatedCounter
                   target={stat.value}
                   suffix={stat.value.includes("%") ? "%" : stat.value.includes("+") ? "+" : ""}
                 />
               </h3>
-              {/* Minimalist underline accent */}
-              <div className="w-8 h-0.5 bg-slate-900 dark:bg-white rounded-full mb-2 group-hover:w-12 transition-all duration-300" />
+
+              {/* Underline accent with smooth expansion */}
+              <div className="w-8 h-0.5 bg-slate-900 dark:bg-white rounded-full mb-2 group-hover:w-14 transition-all duration-300" />
+
               <p className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {stat.label}
               </p>

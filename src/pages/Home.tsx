@@ -2,6 +2,7 @@ import Layout from "@/components/Layout";
 import HeroSection from "@/sections/HeroSection";
 import AnnouncementsBar from "@/sections/AnnouncementsBar";
 import QuickStats from "@/sections/QuickStats";
+import InteractiveFacilitiesSection from "@/sections/InteractiveFacilitiesSection";
 import NewsHighlights from "@/sections/NewsHighlights";
 import PrincipalMessage from "@/sections/PrincipalMessage";
 import AchievementsSection from "@/sections/AchievementsSection";
@@ -15,6 +16,7 @@ export default function Home() {
       <AnnouncementsBar />
       <HeroSection />
       <QuickStats />
+      <InteractiveFacilitiesSection />
       <NewsHighlights />
       <PrincipalMessage />
       <AchievementsSection />

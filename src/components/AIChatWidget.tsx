@@ -68,6 +68,17 @@ export default function AIChatWidget() {
   const email = getSetting("contact_email", "info@dpsindirapuram.com");
 
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = (e: any) => {
+      setIsOpen(true);
+      if (e?.detail?.prompt) {
+        setInput(e.detail.prompt);
+      }
+    };
+    window.addEventListener("dpsi:open-ai-chat", handleOpen);
+    return () => window.removeEventListener("dpsi:open-ai-chat", handleOpen);
+  }, []);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
