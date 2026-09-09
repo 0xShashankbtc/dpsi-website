@@ -346,12 +346,13 @@ export default function Navbar() {
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="hidden sm:flex items-center pl-2 border-l border-slate-200 dark:border-slate-800">
+              <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
                 <motion.img
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.06 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
                   src="/images/dps/international_logo.webp"
                   alt="British Council International Dimension in Schools 2020-23"
-                  className="h-9 sm:h-11 w-auto object-contain rounded shadow-xs"
+                  className="h-11 sm:h-14 lg:h-16 w-auto object-contain rounded-md drop-shadow-sm hover:drop-shadow-md transition-all cursor-pointer"
                   title="British Council International Dimension in Schools 2020-23"
                 />
               </div>
@@ -449,6 +450,22 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                 )}
+
+                <div className="pt-3 mt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center gap-3 px-3">
+                  <img
+                    src="/images/dps/international_logo.webp"
+                    alt="British Council International Dimension in Schools"
+                    className="h-12 w-auto object-contain rounded drop-shadow-xs"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      British Council IDS Accredited
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      International Dimension in Schools
+                    </span>
+                  </div>
+                </div>
               </motion.div>
             </motion.div>
           )}
