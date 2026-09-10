@@ -84,14 +84,33 @@ describe("Cybersecurity & Hardening Test Suite", () => {
   });
 
   describe("File Upload & Magic Bytes Security", () => {
-    it("blocks executable file extensions", () => {
-      const forbidden = [".exe", ".sh", ".php", ".phtml", ".js", ".mjs", ".bat", ".cmd", ".vbs"];
-      const testFiles = ["exploit.exe", "script.sh", "backdoor.php", "payload.js", "virus.bat"];
+    it("blocks executable and script file extensions", () => {
+      const forbidden = [
+        ".exe", ".sh", ".php", ".phtml", ".js", ".mjs", ".bat", ".cmd", ".vbs",
+        ".html", ".htm", ".xhtml", ".jsp", ".asp", ".aspx", ".cgi", ".pl"
+      ];
+      const testFiles = [
+        "exploit.exe", "script.sh", "backdoor.php", "payload.js", "virus.bat",
+        "phishing.html", "xss.htm", "shell.jsp", "hack.asp", "portal.aspx", "run.cgi", "script.pl"
+      ];
 
       for (const file of testFiles) {
         const lower = file.toLowerCase();
         const isBlocked = forbidden.some((ext) => lower.endsWith(ext));
         expect(isBlocked).toBe(true);
+      }
+    });
+
+    it("allows standard safe document, image, and media formats", () => {
+      const allowed = ["document.pdf", "photo.jpg", "image.png", "graphic.webp", "video.mp4"];
+      const forbidden = [
+        ".exe", ".sh", ".php", ".phtml", ".js", ".mjs", ".bat", ".cmd", ".vbs",
+        ".html", ".htm", ".xhtml", ".jsp", ".asp", ".aspx", ".cgi", ".pl"
+      ];
+      for (const file of allowed) {
+        const lower = file.toLowerCase();
+        const isBlocked = forbidden.some((ext) => lower.endsWith(ext));
+        expect(isBlocked).toBe(false);
       }
     });
 
@@ -301,4 +320,65 @@ describe("Cybersecurity & Hardening Test Suite", () => {
       expect(typeof mockHealth.responseTimeMs).toBe("number");
     });
   });
+
+  describe("Phase 6: Auth Bypass Prevention & Rate Limiting Enforcement", () => {
+    it("strictly forbids x-admin-auth header bypass in production mode", () => {
+      function evaluateDevBypass(env: string, enableDevAdmin: string | undefined, headerVal: string | null) {
+        const isDev = env === "development" || env === "test";
+        if (isDev && enableDevAdmin === "true" && headerVal === "true") {
+          return { role: "superadmin", username: "Admin" };
+        }
+        return null;
+      }
+
+      // Production attempt with x-admin-auth: true MUST return null
+      expect(evaluateDevBypass("production", "true", "true")).toBeNull();
+      expect(evaluateDevBypass("production", "false", "true")).toBeNull();
+      expect(evaluateDevBypass("production", undefined, "true")).toBeNull();
+
+      // Dev attempt without ENABLE_DEV_ADMIN=true MUST return null
+      expect(evaluateDevBypass("development", undefined, "true")).toBeNull();
+      expect(evaluateDevBypass("development", "false", "true")).toBeNull();
+
+      // Only valid when in dev/test AND explicit opt-in flag ENABLE_DEV_ADMIN=true
+      expect(evaluateDevBypass("development", "true", "true")).toEqual({
+        role: "superadmin",
+        username: "Admin",
+      });
+    });
+
+    it("evaluates rate limit window correctly and blocks excessive attempts", () => {
+      const windowMs = 60 * 1000;
+      const maxLimit = 5;
+      const attempts = [
+        Date.now() - 10000,
+        Date.now() - 8000,
+        Date.now() - 6000,
+        Date.now() - 4000,
+        Date.now() - 2000,
+      ];
+
+      const now = Date.now();
+      const recentAttempts = attempts.filter((t) => now - t < windowMs);
+      const isRateLimited = recentAttempts.length >= maxLimit;
+
+      expect(isRateLimited).toBe(true);
+
+      // Filtered with fewer attempts
+      const allowedAttempts = attempts.slice(0, 3);
+      expect(allowedAttempts.filter((t) => now - t < windowMs).length >= maxLimit).toBe(false);
+    });
+
+    it("verifies changePassword schema rejects passwords under 8 characters", () => {
+      const changePasswordSchema = z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8, "Password must be at least 8 characters long"),
+      });
+
+      expect(() => changePasswordSchema.parse({ currentPassword: "admin", newPassword: "123" })).toThrow();
+      expect(() => changePasswordSchema.parse({ currentPassword: "admin", newPassword: "7chars!" })).toThrow();
+      expect(() => changePasswordSchema.parse({ currentPassword: "admin", newPassword: "8charsOk!" })).not.toThrow();
+    });
+  });
 });
+

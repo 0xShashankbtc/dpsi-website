@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createRouter, publicMutation, adminQuery, adminMutation } from "./middleware";
+import { checkPersistentRateLimit } from "./models/cmsSchemas";
 
 export const contactRouter = createRouter({
   create: publicMutation
@@ -12,7 +13,12 @@ export const contactRouter = createRouter({
         message: z.string().min(5),
       })
     )
-    .mutation(async () => {
+    .mutation(async ({ ctx }) => {
+      const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+      const allowed = await checkPersistentRateLimit(`contact:${clientIp}`, 10, 60);
+      if (!allowed) {
+        return { success: false, error: "Too many submissions. Please wait a moment before sending another message." };
+      }
       return { success: true, id: 1 };
     }),
 

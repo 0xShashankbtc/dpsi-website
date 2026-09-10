@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRouter, publicQuery, publicMutation, adminQuery, adminMutation } from "./middleware";
-import { getMainModels } from "./models/cmsSchemas";
+import { getMainModels, checkPersistentRateLimit } from "./models/cmsSchemas";
 
 export const admissionRouter = createRouter({
   create: publicMutation
@@ -20,7 +20,12 @@ export const admissionRouter = createRouter({
         message: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+      const allowed = await checkPersistentRateLimit(`admission:${clientIp}`, 10, 60);
+      if (!allowed) {
+        return { success: false, error: "Too many registration attempts. Please wait a moment before trying again." };
+      }
       try {
         const { MunRegistration } = await getMainModels();
         const doc = await MunRegistration.create({
