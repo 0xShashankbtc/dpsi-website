@@ -235,7 +235,10 @@ export default function HeroSection() {
         transition={{ duration: 0.5, delay: 0.1 }}
         className="absolute top-5 sm:top-7 inset-x-0 z-20 flex justify-center px-4 pointer-events-auto"
       >
-        <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-white/[0.14] hover:bg-white/[0.22] backdrop-blur-xl border border-white/30 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/10 cursor-default transition-all">
+        <div
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.14)" }}
+          className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full backdrop-blur-xl border border-white/30 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/10 cursor-default transition-all"
+        >
           <span>{slide.badge || "Admissions Open 2026-27"}</span>
           <span className="text-white/40">|</span>
           <span className="text-[11px] sm:text-xs text-white/85">CBSE Affiliation No. 2130541</span>
