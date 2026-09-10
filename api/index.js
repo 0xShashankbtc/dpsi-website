@@ -180267,12 +180267,20 @@ var cmsRouter = createRouter({
       mediaType: external_exports.enum(["image", "video"]).default("image"),
       linkUrl: external_exports.string().optional(),
       buttonText: external_exports.string().optional(),
+      buttonLink: external_exports.string().optional(),
       order: external_exports.number().default(0),
       isActive: external_exports.boolean().default(true)
     })
   ).mutation(async ({ input, ctx }) => {
     const { Slider } = await getMainModels();
-    const created = await Slider.create(input);
+    const sliderData = { ...input };
+    if (input.buttonLink && !input.linkUrl) {
+      sliderData.linkUrl = input.buttonLink;
+    }
+    if (input.linkUrl && !input.buttonLink) {
+      sliderData.buttonLink = input.linkUrl;
+    }
+    const created = await Slider.create(sliderData);
     await createImmutableAuditLog({
       action: "CREATE_SLIDER",
       module: "Sliders",
@@ -180292,6 +180300,7 @@ var cmsRouter = createRouter({
       mediaType: external_exports.enum(["image", "video"]).optional(),
       linkUrl: external_exports.string().optional(),
       buttonText: external_exports.string().optional(),
+      buttonLink: external_exports.string().optional(),
       order: external_exports.number().optional(),
       isActive: external_exports.boolean().optional()
     })
@@ -180299,6 +180308,12 @@ var cmsRouter = createRouter({
     const { Slider } = await getMainModels();
     const sliderId = String(input.id?._id || input.id);
     const { id, ...data2 } = input;
+    if (data2.buttonLink && !data2.linkUrl) {
+      data2.linkUrl = data2.buttonLink;
+    }
+    if (data2.linkUrl && !data2.buttonLink) {
+      data2.buttonLink = data2.linkUrl;
+    }
     const updated = await Slider.findByIdAndUpdate(sliderId, data2, { new: true });
     await createImmutableAuditLog({
       action: "UPDATE_SLIDER",

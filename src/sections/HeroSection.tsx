@@ -32,7 +32,8 @@ const DEFAULT_HERO_SLIDES = [
 
 export default function HeroSection() {
   const { data: cmsSliders } = trpc.cms.listSliders.useQuery(undefined, {
-    staleTime: 60000,
+    staleTime: 5000,
+    refetchOnMount: true,
   });
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
@@ -178,6 +179,13 @@ export default function HeroSection() {
               loop
               playsInline
               preload="auto"
+              onPlay={() => setIsPlayingVideo(true)}
+              onPause={() => setIsPlayingVideo(false)}
+              onVolumeChange={() => {
+                if (videoRef.current) {
+                  setIsMuted(videoRef.current.muted);
+                }
+              }}
               className="w-full h-full object-cover object-center scale-[1.02] will-change-transform"
             />
           ) : (

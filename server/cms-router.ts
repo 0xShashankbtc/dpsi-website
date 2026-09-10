@@ -1140,13 +1140,21 @@ export const cmsRouter = createRouter({
         mediaType: z.enum(["image", "video"]).default("image"),
         linkUrl: z.string().optional(),
         buttonText: z.string().optional(),
+        buttonLink: z.string().optional(),
         order: z.number().default(0),
         isActive: z.boolean().default(true),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const { Slider } = await getMainModels();
-      const created = await Slider.create(input);
+      const sliderData: any = { ...input };
+      if (input.buttonLink && !input.linkUrl) {
+        sliderData.linkUrl = input.buttonLink;
+      }
+      if (input.linkUrl && !input.buttonLink) {
+        sliderData.buttonLink = input.linkUrl;
+      }
+      const created = await Slider.create(sliderData);
       await createImmutableAuditLog({
         action: "CREATE_SLIDER",
         module: "Sliders",
@@ -1167,6 +1175,7 @@ export const cmsRouter = createRouter({
         mediaType: z.enum(["image", "video"]).optional(),
         linkUrl: z.string().optional(),
         buttonText: z.string().optional(),
+        buttonLink: z.string().optional(),
         order: z.number().optional(),
         isActive: z.boolean().optional(),
       })
@@ -1174,7 +1183,13 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { Slider } = await getMainModels();
       const sliderId = String(input.id?._id || input.id);
-      const { id, ...data } = input;
+      const { id, ...data } = input as any;
+      if (data.buttonLink && !data.linkUrl) {
+        data.linkUrl = data.buttonLink;
+      }
+      if (data.linkUrl && !data.buttonLink) {
+        data.buttonLink = data.linkUrl;
+      }
       const updated = await Slider.findByIdAndUpdate(sliderId, data, { new: true });
       await createImmutableAuditLog({
         action: "UPDATE_SLIDER",
