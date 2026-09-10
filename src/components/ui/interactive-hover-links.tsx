@@ -2,6 +2,7 @@ import { useMotionValue, motion, useSpring, useTransform } from "framer-motion";
 import React, { useRef } from "react";
 import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
+import { trpc } from "@/providers/trpc";
 
 export interface InteractiveLinkItem {
   heading: string;
@@ -17,14 +18,65 @@ interface InteractiveHoverLinksProps {
 }
 
 export function InteractiveHoverLinks({
-  links = INTERACTIVE_LINKS,
+  links,
   className = "",
   onLinkClick,
 }: InteractiveHoverLinksProps) {
+  const { data: dbMenus } = trpc.cms.listMenus.useQuery({ location: "header" });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  // If custom links were passed via props, use them
+  // Otherwise build dynamic links combining DB menus & site settings, with curated fallbacks
+  const resolvedLinks: InteractiveLinkItem[] = (() => {
+    if (links && links.length > 0) return links;
+
+    // Check if 360 tour URL is configured in DB site settings
+    const view360Url = siteSettings?.find((s: any) => s.key === "view_360_url")?.value?.trim() || "https://dpsivr.vercel.app";
+    const view360Enabled = siteSettings?.find((s: any) => s.key === "view_360_enabled")?.value !== "false";
+
+    const baseList: InteractiveLinkItem[] = [
+      {
+        heading: "Academics",
+        subheading: "CBSE curriculum, STEM, results & scholastic honors",
+        imgSrc: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop",
+        href: "/academics",
+      },
+      {
+        heading: "Admissions",
+        subheading: "Enrollment criteria, registration & fee structure 2026-27",
+        imgSrc: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop",
+        href: "/admissions",
+      },
+      {
+        heading: "Campus Life",
+        subheading: "World-class robotics labs, sports complex & smart classrooms",
+        imgSrc: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop",
+        href: "/facilities",
+      },
+      {
+        heading: "News & Events",
+        subheading: "School milestones, annual concerts & athletic championships",
+        imgSrc: "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop",
+        href: "/news-events",
+      },
+    ];
+
+    if (view360Enabled) {
+      baseList.push({
+        heading: "360 Virtual Tour",
+        subheading: "Immersive VR walkthrough of the entire school campus",
+        imgSrc: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop",
+        href: view360Url,
+      });
+    }
+
+    return baseList;
+  })();
+
   return (
     <section className={`bg-transparent p-2 md:p-6 w-full ${className}`}>
       <div className="mx-auto max-w-5xl">
-        {links.map((link) => (
+        {resolvedLinks.map((link) => (
           <LinkItem key={link.heading} {...link} onLinkClick={onLinkClick} />
         ))}
       </div>
