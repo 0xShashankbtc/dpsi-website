@@ -1751,12 +1751,32 @@ export const cmsRouter = createRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const { SiteSettings } = await getMainModels();
+      const { SiteSettings, Leadership } = await getMainModels();
       await Promise.all(
         input.updates.map((u) =>
           SiteSettings.findOneAndUpdate({ key: u.key }, { value: u.value }, { upsert: true, new: true })
         )
       );
+
+      // If principal settings are updated, sync with Leadership profile
+      const principalImageUpdate = input.updates.find((u) => u.key === "principal_image");
+      const principalNameUpdate = input.updates.find((u) => u.key === "principal_name");
+      const principalTitleUpdate = input.updates.find((u) => u.key === "principal_title");
+      if (principalImageUpdate || principalNameUpdate || principalTitleUpdate) {
+        const leadQuery: any = {
+          $or: [
+            { category: "Principal" },
+            { role: { $regex: /principal/i } },
+            { name: { $regex: /priya/i } },
+          ],
+        };
+        const leadUpdate: any = {};
+        if (principalImageUpdate) leadUpdate.imageUrl = principalImageUpdate.value;
+        if (principalNameUpdate) leadUpdate.name = principalNameUpdate.value;
+        if (principalTitleUpdate) leadUpdate.role = principalTitleUpdate.value;
+        await Leadership.updateMany(leadQuery, { $set: leadUpdate });
+      }
+
       return { success: true };
     }),
 
@@ -1875,14 +1895,57 @@ export const cmsRouter = createRouter({
     )
     .mutation(async ({ input, ctx }) => {
       const { id, ...data } = input;
-      const { Leadership } = await getMainModels();
-      const updated = await Leadership.findByIdAndUpdate(id, data, { new: true });
+      const { Leadership, SiteSettings } = await getMainModels();
+      let updated: any = null;
+      if (mongoose.Types.ObjectId.isValid(id)) {
+        updated = await Leadership.findByIdAndUpdate(id, data, { new: true });
+      }
+      if (!updated) {
+        updated = await Leadership.findOneAndUpdate(
+          { $or: [{ _id: id }, { id: id }, { name: id }] },
+          data,
+          { new: true }
+        );
+      }
+
+      // If this leader is the Principal, keep SiteSettings in sync!
+      const isPrincipal =
+        updated?.category === "Principal" ||
+        data.category === "Principal" ||
+        updated?.role?.toLowerCase().includes("principal") ||
+        data.role?.toLowerCase().includes("principal") ||
+        updated?.name?.toLowerCase().includes("priya");
+
+      if (isPrincipal) {
+        if (data.imageUrl) {
+          await SiteSettings.findOneAndUpdate(
+            { key: "principal_image" },
+            { value: data.imageUrl, group: "principal", label: "Principal Photo" },
+            { upsert: true }
+          );
+        }
+        if (data.name) {
+          await SiteSettings.findOneAndUpdate(
+            { key: "principal_name" },
+            { value: data.name, group: "principal", label: "Principal Name" },
+            { upsert: true }
+          );
+        }
+        if (data.role) {
+          await SiteSettings.findOneAndUpdate(
+            { key: "principal_title" },
+            { value: data.role, group: "principal", label: "Principal Title" },
+            { upsert: true }
+          );
+        }
+      }
+
       await createImmutableAuditLog({
         action: "UPDATE_LEADERSHIP",
         module: "Faculty",
         performedBy: ctx.user?.username || "Admin",
         documentId: id,
-        details: `Updated leadership/faculty profile: ${updated?.name}`,
+        details: `Updated leadership/faculty profile: ${updated?.name || id}`,
       });
       return updated;
     }),

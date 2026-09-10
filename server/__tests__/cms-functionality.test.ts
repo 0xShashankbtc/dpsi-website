@@ -463,6 +463,41 @@ describe("CMS Functionality & Business Logic Test Suite", () => {
       expect(parsed.order).toBe(0);
     });
   });
+
+  describe("Leadership & Principal Photo Management Contracts", () => {
+    const LeadershipContract = z.object({
+      id: z.string(),
+      name: z.string().min(2).optional(),
+      role: z.string().min(2).optional(),
+      imageUrl: z.string().optional(),
+      category: z.string().optional(),
+    });
+
+    it("accepts photo updates for leaders with CDN URLs", () => {
+      const update = {
+        id: "6a86ea9f6b569b5edacab5a7",
+        imageUrl: "https://res.cloudinary.com/uqty03zf/image/upload/v123/principal_new.webp",
+      };
+      const parsed = LeadershipContract.parse(update);
+      expect(parsed.id).toBe("6a86ea9f6b569b5edacab5a7");
+      expect(parsed.imageUrl).toContain("principal_new.webp");
+    });
+
+    it("correctly identifies principal profile for sync", () => {
+      const isPrincipal = (role: string = "", category: string = "", name: string = "") => {
+        return (
+          category === "Principal" ||
+          role.toLowerCase().includes("principal") ||
+          name.toLowerCase().includes("priya")
+        );
+      };
+
+      expect(isPrincipal("Principal, DPS Indirapuram", "Principal", "Ms. Priya Elizabeth John")).toBe(true);
+      expect(isPrincipal("Chairman", "Management", "Mr. V.K. Shunglu")).toBe(false);
+      expect(isPrincipal("Vice Chairperson", "Management", "Ms. Santosh Bansal")).toBe(false);
+    });
+  });
 });
+
 
 
