@@ -35,7 +35,10 @@ export default function HeroSection() {
     staleTime: 5000,
     refetchOnMount: true,
   });
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
+    staleTime: 5000,
+    refetchOnMount: true,
+  });
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
@@ -44,7 +47,7 @@ export default function HeroSection() {
 
   const view360Url = getSetting("view_360_url", "https://dpsivr.vercel.app");
   const view360Label = getSetting("view_360_label", "360 View");
-  const view360Enabled = getSetting("view_360_enabled", "true") !== "false";
+  const view360Enabled = getSetting("view_360_enabled", "false") === "true";
 
   const activeSlides =
     cmsSliders && cmsSliders.length > 0

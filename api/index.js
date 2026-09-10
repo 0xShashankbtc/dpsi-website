@@ -181559,7 +181559,7 @@ app.use(
 );
 var trpcHandler = async (c5) => {
   const ctx = await createContext({ req: c5.req.raw, resHeaders: new Headers(), info: {} });
-  return tenantContextStorage.run(ctx.tenantId, () => {
+  const res = await tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
       endpoint: "/api/trpc",
       req: c5.req.raw,
@@ -181567,17 +181567,35 @@ var trpcHandler = async (c5) => {
       createContext: () => ctx
     });
   });
+  const headers = new Headers(res.headers);
+  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  headers.set("Pragma", "no-cache");
+  headers.set("Expires", "0");
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers
+  });
 };
 app.all("/api/trpc/*", trpcHandler);
 app.all("/trpc/*", async (c5) => {
   const ctx = await createContext({ req: c5.req.raw, resHeaders: new Headers(), info: {} });
-  return tenantContextStorage.run(ctx.tenantId, () => {
+  const res = await tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
       endpoint: "/trpc",
       req: c5.req.raw,
       router: appRouter,
       createContext: () => ctx
     });
+  });
+  const headers = new Headers(res.headers);
+  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  headers.set("Pragma", "no-cache");
+  headers.set("Expires", "0");
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers
   });
 });
 app.get("/api/health", async (c5) => {

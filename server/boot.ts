@@ -62,7 +62,7 @@ import { tenantContextStorage } from "./models/cmsSchemas";
 
 const trpcHandler = async (c: any) => {
   const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers(), info: {} as any });
-  return tenantContextStorage.run(ctx.tenantId, () => {
+  const res = await tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
       endpoint: "/api/trpc",
       req: c.req.raw,
@@ -70,18 +70,37 @@ const trpcHandler = async (c: any) => {
       createContext: () => ctx,
     });
   });
+  // Set anti-caching headers on all dynamic tRPC API responses
+  const headers = new Headers(res.headers);
+  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  headers.set("Pragma", "no-cache");
+  headers.set("Expires", "0");
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
 };
 
 app.all("/api/trpc/*", trpcHandler);
 app.all("/trpc/*", async (c: any) => {
   const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers(), info: {} as any });
-  return tenantContextStorage.run(ctx.tenantId, () => {
+  const res = await tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
       endpoint: "/trpc",
       req: c.req.raw,
       router: appRouter,
       createContext: () => ctx,
     });
+  });
+  const headers = new Headers(res.headers);
+  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  headers.set("Pragma", "no-cache");
+  headers.set("Expires", "0");
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
   });
 });
 

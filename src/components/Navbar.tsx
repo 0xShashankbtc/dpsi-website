@@ -8,7 +8,6 @@ import {
   Sun,
   Moon,
   ChevronDown,
-  Compass,
 } from "lucide-react";
 
 
@@ -51,7 +50,10 @@ export default function Navbar() {
     staleTime: 5000,
     refetchOnMount: true,
   });
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
+    staleTime: 5000,
+    refetchOnMount: true,
+  });
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
@@ -64,9 +66,6 @@ export default function Navbar() {
   const logoShowText = getSetting("logo_show_text", "false") === "true";
   const schoolName = getSetting("school_name", "Delhi Public School Indirapuram");
   const schoolTagline = getSetting("school_tagline", "Excellence in Education");
-  const view360Url = getSetting("view_360_url", "https://dpsivr.vercel.app");
-  const view360Label = getSetting("view_360_label", "360 View");
-  const view360Enabled = getSetting("view_360_enabled", "true") !== "false";
 
   // Construct dynamic hierarchical nav links from MongoDB
   const dynamicNavLinks = (() => {
@@ -135,7 +134,8 @@ export default function Navbar() {
   const isAdmin = true;
 
   const { data: dbMarquees } = trpc.cms.listMarquees.useQuery(undefined, {
-    staleTime: 60000,
+    staleTime: 5000,
+    refetchOnMount: true,
   });
 
   const phone = getSetting("contact_phone", "+91-0120-4660000, 4670000");
@@ -214,20 +214,6 @@ export default function Navbar() {
                 Apply Now
               </Link>
             </motion.div>
-            {view360Enabled && (
-              <motion.a
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                href={view360Url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3.5 py-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white rounded shadow-md transition-all font-extrabold flex items-center gap-1.5 border border-teal-400/30"
-                title="Launch 360 View Virtual Tour"
-              >
-                <Compass className="w-3.5 h-3.5 animate-spin-slow" />
-                <span>{view360Label}</span>
-              </motion.a>
-            )}
             {isAdmin && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
@@ -369,20 +355,6 @@ export default function Navbar() {
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              {view360Enabled && (
-                <motion.a
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  href={view360Url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 shadow-sm hover:shadow-md transition-all border border-emerald-400/30 cursor-pointer"
-                  title="Experience DPS Indirapuram 360° VR Tour"
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>{view360Label}</span>
-                </motion.a>
-              )}
 
               <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
                 <motion.img
@@ -443,23 +415,6 @@ export default function Navbar() {
                 }}
                 className="px-4 py-4 space-y-1"
               >
-                {view360Enabled && (
-                  <motion.a
-                    variants={{
-                      open: { opacity: 1, y: 0 },
-                      closed: { opacity: 0, y: -6 },
-                    }}
-                    href={view360Url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 shadow-md mb-3 border border-emerald-400/30"
-                  >
-                    <Compass className="w-4 h-4 animate-spin-slow" />
-                    <span>Launch {view360Label} (Virtual Campus Tour)</span>
-                  </motion.a>
-                )}
-
                 {activeNavItems.map((link) => (
                   <div key={link.label}>
                     <Link

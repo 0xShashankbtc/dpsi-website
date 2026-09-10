@@ -4131,11 +4131,11 @@ export default function AdminCMS() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
-                          (settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "true") === "true"
+                          (settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "false") === "true"
                             ? "bg-emerald-100 text-emerald-800 border-emerald-300"
                             : "bg-slate-100 text-slate-600 border-slate-300"
                         }`}>
-                          {(settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "true") === "true" ? "Active" : "Hidden"}
+                          {(settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "false") === "true" ? "Active" : "Hidden"}
                         </span>
                       </div>
                     </div>
@@ -4187,7 +4187,7 @@ export default function AdminCMS() {
                               type="button"
                               onClick={() => setSettingsEdits({ ...settingsEdits, view_360_enabled: "true" })}
                               className={`px-3 py-1 text-xs rounded-lg font-semibold border transition-all cursor-pointer ${
-                                (settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "true") === "true"
+                                (settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "false") === "true"
                                   ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
                                   : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
                               }`}
@@ -4198,7 +4198,7 @@ export default function AdminCMS() {
                               type="button"
                               onClick={() => setSettingsEdits({ ...settingsEdits, view_360_enabled: "false" })}
                               className={`px-3 py-1 text-xs rounded-lg font-semibold border transition-all cursor-pointer ${
-                                (settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "true") === "false"
+                                (settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "false") === "true"
                                   ? "bg-rose-600 text-white border-rose-600 shadow-xs"
                                   : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
                               }`}
@@ -4214,7 +4214,7 @@ export default function AdminCMS() {
                           onClick={() => {
                             const urlVal = settingsEdits["view_360_url"] !== undefined ? settingsEdits["view_360_url"] : (siteSettings || []).find((s: any) => s.key === "view_360_url")?.value || "https://dpsivr.vercel.app";
                             const labelVal = settingsEdits["view_360_label"] !== undefined ? settingsEdits["view_360_label"] : (siteSettings || []).find((s: any) => s.key === "view_360_label")?.value || "360 View";
-                            const enabledVal = settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "true";
+                            const enabledVal = settingsEdits["view_360_enabled"] !== undefined ? settingsEdits["view_360_enabled"] : (siteSettings || []).find((s: any) => s.key === "view_360_enabled")?.value || "false";
                             updateSiteSettingsMutation.mutate({
                               updates: [
                                 { key: "view_360_url", value: urlVal },

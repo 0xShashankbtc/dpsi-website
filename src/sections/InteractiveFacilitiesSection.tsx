@@ -165,9 +165,13 @@ import { trpc } from "@/providers/trpc";
 
 export default function InteractiveFacilitiesSection() {
   const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery(undefined, {
-    staleTime: 60000,
+    staleTime: 5000,
+    refetchOnMount: true,
   });
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
+    staleTime: 5000,
+    refetchOnMount: true,
+  });
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
@@ -176,7 +180,7 @@ export default function InteractiveFacilitiesSection() {
 
   const view360Url = getSetting("view_360_url", "https://dpsivr.vercel.app");
   const view360Label = getSetting("view_360_label", "360 View");
-  const view360Enabled = getSetting("view_360_enabled", "true") !== "false";
+  const view360Enabled = getSetting("view_360_enabled", "false") === "true";
 
   const facilities: FacilityItem[] =
     cmsFacilities && cmsFacilities.length > 0
