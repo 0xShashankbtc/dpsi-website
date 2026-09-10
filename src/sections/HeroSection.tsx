@@ -18,17 +18,17 @@ export function optimizeMediaUrl(url?: string): string {
   if (!url || typeof url !== "string") return "";
   const clean = url.trim();
   if (clean.includes("cloudinary.com") && clean.includes("/video/upload/")) {
-    if (clean.includes("/video/upload/q_auto")) return clean;
+    if (clean.includes("/video/upload/q_auto:best")) return clean;
     return clean.replace(
       "/video/upload/",
-      "/video/upload/q_auto,vc_auto,w_1280,c_limit/"
+      "/video/upload/q_auto:best,vc_auto,w_1920,c_limit/"
     );
   }
   if (clean.includes("cloudinary.com") && clean.includes("/image/upload/")) {
-    if (clean.includes("/image/upload/q_auto")) return clean;
+    if (clean.includes("/image/upload/q_auto:best")) return clean;
     return clean.replace(
       "/image/upload/",
-      "/image/upload/q_auto,f_auto,w_2048,c_limit/"
+      "/image/upload/q_auto:best,f_auto,w_2560,c_limit/"
     );
   }
   return clean;
@@ -42,7 +42,7 @@ const DEFAULT_HERO_SLIDES = [
     title: "Delhi Public School Indirapuram",
     subtitle: "Premier CBSE Day School in Ghaziabad • Nursery to Class XII",
     badge: "Admissions Open 2026-27",
-    buttonText: "Apply Now",
+    buttonText: "",
     buttonLink: "/admissions",
   },
 ];
@@ -228,18 +228,17 @@ export default function HeroSection() {
         </motion.div>
       </AnimatePresence>
 
-      {/* TOP PORTION: ADMISSIONS OPEN BADGE */}
+      {/* TOP PORTION: ADMISSIONS OPEN BADGE (86% TRANSPARENT GLASSMORPHISM) */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
         className="absolute top-5 sm:top-7 inset-x-0 z-20 flex justify-center px-4 pointer-events-auto"
       >
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-lg cursor-default transition-colors">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-white/[0.14] hover:bg-white/[0.22] backdrop-blur-xl border border-white/30 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/10 cursor-default transition-all">
           <span>{slide.badge || "Admissions Open 2026-27"}</span>
           <span className="text-white/40">|</span>
-          <span className="text-[11px] sm:text-xs text-white/80">CBSE Affiliation No. 2130541</span>
+          <span className="text-[11px] sm:text-xs text-white/85">CBSE Affiliation No. 2130541</span>
         </div>
       </motion.div>
 

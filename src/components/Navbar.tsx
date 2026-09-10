@@ -206,11 +206,6 @@ export default function Navbar() {
               SchoolsOS Login
             </motion.a>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/admissions" className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-all block">
-                Apply Now
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <a
                 href="https://dpsivr.vercel.app"
                 target="_blank"

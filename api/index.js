@@ -176603,8 +176603,8 @@ var ActivitySchema = new import_mongoose5.Schema(
 );
 var SliderSchema = new import_mongoose5.Schema(
   {
-    title: { type: String, required: true },
-    subtitle: { type: String },
+    title: { type: String, default: "" },
+    subtitle: { type: String, default: "" },
     imageUrl: { type: String, default: "" },
     videoUrl: { type: String, default: "" },
     mediaType: { type: String, enum: ["image", "video"], default: "image" },
@@ -180284,7 +180284,7 @@ var cmsRouter = createRouter({
   }),
   createSlider: adminMutation.input(
     external_exports.object({
-      title: external_exports.string(),
+      title: external_exports.string().optional().default(""),
       subtitle: external_exports.string().optional(),
       imageUrl: external_exports.string().optional().default("/images/dps/slider_1.webp"),
       videoUrl: external_exports.string().optional(),
