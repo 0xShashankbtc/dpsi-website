@@ -64,6 +64,8 @@ export default function Navbar() {
   const logoShowText = getSetting("logo_show_text", "false") === "true";
   const schoolName = getSetting("school_name", "Delhi Public School Indirapuram");
   const schoolTagline = getSetting("school_tagline", "Excellence in Education");
+  const internationalLogoUrl = getSetting("international_logo_url", "/images/dps/international_logo.webp");
+  const showInternationalLogo = getSetting("show_international_logo", "true") !== "false";
 
   // Construct dynamic hierarchical nav links from MongoDB
   const dynamicNavLinks = (() => {
@@ -258,15 +260,15 @@ export default function Navbar() {
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-18 sm:h-20 lg:h-22">
-            <Link to="/" className="flex items-center gap-3 group">
+          <div className="flex items-center justify-between h-18 sm:h-20 lg:h-22 gap-2 xl:gap-4">
+            <Link to="/" className="flex items-center gap-3 group shrink-0">
               <motion.img
                 whileHover={{ scale: 1.04 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 src={logoUrl}
                 alt={schoolName}
                 style={{ height: `${Math.min(Math.max(logoHeight, 40), 84)}px` }}
-                className={`h-13 sm:h-16 lg:h-18 w-auto object-contain transition-transform duration-300 ${
+                className={`h-13 sm:h-16 lg:h-18 w-auto object-contain transition-transform duration-300 shrink-0 ${
                   logoShape === "circle"
                     ? "rounded-full"
                     : logoShape === "rounded"
@@ -290,7 +292,7 @@ export default function Navbar() {
               )}
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-1 xl:gap-2" onMouseLeave={() => setHoveredLink(null)}>
+            <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5 2xl:gap-2 shrink min-w-0" onMouseLeave={() => setHoveredLink(null)}>
               {activeNavItems.map((link) => {
                 const isActive =
                   location.pathname === link.href ||
@@ -301,7 +303,7 @@ export default function Navbar() {
                 return (
                   <div
                     key={link.label}
-                    className="relative"
+                    className="relative shrink-0"
                     onMouseEnter={() => {
                       setHoveredLink(link.label);
                       if (hasChildren) setActiveDropdown(link.label);
@@ -312,7 +314,7 @@ export default function Navbar() {
                   >
                     <Link
                       to={link.href}
-                      className={`relative z-10 px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 ${
+                      className={`relative z-10 px-2.5 xl:px-3.5 py-2 text-xs xl:text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap ${
                         isActive
                           ? "text-emerald-800 dark:text-emerald-300"
                           : "text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400"
@@ -358,7 +360,8 @@ export default function Navbar() {
                             >
                               <Link
                                 to={child.href}
-                                className="block px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                                className="block px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
+                                onClick={() => setActiveDropdown(null)}
                               >
                                 {child.label}
                               </Link>
@@ -372,14 +375,14 @@ export default function Navbar() {
               })}
             </nav>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5 xl:gap-3 shrink-0">
 
               {/* Interactive Hover Links / Explore Campus Trigger */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsExploreOpen(true)}
-                className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer shrink-0"
                 title="Quick Interactive Explore"
               >
                 <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-spin-slow" />
@@ -387,22 +390,31 @@ export default function Navbar() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </motion.button>
 
-              <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
-                <motion.img
-                  whileHover={{ scale: 1.06 }}
-                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                  src="/images/dps/international_logo.webp"
-                  alt="British Council International Dimension in Schools 2020-23"
-                  className="h-12 sm:h-16 lg:h-[72px] w-auto object-contain rounded-md drop-shadow-sm hover:drop-shadow-md transition-all cursor-pointer"
-                  title="British Council International Dimension in Schools 2020-23"
-                />
-              </div>
+              {showInternationalLogo && (
+                <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800 shrink-0">
+                  <motion.img
+                    whileHover={{ scale: 1.08 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                    src={internationalLogoUrl}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes("/images/dps/international_logo.webp")) {
+                        target.src = "/images/dps/international_logo.webp";
+                      }
+                    }}
+                    alt="British Council International Dimension in Schools 2020-23"
+                    className="h-8 w-8 sm:h-9 sm:w-9 lg:h-10 lg:w-10 object-contain rounded-md drop-shadow-xs shrink-0 cursor-pointer"
+                    title="British Council International Dimension in Schools 2020-23"
+                    loading="eager"
+                  />
+                </div>
+              )}
 
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 15 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsDark(!isDark)}
-                className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                className="p-2 sm:p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
                 aria-label="Toggle dark mode"
               >
                 {isDark ? (
@@ -415,7 +427,7 @@ export default function Navbar() {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
-                className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
               >
                 {isMobileOpen ? (
                   <X className="w-5 h-5" />
@@ -548,21 +560,29 @@ export default function Navbar() {
                   </div>
 
                   {/* Accreditations at Drawer Bottom */}
-                  <div className="pt-4 mt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center gap-3 px-2">
-                    <img
-                      src="/images/dps/international_logo.webp"
-                      alt="British Council International Dimension in Schools"
-                      className="h-12 w-auto object-contain rounded drop-shadow-xs"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                        British Council IDS Accredited
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                        International Dimension in Schools
-                      </span>
+                  {showInternationalLogo && (
+                    <div className="pt-4 mt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center gap-3 px-2 shrink-0">
+                      <img
+                        src={internationalLogoUrl}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.src.includes("/images/dps/international_logo.webp")) {
+                            target.src = "/images/dps/international_logo.webp";
+                          }
+                        }}
+                        alt="British Council International Dimension in Schools"
+                        className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded drop-shadow-xs shrink-0"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                          British Council IDS Accredited
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          International Dimension in Schools
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
             </>
