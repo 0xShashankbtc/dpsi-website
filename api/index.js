@@ -76905,17 +76905,7 @@ async function getDbConnection(dbName) {
     throw new Error("MONGODB_URI environment variable is missing.");
   }
   if (!cached3.basePromise || cached3.baseConn && cached3.baseConn.readyState !== 1 && cached3.baseConn.readyState !== 2) {
-    console.log("[MongoDB] Initializing shared cluster connection...");
-    const conn = import_mongoose4.default.createConnection(rawUri, {
-      serverSelectionTimeoutMS: 1e4,
-      connectTimeoutMS: 1e4,
-      socketTimeoutMS: 45e3,
-      maxPoolSize: 10,
-      minPoolSize: 0,
-      tls: true,
-      retryWrites: true,
-      w: "majority"
-    });
+    const conn = import_mongoose4.default.createConnection(rawUri, MONGO_OPTIONS);
     conn.on("error", (err) => {
       console.error("[MongoDB] Shared connection error:", err.message);
     });
@@ -76926,7 +76916,6 @@ async function getDbConnection(dbName) {
       cached3.connections = {};
     });
     cached3.basePromise = conn.asPromise().then((c5) => {
-      console.log("[MongoDB] \u2705 Shared cluster connection active!");
       cached3.baseConn = c5;
       return c5;
     }).catch((err) => {
@@ -76943,7 +76932,7 @@ async function getDbConnection(dbName) {
   }
   return cached3.connections[dbName];
 }
-var import_mongoose4, cached3;
+var import_mongoose4, cached3, MONGO_OPTIONS;
 var init_mongodb = __esm({
   "server/lib/mongodb.ts"() {
     import_mongoose4 = __toESM(require_mongoose2(), 1);
@@ -76954,6 +76943,30 @@ var init_mongodb = __esm({
     };
     if (!global._mongoCache) {
       global._mongoCache = cached3;
+    }
+    MONGO_OPTIONS = {
+      serverSelectionTimeoutMS: 5e3,
+      connectTimeoutMS: 5e3,
+      socketTimeoutMS: 3e4,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      // Keep warm socket alive to eliminate TCP/TLS handshake latency
+      maxIdleTimeMS: 6e4,
+      // Keep idle sockets alive for 60s
+      heartbeatFrequencyMS: 1e4,
+      // Keep-alive heartbeats to Atlas
+      autoIndex: false,
+      // Huge speed boost: skip index builds on every connection in production
+      autoCreate: false,
+      // Skip collection creation round-trips
+      bufferCommands: true
+      // Buffer commands so queries start immediately without waiting
+    };
+    if (typeof window === "undefined" && process.env.MONGODB_URI) {
+      setTimeout(() => {
+        getDbConnection("dpsi_main").catch(() => {
+        });
+      }, 0);
     }
   }
 });
@@ -176873,11 +176886,16 @@ var tenantContextStorage = new AsyncLocalStorage2();
 function getActiveTenantId() {
   return tenantContextStorage.getStore() || "dpsi";
 }
+var modelsCache = /* @__PURE__ */ new Map();
 async function getMainModels(tenantId) {
   const targetTenant = tenantId || getActiveTenantId();
   const dbName = resolveDbName(targetTenant, "main");
+  const cached4 = modelsCache.get(dbName);
+  if (cached4 && cached4.conn?.readyState === 1) {
+    return cached4.models;
+  }
   const conn = await getDbConnection(dbName);
-  return {
+  const models = {
     Page: conn.models.Page || conn.model("Page", PageSchema),
     Menu: conn.models.Menu || conn.model("Menu", MenuSchema),
     Popup: conn.models.Popup || conn.model("Popup", PopupSchema),
@@ -176902,6 +176920,8 @@ async function getMainModels(tenantId) {
     RateLimit: conn.models.RateLimit || conn.model("RateLimit", RateLimitSchema),
     AuditLog: conn.models.AuditLog || conn.model("AuditLog", AuditLogSchema)
   };
+  modelsCache.set(dbName, { conn, models });
+  return models;
 }
 var AuditLogSchema = new import_mongoose5.Schema(
   {
@@ -176971,20 +176991,32 @@ async function checkPersistentRateLimit(key, limit = 40, windowSeconds = 60, ten
 async function getGalleryModels(tenantId) {
   const targetTenant = tenantId || getActiveTenantId();
   const dbName = resolveDbName(targetTenant, "gallery");
+  const cached4 = modelsCache.get(dbName);
+  if (cached4 && cached4.conn?.readyState === 1) {
+    return cached4.models;
+  }
   const conn = await getDbConnection(dbName);
-  return {
+  const models = {
     GalleryCategory: conn.models.GalleryCategory || conn.model("GalleryCategory", GalleryCategorySchema),
     GalleryImage: conn.models.GalleryImage || conn.model("GalleryImage", GalleryImageSchema),
     VideoGallery: conn.models.VideoGallery || conn.model("VideoGallery", VideoGallerySchema)
   };
+  modelsCache.set(dbName, { conn, models });
+  return models;
 }
 async function getTcModels(tenantId) {
   const targetTenant = tenantId || getActiveTenantId();
   const dbName = resolveDbName(targetTenant, "tc");
+  const cached4 = modelsCache.get(dbName);
+  if (cached4 && cached4.conn?.readyState === 1) {
+    return cached4.models;
+  }
   const conn = await getDbConnection(dbName);
-  return {
+  const models = {
     TransferCertificate: conn.models.TransferCertificate || conn.model("TransferCertificate", TransferCertificateSchema)
   };
+  modelsCache.set(dbName, { conn, models });
+  return models;
 }
 
 // server/admission-router.ts
@@ -179302,6 +179334,29 @@ async function convertImageToWebP(inputBuffer, quality = 80, maxWidth) {
   };
 }
 
+// server/lib/cache.ts
+var memoryCache = /* @__PURE__ */ new Map();
+async function withCache(key, ttlSeconds, fetcher) {
+  const now = Date.now();
+  const cached4 = memoryCache.get(key);
+  if (cached4 && cached4.expiresAt > now) {
+    return cached4.data;
+  }
+  const freshData = await fetcher();
+  memoryCache.set(key, {
+    data: freshData,
+    expiresAt: now + ttlSeconds * 1e3
+  });
+  return freshData;
+}
+function invalidateCache(keyOrPrefix) {
+  for (const key of memoryCache.keys()) {
+    if (key === keyOrPrefix || key.startsWith(keyOrPrefix)) {
+      memoryCache.delete(key);
+    }
+  }
+}
+
 // server/cms-router.ts
 var JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "");
 function escapeRegex3(str) {
@@ -179966,13 +180021,16 @@ var cmsRouter = createRouter({
       includeDeleted: external_exports.boolean().optional()
     }).optional()
   ).query(async ({ input }) => {
-    const { Menu } = await getMainModels();
-    const filter = {};
-    if (input?.location) filter.location = input.location;
-    if (!input?.includeDeleted) {
-      filter.isDeleted = { $ne: true };
-    }
-    return Menu.find(filter).sort({ order: 1 });
+    const cacheKey = `cms:menus:${input?.location || "all"}:${input?.includeDeleted ? "del" : "active"}`;
+    return withCache(cacheKey, 60, async () => {
+      const { Menu } = await getMainModels();
+      const filter = {};
+      if (input?.location) filter.location = input.location;
+      if (!input?.includeDeleted) {
+        filter.isDeleted = { $ne: true };
+      }
+      return Menu.find(filter).sort({ order: 1 }).lean();
+    });
   }),
   createMenu: adminMutation.input(
     external_exports.object({
@@ -179998,6 +180056,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created menu link: ${created.title} (${created.url})`
     });
+    invalidateCache("cms:menus");
     return created;
   }),
   updateMenu: adminMutation.input(
@@ -180043,6 +180102,7 @@ var cmsRouter = createRouter({
       documentId: menuId,
       details: `Updated menu link: ${updated?.title || menuId} (${updated?.url || "N/A"})`
     });
+    invalidateCache("cms:menus");
     return updated;
   }),
   deleteMenu: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -180077,12 +180137,15 @@ var cmsRouter = createRouter({
       documentId: menuId,
       details: `Deleted menu link: ${deleted?.title || menuId} (${deleted?.url || "N/A"})`
     });
+    invalidateCache("cms:menus");
     return deleted || { success: true, id: menuId };
   }),
   // --- 5. POPUP MANAGEMENT ---
   listPopups: publicQuery.query(async () => {
-    const { Popup } = await getMainModels();
-    return Popup.find({}).sort({ createdAt: -1 });
+    return withCache("cms:popups", 60, async () => {
+      const { Popup } = await getMainModels();
+      return Popup.find({}).sort({ createdAt: -1 }).lean();
+    });
   }),
   createPopup: adminMutation.input(
     external_exports.object({
@@ -180105,12 +180168,15 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created modal banner: ${created.title}`
     });
+    invalidateCache("cms:popups");
     return created;
   }),
   togglePopup: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]), isActive: external_exports.boolean() })).mutation(async ({ input }) => {
     const { Popup } = await getMainModels();
     const popupId = String(input.id?._id || input.id);
-    return Popup.findByIdAndUpdate(popupId, { isActive: input.isActive }, { new: true });
+    const res = await Popup.findByIdAndUpdate(popupId, { isActive: input.isActive }, { new: true });
+    invalidateCache("cms:popups");
+    return res;
   }),
   deletePopup: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
     const { Popup } = await getMainModels();
@@ -180132,12 +180198,15 @@ var cmsRouter = createRouter({
       documentId: popupId,
       details: `Deleted modal banner: ${deleted?.title || popupId}`
     });
+    invalidateCache("cms:popups");
     return deleted || { success: true, id: popupId };
   }),
   // --- 6. MARQUEE / FLASH ALERTS ---
   listMarquees: publicQuery.query(async () => {
-    const { Marquee } = await getMainModels();
-    return Marquee.find({}).sort({ createdAt: -1 });
+    return withCache("cms:marquees", 60, async () => {
+      const { Marquee } = await getMainModels();
+      return Marquee.find({}).sort({ createdAt: -1 }).lean();
+    });
   }),
   createMarquee: adminMutation.input(
     external_exports.object({
@@ -180162,6 +180231,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created marquee alert: ${created.text} (Shape: ${created.shape}, Transparent: ${created.isTransparent})`
     });
+    invalidateCache("cms:marquees");
     return created;
   }),
   updateMarquee: adminMutation.input(
@@ -180190,12 +180260,15 @@ var cmsRouter = createRouter({
       documentId: marqueeId,
       details: `Updated marquee alert: ${updated?.text} (Shape: ${updated?.shape}, Transparent: ${updated?.isTransparent})`
     });
+    invalidateCache("cms:marquees");
     return updated;
   }),
   toggleMarquee: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]), isActive: external_exports.boolean() })).mutation(async ({ input }) => {
     const { Marquee } = await getMainModels();
     const marqueeId = String(input.id?._id || input.id);
-    return Marquee.findByIdAndUpdate(marqueeId, { isActive: input.isActive }, { new: true });
+    const res = await Marquee.findByIdAndUpdate(marqueeId, { isActive: input.isActive }, { new: true });
+    invalidateCache("cms:marquees");
+    return res;
   }),
   deleteMarquee: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
     const { Marquee } = await getMainModels();
@@ -180217,12 +180290,15 @@ var cmsRouter = createRouter({
       documentId: marqueeId,
       details: `Deleted marquee alert: ${deleted?.text || marqueeId}`
     });
+    invalidateCache("cms:marquees");
     return deleted || { success: true, id: marqueeId };
   }),
   // --- 7. RECENT ACTIVITIES ---
   listActivities: publicQuery.query(async () => {
-    const { Activity } = await getMainModels();
-    return Activity.find({ isDeleted: { $ne: true } }).sort({ eventDate: -1 });
+    return withCache("cms:activities", 60, async () => {
+      const { Activity } = await getMainModels();
+      return Activity.find({ isDeleted: { $ne: true } }).sort({ eventDate: -1 }).lean();
+    });
   }),
   createActivity: adminMutation.input(
     external_exports.object({
@@ -180246,6 +180322,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created activity/news: ${created.title}`
     });
+    invalidateCache("cms:activities");
     return created;
   }),
   deleteActivity: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -180275,12 +180352,15 @@ var cmsRouter = createRouter({
       documentId: activityId,
       details: `Deleted activity/news: ${deleted?.title || activityId}`
     });
+    invalidateCache("cms:activities");
     return deleted || { success: true, id: activityId };
   }),
   // --- 8. HERO SLIDERS ---
   listSliders: publicQuery.query(async () => {
-    const { Slider } = await getMainModels();
-    return Slider.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+    return withCache("cms:sliders", 60, async () => {
+      const { Slider } = await getMainModels();
+      return Slider.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
+    });
   }),
   createSlider: adminMutation.input(
     external_exports.object({
@@ -180315,6 +180395,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created hero slider: ${created.title}`
     });
+    invalidateCache("cms:sliders");
     return created;
   }),
   updateSlider: adminMutation.input(
@@ -180349,6 +180430,7 @@ var cmsRouter = createRouter({
       documentId: sliderId,
       details: `Updated hero slider: ${updated?.title}`
     });
+    invalidateCache("cms:sliders");
     return updated;
   }),
   deleteSlider: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -180371,6 +180453,7 @@ var cmsRouter = createRouter({
       documentId: sliderId,
       details: `Deleted hero slider: ${deleted?.title || sliderId}`
     });
+    invalidateCache("cms:sliders");
     return deleted || { success: true, id: sliderId };
   }),
   // --- 9. ATTACHMENTS & CIRCULARS ---
@@ -180762,28 +180845,30 @@ var cmsRouter = createRouter({
   }),
   // --- 22. SITE SETTINGS ---
   getSiteSettings: publicQuery.query(async () => {
-    const { SiteSettings } = await getMainModels();
-    const settings = await SiteSettings.find({}).sort({ group: 1, key: 1 });
-    if (!settings || settings.length === 0) {
-      const defaults = [
-        { key: "school_name", value: "Delhi Public School Indirapuram", label: "School Name", group: "general" },
-        { key: "school_tagline", value: "Excellence in Education \u2014 CBSE Affiliated", label: "Tagline", group: "general" },
-        { key: "contact_phone", value: "+91-0120-4660000", label: "Contact Phone", group: "contact" },
-        { key: "contact_email", value: "info@dpsindirapuram.com", label: "Contact Email", group: "contact" },
-        { key: "contact_address", value: "526/1 Ahinsa Khand-II, Indirapuram, Ghaziabad, UP 201014", label: "Address", group: "contact" },
-        { key: "admission_status", value: "Open for 2026-27", label: "Admission Status", group: "admissions" },
-        { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
-        { key: "social_instagram", value: "https://instagram.com/dpsindirapuram", label: "Instagram URL", group: "social" },
-        { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" },
-        { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360\xB0 Virtual Tour / VR URL", group: "virtual_tour" },
-        { key: "view_360_label", value: "360\xB0 View", label: "360\xB0 Button Label", group: "virtual_tour" },
-        { key: "view_360_enabled", value: "true", label: "Enable 360\xB0 View Button", group: "virtual_tour" }
-      ];
-      await SiteSettings.insertMany(defaults).catch(() => {
-      });
-      return SiteSettings.find({}).sort({ group: 1, key: 1 });
-    }
-    return settings;
+    return withCache("cms:siteSettings", 60, async () => {
+      const { SiteSettings } = await getMainModels();
+      const settings = await SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
+      if (!settings || settings.length === 0) {
+        const defaults = [
+          { key: "school_name", value: "Delhi Public School Indirapuram", label: "School Name", group: "general" },
+          { key: "school_tagline", value: "Excellence in Education \u2014 CBSE Affiliated", label: "Tagline", group: "general" },
+          { key: "contact_phone", value: "+91-0120-4660000", label: "Contact Phone", group: "contact" },
+          { key: "contact_email", value: "info@dpsindirapuram.com", label: "Contact Email", group: "contact" },
+          { key: "contact_address", value: "526/1 Ahinsa Khand-II, Indirapuram, Ghaziabad, UP 201014", label: "Address", group: "contact" },
+          { key: "admission_status", value: "Open for 2026-27", label: "Admission Status", group: "admissions" },
+          { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
+          { key: "social_instagram", value: "https://instagram.com/dpsindirapuram", label: "Instagram URL", group: "social" },
+          { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" },
+          { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360\xB0 Virtual Tour / VR URL", group: "virtual_tour" },
+          { key: "view_360_label", value: "360\xB0 View", label: "360\xB0 Button Label", group: "virtual_tour" },
+          { key: "view_360_enabled", value: "true", label: "Enable 360\xB0 View Button", group: "virtual_tour" }
+        ];
+        await SiteSettings.insertMany(defaults).catch(() => {
+        });
+        return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
+      }
+      return settings;
+    });
   }),
   updateSiteSettings: adminMutation.input(
     external_exports.object({
@@ -180813,6 +180898,8 @@ var cmsRouter = createRouter({
       if (principalTitleUpdate) leadUpdate.role = principalTitleUpdate.value;
       await Leadership.updateMany(leadQuery, { $set: leadUpdate });
     }
+    invalidateCache("cms:siteSettings");
+    invalidateCache("cms:leadership");
     return { success: true };
   }),
   // --- 23. AI CONFIG ---
@@ -180878,8 +180965,10 @@ var cmsRouter = createRouter({
   }),
   // --- 26. LEADERSHIP & FACULTY ---
   listLeadership: publicQuery.query(async () => {
-    const { Leadership } = await getMainModels();
-    return Leadership.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:leadership", 60, async () => {
+      const { Leadership } = await getMainModels();
+      return Leadership.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createLeadership: adminMutation.input(
     external_exports.object({
@@ -180901,6 +180990,8 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Added leadership/faculty profile: ${created.name} (${created.role})`
     });
+    invalidateCache("cms:leadership");
+    invalidateCache("cms:siteSettings");
     return created;
   }),
   updateLeadership: adminMutation.input(
@@ -180960,6 +181051,8 @@ var cmsRouter = createRouter({
       documentId: id,
       details: `Updated leadership/faculty profile: ${updated?.name || id}`
     });
+    invalidateCache("cms:leadership");
+    invalidateCache("cms:siteSettings");
     return updated;
   }),
   deleteLeadership: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -180982,12 +181075,16 @@ var cmsRouter = createRouter({
       documentId: leadId,
       details: `Deleted leadership profile: ${deleted?.name || leadId}`
     });
+    invalidateCache("cms:leadership");
+    invalidateCache("cms:siteSettings");
     return deleted || { success: true, id: leadId };
   }),
   // --- 28. FACILITIES ---
   listFacilities: publicQuery.query(async () => {
-    const { Facility } = await getMainModels();
-    return Facility.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:facilities", 60, async () => {
+      const { Facility } = await getMainModels();
+      return Facility.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createFacility: adminMutation.input(
     external_exports.object({
@@ -181011,6 +181108,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created facility: ${created.title}`
     });
+    invalidateCache("cms:facilities");
     return created;
   }),
   updateFacility: adminMutation.input(
@@ -181039,6 +181137,7 @@ var cmsRouter = createRouter({
       documentId: facilityId,
       details: `Updated facility: ${updated?.title}`
     });
+    invalidateCache("cms:facilities");
     return updated;
   }),
   deleteFacility: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181061,12 +181160,15 @@ var cmsRouter = createRouter({
       documentId: facId,
       details: `Deleted facility: ${deleted?.title || facId}`
     });
+    invalidateCache("cms:facilities");
     return deleted || { success: true, id: facId };
   }),
   // --- 29. DEPARTMENTS & CURRICULUM ---
   listDepartments: publicQuery.query(async () => {
-    const { Department } = await getMainModels();
-    return Department.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:departments", 60, async () => {
+      const { Department } = await getMainModels();
+      return Department.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createDepartment: adminMutation.input(
     external_exports.object({
@@ -181086,6 +181188,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created academic department: ${created.name}`
     });
+    invalidateCache("cms:departments");
     return created;
   }),
   updateDepartment: adminMutation.input(
@@ -181110,6 +181213,7 @@ var cmsRouter = createRouter({
       documentId: deptId,
       details: `Updated academic department: ${updated?.name}`
     });
+    invalidateCache("cms:departments");
     return updated;
   }),
   deleteDepartment: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181132,12 +181236,15 @@ var cmsRouter = createRouter({
       documentId: deptId,
       details: `Deleted academic department: ${deleted?.name || deptId}`
     });
+    invalidateCache("cms:departments");
     return deleted || { success: true, id: deptId };
   }),
   // --- 30. ADMISSION STEPS ---
   listAdmissionSteps: publicQuery.query(async () => {
-    const { AdmissionStep } = await getMainModels();
-    return AdmissionStep.find({ isActive: true }).sort({ stepNumber: 1 });
+    return withCache("cms:admissionSteps", 60, async () => {
+      const { AdmissionStep } = await getMainModels();
+      return AdmissionStep.find({ isActive: true }).sort({ stepNumber: 1 }).lean();
+    });
   }),
   createAdmissionStep: adminMutation.input(
     external_exports.object({
@@ -181157,6 +181264,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created admission step #${created.stepNumber}: ${created.title}`
     });
+    invalidateCache("cms:admissionSteps");
     return created;
   }),
   updateAdmissionStep: adminMutation.input(
@@ -181181,6 +181289,7 @@ var cmsRouter = createRouter({
       documentId: stepId,
       details: `Updated admission step #${updated?.stepNumber}: ${updated?.title}`
     });
+    invalidateCache("cms:admissionSteps");
     return updated;
   }),
   deleteAdmissionStep: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181203,14 +181312,18 @@ var cmsRouter = createRouter({
       documentId: stepId,
       details: `Deleted admission step #${deleted?.stepNumber || stepId}`
     });
+    invalidateCache("cms:admissionSteps");
     return deleted || { success: true, id: stepId };
   }),
   // --- 31. FAQS ---
   listFaqs: publicQuery.input(external_exports.object({ category: external_exports.string().optional() }).optional()).query(async ({ input }) => {
-    const { Faq } = await getMainModels();
-    const filter = { isActive: true };
-    if (input?.category) filter.category = input.category;
-    return Faq.find(filter).sort({ order: 1 });
+    const cacheKey = `cms:faqs:${input?.category || "all"}`;
+    return withCache(cacheKey, 60, async () => {
+      const { Faq } = await getMainModels();
+      const filter = { isActive: true };
+      if (input?.category) filter.category = input.category;
+      return Faq.find(filter).sort({ order: 1 }).lean();
+    });
   }),
   createFaq: adminMutation.input(
     external_exports.object({
@@ -181229,6 +181342,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created FAQ: ${created.question}`
     });
+    invalidateCache("cms:faqs");
     return created;
   }),
   updateFaq: adminMutation.input(
@@ -181252,6 +181366,7 @@ var cmsRouter = createRouter({
       documentId: faqId,
       details: `Updated FAQ: ${updated?.question}`
     });
+    invalidateCache("cms:faqs");
     return updated;
   }),
   deleteFaq: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181274,12 +181389,15 @@ var cmsRouter = createRouter({
       documentId: faqId,
       details: `Deleted FAQ: ${deleted?.question || faqId}`
     });
+    invalidateCache("cms:faqs");
     return deleted || { success: true, id: faqId };
   }),
   // --- 32. TIMELINE & MILESTONES ---
   listTimeline: publicQuery.query(async () => {
-    const { TimelineItem } = await getMainModels();
-    return TimelineItem.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:timeline", 60, async () => {
+      const { TimelineItem } = await getMainModels();
+      return TimelineItem.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createTimelineItem: adminMutation.input(
     external_exports.object({
@@ -181298,6 +181416,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created history milestone [${created.year}]: ${created.title}`
     });
+    invalidateCache("cms:timeline");
     return created;
   }),
   updateTimelineItem: adminMutation.input(
@@ -181321,6 +181440,7 @@ var cmsRouter = createRouter({
       documentId: timelineId,
       details: `Updated history milestone: ${updated?.title}`
     });
+    invalidateCache("cms:timeline");
     return updated;
   }),
   deleteTimelineItem: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181343,12 +181463,15 @@ var cmsRouter = createRouter({
       documentId: timelineId,
       details: `Deleted history milestone: ${deleted?.title || timelineId}`
     });
+    invalidateCache("cms:timeline");
     return deleted || { success: true, id: timelineId };
   }),
   // --- 33. CORE VALUES ---
   listCoreValues: publicQuery.query(async () => {
-    const { CoreValue } = await getMainModels();
-    return CoreValue.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:coreValues", 60, async () => {
+      const { CoreValue } = await getMainModels();
+      return CoreValue.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createCoreValue: adminMutation.input(
     external_exports.object({
@@ -181367,6 +181490,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created core value pillar: ${created.title}`
     });
+    invalidateCache("cms:coreValues");
     return created;
   }),
   updateCoreValue: adminMutation.input(
@@ -181390,6 +181514,7 @@ var cmsRouter = createRouter({
       documentId: valueId,
       details: `Updated core value pillar: ${updated?.title}`
     });
+    invalidateCache("cms:coreValues");
     return updated;
   }),
   deleteCoreValue: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181412,12 +181537,15 @@ var cmsRouter = createRouter({
       documentId: valueId,
       details: `Deleted core value pillar: ${deleted?.title || valueId}`
     });
+    invalidateCache("cms:coreValues");
     return deleted || { success: true, id: valueId };
   }),
   // --- 34. 3D FEATURE CARDS ---
   listFeatureCards: publicQuery.query(async () => {
-    const { FeatureCard } = await getMainModels();
-    return FeatureCard.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:featureCards", 60, async () => {
+      const { FeatureCard } = await getMainModels();
+      return FeatureCard.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createFeatureCard: adminMutation.input(
     external_exports.object({
@@ -181437,6 +181565,7 @@ var cmsRouter = createRouter({
       documentId: created._id.toString(),
       details: `Created feature card: ${created.title}`
     });
+    invalidateCache("cms:featureCards");
     return created;
   }),
   updateFeatureCard: adminMutation.input(
@@ -181461,6 +181590,7 @@ var cmsRouter = createRouter({
       documentId: cardId,
       details: `Updated feature card: ${updated?.title}`
     });
+    invalidateCache("cms:featureCards");
     return updated;
   }),
   deleteFeatureCard: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181483,6 +181613,7 @@ var cmsRouter = createRouter({
       documentId: cardId,
       details: `Deleted feature card: ${deleted?.title || cardId}`
     });
+    invalidateCache("cms:featureCards");
     return deleted || { success: true, id: cardId };
   }),
   // --- 35. IMMUTABLE AUDIT LOGS ---
@@ -181597,6 +181728,12 @@ async function createContext(opts) {
 }
 
 // server/boot.ts
+init_mongodb();
+if (process.env.MONGODB_URI) {
+  getDbConnection(resolveDbName("dpsi", "main")).catch((err) => {
+    console.warn("[Boot] Background DB pre-warm notice:", err.message);
+  });
+}
 var app = new Hono2();
 app.use("*", async (c5, next) => {
   console.log(`[HTTP] ${c5.req.method} ${c5.req.url}`);

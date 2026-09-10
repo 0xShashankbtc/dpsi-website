@@ -15,6 +15,7 @@ import { getAdminUserModel } from "./models/adminUserSchema";
 import { getTenantModel } from "./models/tenantSchema";
 import { seedDatabase } from "./lib/seedDatabase";
 import { convertImageToWebP } from "./utils/mediaConverter";
+import { withCache, invalidateCache } from "./lib/cache";
 
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "");
 
@@ -806,13 +807,16 @@ export const cmsRouter = createRouter({
         .optional()
     )
     .query(async ({ input }) => {
-      const { Menu } = await getMainModels();
-      const filter: any = {};
-      if (input?.location) filter.location = input.location;
-      if (!input?.includeDeleted) {
-        filter.isDeleted = { $ne: true };
-      }
-      return Menu.find(filter).sort({ order: 1 });
+      const cacheKey = `cms:menus:${input?.location || "all"}:${input?.includeDeleted ? "del" : "active"}`;
+      return withCache(cacheKey, 60, async () => {
+        const { Menu } = await getMainModels();
+        const filter: any = {};
+        if (input?.location) filter.location = input.location;
+        if (!input?.includeDeleted) {
+          filter.isDeleted = { $ne: true };
+        }
+        return Menu.find(filter).sort({ order: 1 }).lean();
+      });
     }),
   createMenu: adminMutation
     .input(
@@ -840,6 +844,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created menu link: ${created.title} (${created.url})`,
       });
+      invalidateCache("cms:menus");
       return created;
     }),
   updateMenu: adminMutation
@@ -890,6 +895,7 @@ export const cmsRouter = createRouter({
         documentId: menuId,
         details: `Updated menu link: ${updated?.title || menuId} (${updated?.url || "N/A"})`,
       });
+      invalidateCache("cms:menus");
       return updated;
     }),
   deleteMenu: adminMutation
@@ -933,14 +939,16 @@ export const cmsRouter = createRouter({
         documentId: menuId,
         details: `Deleted menu link: ${deleted?.title || menuId} (${deleted?.url || "N/A"})`,
       });
-
+      invalidateCache("cms:menus");
       return deleted || { success: true, id: menuId };
     }),
 
   // --- 5. POPUP MANAGEMENT ---
   listPopups: publicQuery.query(async () => {
-    const { Popup } = await getMainModels();
-    return Popup.find({}).sort({ createdAt: -1 });
+    return withCache("cms:popups", 60, async () => {
+      const { Popup } = await getMainModels();
+      return Popup.find({}).sort({ createdAt: -1 }).lean();
+    });
   }),
   createPopup: adminMutation
     .input(
@@ -965,6 +973,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created modal banner: ${created.title}`,
       });
+      invalidateCache("cms:popups");
       return created;
     }),
   togglePopup: adminMutation
@@ -972,7 +981,9 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input }) => {
       const { Popup } = await getMainModels();
       const popupId = String(input.id?._id || input.id);
-      return Popup.findByIdAndUpdate(popupId, { isActive: input.isActive }, { new: true });
+      const res = await Popup.findByIdAndUpdate(popupId, { isActive: input.isActive }, { new: true });
+      invalidateCache("cms:popups");
+      return res;
     }),
   deletePopup: adminMutation
     .input(z.object({ id: z.union([z.string(), z.any()]) }))
@@ -998,13 +1009,16 @@ export const cmsRouter = createRouter({
         documentId: popupId,
         details: `Deleted modal banner: ${deleted?.title || popupId}`,
       });
+      invalidateCache("cms:popups");
       return deleted || { success: true, id: popupId };
     }),
 
   // --- 6. MARQUEE / FLASH ALERTS ---
   listMarquees: publicQuery.query(async () => {
-    const { Marquee } = await getMainModels();
-    return Marquee.find({}).sort({ createdAt: -1 });
+    return withCache("cms:marquees", 60, async () => {
+      const { Marquee } = await getMainModels();
+      return Marquee.find({}).sort({ createdAt: -1 }).lean();
+    });
   }),
   createMarquee: adminMutation
     .input(
@@ -1031,6 +1045,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created marquee alert: ${created.text} (Shape: ${created.shape}, Transparent: ${created.isTransparent})`,
       });
+      invalidateCache("cms:marquees");
       return created;
     }),
   updateMarquee: adminMutation
@@ -1061,6 +1076,7 @@ export const cmsRouter = createRouter({
         documentId: marqueeId,
         details: `Updated marquee alert: ${updated?.text} (Shape: ${updated?.shape}, Transparent: ${updated?.isTransparent})`,
       });
+      invalidateCache("cms:marquees");
       return updated;
     }),
   toggleMarquee: adminMutation
@@ -1068,7 +1084,9 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input }) => {
       const { Marquee } = await getMainModels();
       const marqueeId = String(input.id?._id || input.id);
-      return Marquee.findByIdAndUpdate(marqueeId, { isActive: input.isActive }, { new: true });
+      const res = await Marquee.findByIdAndUpdate(marqueeId, { isActive: input.isActive }, { new: true });
+      invalidateCache("cms:marquees");
+      return res;
     }),
   deleteMarquee: adminMutation
     .input(z.object({ id: z.union([z.string(), z.any()]) }))
@@ -1094,14 +1112,17 @@ export const cmsRouter = createRouter({
         documentId: marqueeId,
         details: `Deleted marquee alert: ${deleted?.text || marqueeId}`,
       });
+      invalidateCache("cms:marquees");
       return deleted || { success: true, id: marqueeId };
     }),
 
 
   // --- 7. RECENT ACTIVITIES ---
   listActivities: publicQuery.query(async () => {
-    const { Activity } = await getMainModels();
-    return Activity.find({ isDeleted: { $ne: true } }).sort({ eventDate: -1 });
+    return withCache("cms:activities", 60, async () => {
+      const { Activity } = await getMainModels();
+      return Activity.find({ isDeleted: { $ne: true } }).sort({ eventDate: -1 }).lean();
+    });
   }),
   createActivity: adminMutation
     .input(
@@ -1127,6 +1148,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created activity/news: ${created.title}`,
       });
+      invalidateCache("cms:activities");
       return created;
     }),
   deleteActivity: adminMutation
@@ -1160,13 +1182,16 @@ export const cmsRouter = createRouter({
         documentId: activityId,
         details: `Deleted activity/news: ${deleted?.title || activityId}`,
       });
+      invalidateCache("cms:activities");
       return deleted || { success: true, id: activityId };
     }),
 
   // --- 8. HERO SLIDERS ---
   listSliders: publicQuery.query(async () => {
-    const { Slider } = await getMainModels();
-    return Slider.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+    return withCache("cms:sliders", 60, async () => {
+      const { Slider } = await getMainModels();
+      return Slider.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
+    });
   }),
   createSlider: adminMutation
     .input(
@@ -1203,6 +1228,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created hero slider: ${created.title}`,
       });
+      invalidateCache("cms:sliders");
       return created;
     }),
   updateSlider: adminMutation
@@ -1239,6 +1265,7 @@ export const cmsRouter = createRouter({
         documentId: sliderId,
         details: `Updated hero slider: ${updated?.title}`,
       });
+      invalidateCache("cms:sliders");
       return updated;
     }),
   deleteSlider: adminMutation
@@ -1265,6 +1292,7 @@ export const cmsRouter = createRouter({
         documentId: sliderId,
         details: `Deleted hero slider: ${deleted?.title || sliderId}`,
       });
+      invalidateCache("cms:sliders");
       return deleted || { success: true, id: sliderId };
     }),
 
@@ -1721,28 +1749,30 @@ export const cmsRouter = createRouter({
 
   // --- 22. SITE SETTINGS ---
   getSiteSettings: publicQuery.query(async () => {
-    const { SiteSettings } = await getMainModels();
-    const settings = await SiteSettings.find({}).sort({ group: 1, key: 1 });
-    if (!settings || settings.length === 0) {
-      // Seed defaults on first fetch
-      const defaults = [
-        { key: "school_name", value: "Delhi Public School Indirapuram", label: "School Name", group: "general" },
-        { key: "school_tagline", value: "Excellence in Education — CBSE Affiliated", label: "Tagline", group: "general" },
-        { key: "contact_phone", value: "+91-0120-4660000", label: "Contact Phone", group: "contact" },
-        { key: "contact_email", value: "info@dpsindirapuram.com", label: "Contact Email", group: "contact" },
-        { key: "contact_address", value: "526/1 Ahinsa Khand-II, Indirapuram, Ghaziabad, UP 201014", label: "Address", group: "contact" },
-        { key: "admission_status", value: "Open for 2026-27", label: "Admission Status", group: "admissions" },
-        { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
-        { key: "social_instagram", value: "https://instagram.com/dpsindirapuram", label: "Instagram URL", group: "social" },
-        { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" },
-        { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360° Virtual Tour / VR URL", group: "virtual_tour" },
-        { key: "view_360_label", value: "360° View", label: "360° Button Label", group: "virtual_tour" },
-        { key: "view_360_enabled", value: "true", label: "Enable 360° View Button", group: "virtual_tour" },
-      ];
-      await SiteSettings.insertMany(defaults).catch(() => {});
-      return SiteSettings.find({}).sort({ group: 1, key: 1 });
-    }
-    return settings;
+    return withCache("cms:siteSettings", 60, async () => {
+      const { SiteSettings } = await getMainModels();
+      const settings = await SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
+      if (!settings || settings.length === 0) {
+        // Seed defaults on first fetch
+        const defaults = [
+          { key: "school_name", value: "Delhi Public School Indirapuram", label: "School Name", group: "general" },
+          { key: "school_tagline", value: "Excellence in Education — CBSE Affiliated", label: "Tagline", group: "general" },
+          { key: "contact_phone", value: "+91-0120-4660000", label: "Contact Phone", group: "contact" },
+          { key: "contact_email", value: "info@dpsindirapuram.com", label: "Contact Email", group: "contact" },
+          { key: "contact_address", value: "526/1 Ahinsa Khand-II, Indirapuram, Ghaziabad, UP 201014", label: "Address", group: "contact" },
+          { key: "admission_status", value: "Open for 2026-27", label: "Admission Status", group: "admissions" },
+          { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
+          { key: "social_instagram", value: "https://instagram.com/dpsindirapuram", label: "Instagram URL", group: "social" },
+          { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" },
+          { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360° Virtual Tour / VR URL", group: "virtual_tour" },
+          { key: "view_360_label", value: "360° View", label: "360° Button Label", group: "virtual_tour" },
+          { key: "view_360_enabled", value: "true", label: "Enable 360° View Button", group: "virtual_tour" },
+        ];
+        await SiteSettings.insertMany(defaults).catch(() => {});
+        return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
+      }
+      return settings;
+    });
   }),
   updateSiteSettings: adminMutation
     .input(
@@ -1777,6 +1807,8 @@ export const cmsRouter = createRouter({
         await Leadership.updateMany(leadQuery, { $set: leadUpdate });
       }
 
+      invalidateCache("cms:siteSettings");
+      invalidateCache("cms:leadership");
       return { success: true };
     }),
 
@@ -1852,8 +1884,10 @@ export const cmsRouter = createRouter({
 
   // --- 26. LEADERSHIP & FACULTY ---
   listLeadership: publicQuery.query(async () => {
-    const { Leadership } = await getMainModels();
-    return Leadership.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:leadership", 60, async () => {
+      const { Leadership } = await getMainModels();
+      return Leadership.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createLeadership: adminMutation
     .input(
@@ -1877,6 +1911,8 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Added leadership/faculty profile: ${created.name} (${created.role})`,
       });
+      invalidateCache("cms:leadership");
+      invalidateCache("cms:siteSettings");
       return created;
     }),
   updateLeadership: adminMutation
@@ -1947,6 +1983,8 @@ export const cmsRouter = createRouter({
         documentId: id,
         details: `Updated leadership/faculty profile: ${updated?.name || id}`,
       });
+      invalidateCache("cms:leadership");
+      invalidateCache("cms:siteSettings");
       return updated;
     }),
   deleteLeadership: adminMutation
@@ -1973,13 +2011,17 @@ export const cmsRouter = createRouter({
         documentId: leadId,
         details: `Deleted leadership profile: ${deleted?.name || leadId}`,
       });
+      invalidateCache("cms:leadership");
+      invalidateCache("cms:siteSettings");
       return deleted || { success: true, id: leadId };
     }),
 
   // --- 28. FACILITIES ---
   listFacilities: publicQuery.query(async () => {
-    const { Facility } = await getMainModels();
-    return Facility.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:facilities", 60, async () => {
+      const { Facility } = await getMainModels();
+      return Facility.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createFacility: adminMutation
     .input(
@@ -2005,6 +2047,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created facility: ${created.title}`,
       });
+      invalidateCache("cms:facilities");
       return created;
     }),
   updateFacility: adminMutation
@@ -2035,6 +2078,7 @@ export const cmsRouter = createRouter({
         documentId: facilityId,
         details: `Updated facility: ${updated?.title}`,
       });
+      invalidateCache("cms:facilities");
       return updated;
     }),
   deleteFacility: adminMutation
@@ -2061,13 +2105,16 @@ export const cmsRouter = createRouter({
         documentId: facId,
         details: `Deleted facility: ${deleted?.title || facId}`,
       });
+      invalidateCache("cms:facilities");
       return deleted || { success: true, id: facId };
     }),
 
   // --- 29. DEPARTMENTS & CURRICULUM ---
   listDepartments: publicQuery.query(async () => {
-    const { Department } = await getMainModels();
-    return Department.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:departments", 60, async () => {
+      const { Department } = await getMainModels();
+      return Department.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createDepartment: adminMutation
     .input(
@@ -2089,6 +2136,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created academic department: ${created.name}`,
       });
+      invalidateCache("cms:departments");
       return created;
     }),
   updateDepartment: adminMutation
@@ -2115,6 +2163,7 @@ export const cmsRouter = createRouter({
         documentId: deptId,
         details: `Updated academic department: ${updated?.name}`,
       });
+      invalidateCache("cms:departments");
       return updated;
     }),
   deleteDepartment: adminMutation
@@ -2141,13 +2190,16 @@ export const cmsRouter = createRouter({
         documentId: deptId,
         details: `Deleted academic department: ${deleted?.name || deptId}`,
       });
+      invalidateCache("cms:departments");
       return deleted || { success: true, id: deptId };
     }),
 
   // --- 30. ADMISSION STEPS ---
   listAdmissionSteps: publicQuery.query(async () => {
-    const { AdmissionStep } = await getMainModels();
-    return AdmissionStep.find({ isActive: true }).sort({ stepNumber: 1 });
+    return withCache("cms:admissionSteps", 60, async () => {
+      const { AdmissionStep } = await getMainModels();
+      return AdmissionStep.find({ isActive: true }).sort({ stepNumber: 1 }).lean();
+    });
   }),
   createAdmissionStep: adminMutation
     .input(
@@ -2169,6 +2221,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created admission step #${created.stepNumber}: ${created.title}`,
       });
+      invalidateCache("cms:admissionSteps");
       return created;
     }),
   updateAdmissionStep: adminMutation
@@ -2195,6 +2248,7 @@ export const cmsRouter = createRouter({
         documentId: stepId,
         details: `Updated admission step #${updated?.stepNumber}: ${updated?.title}`,
       });
+      invalidateCache("cms:admissionSteps");
       return updated;
     }),
   deleteAdmissionStep: adminMutation
@@ -2221,6 +2275,7 @@ export const cmsRouter = createRouter({
         documentId: stepId,
         details: `Deleted admission step #${deleted?.stepNumber || stepId}`,
       });
+      invalidateCache("cms:admissionSteps");
       return deleted || { success: true, id: stepId };
     }),
 
@@ -2228,10 +2283,13 @@ export const cmsRouter = createRouter({
   listFaqs: publicQuery
     .input(z.object({ category: z.string().optional() }).optional())
     .query(async ({ input }) => {
-      const { Faq } = await getMainModels();
-      const filter: any = { isActive: true };
-      if (input?.category) filter.category = input.category;
-      return Faq.find(filter).sort({ order: 1 });
+      const cacheKey = `cms:faqs:${input?.category || "all"}`;
+      return withCache(cacheKey, 60, async () => {
+        const { Faq } = await getMainModels();
+        const filter: any = { isActive: true };
+        if (input?.category) filter.category = input.category;
+        return Faq.find(filter).sort({ order: 1 }).lean();
+      });
     }),
   createFaq: adminMutation
     .input(
@@ -2252,6 +2310,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created FAQ: ${created.question}`,
       });
+      invalidateCache("cms:faqs");
       return created;
     }),
   updateFaq: adminMutation
@@ -2277,6 +2336,7 @@ export const cmsRouter = createRouter({
         documentId: faqId,
         details: `Updated FAQ: ${updated?.question}`,
       });
+      invalidateCache("cms:faqs");
       return updated;
     }),
   deleteFaq: adminMutation
@@ -2303,13 +2363,16 @@ export const cmsRouter = createRouter({
         documentId: faqId,
         details: `Deleted FAQ: ${deleted?.question || faqId}`,
       });
+      invalidateCache("cms:faqs");
       return deleted || { success: true, id: faqId };
     }),
 
   // --- 32. TIMELINE & MILESTONES ---
   listTimeline: publicQuery.query(async () => {
-    const { TimelineItem } = await getMainModels();
-    return TimelineItem.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:timeline", 60, async () => {
+      const { TimelineItem } = await getMainModels();
+      return TimelineItem.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createTimelineItem: adminMutation
     .input(
@@ -2330,6 +2393,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created history milestone [${created.year}]: ${created.title}`,
       });
+      invalidateCache("cms:timeline");
       return created;
     }),
   updateTimelineItem: adminMutation
@@ -2355,6 +2419,7 @@ export const cmsRouter = createRouter({
         documentId: timelineId,
         details: `Updated history milestone: ${updated?.title}`,
       });
+      invalidateCache("cms:timeline");
       return updated;
     }),
   deleteTimelineItem: adminMutation
@@ -2381,13 +2446,16 @@ export const cmsRouter = createRouter({
         documentId: timelineId,
         details: `Deleted history milestone: ${deleted?.title || timelineId}`,
       });
+      invalidateCache("cms:timeline");
       return deleted || { success: true, id: timelineId };
     }),
 
   // --- 33. CORE VALUES ---
   listCoreValues: publicQuery.query(async () => {
-    const { CoreValue } = await getMainModels();
-    return CoreValue.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:coreValues", 60, async () => {
+      const { CoreValue } = await getMainModels();
+      return CoreValue.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createCoreValue: adminMutation
     .input(
@@ -2408,6 +2476,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created core value pillar: ${created.title}`,
       });
+      invalidateCache("cms:coreValues");
       return created;
     }),
   updateCoreValue: adminMutation
@@ -2433,6 +2502,7 @@ export const cmsRouter = createRouter({
         documentId: valueId,
         details: `Updated core value pillar: ${updated?.title}`,
       });
+      invalidateCache("cms:coreValues");
       return updated;
     }),
   deleteCoreValue: adminMutation
@@ -2459,13 +2529,16 @@ export const cmsRouter = createRouter({
         documentId: valueId,
         details: `Deleted core value pillar: ${deleted?.title || valueId}`,
       });
+      invalidateCache("cms:coreValues");
       return deleted || { success: true, id: valueId };
     }),
 
   // --- 34. 3D FEATURE CARDS ---
   listFeatureCards: publicQuery.query(async () => {
-    const { FeatureCard } = await getMainModels();
-    return FeatureCard.find({ isActive: true }).sort({ order: 1 });
+    return withCache("cms:featureCards", 60, async () => {
+      const { FeatureCard } = await getMainModels();
+      return FeatureCard.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
   }),
   createFeatureCard: adminMutation
     .input(
@@ -2487,6 +2560,7 @@ export const cmsRouter = createRouter({
         documentId: created._id.toString(),
         details: `Created feature card: ${created.title}`,
       });
+      invalidateCache("cms:featureCards");
       return created;
     }),
   updateFeatureCard: adminMutation
@@ -2513,6 +2587,7 @@ export const cmsRouter = createRouter({
         documentId: cardId,
         details: `Updated feature card: ${updated?.title}`,
       });
+      invalidateCache("cms:featureCards");
       return updated;
     }),
   deleteFeatureCard: adminMutation
@@ -2539,6 +2614,7 @@ export const cmsRouter = createRouter({
         documentId: cardId,
         details: `Deleted feature card: ${deleted?.title || cardId}`,
       });
+      invalidateCache("cms:featureCards");
       return deleted || { success: true, id: cardId };
     }),
 

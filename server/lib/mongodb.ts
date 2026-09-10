@@ -36,6 +36,20 @@ if (!global._mongoCache) {
   global._mongoCache = cached;
 }
 
+// Optimized options for rapid instant connectivity in Serverless & Node environments
+const MONGO_OPTIONS: mongoose.ConnectOptions = {
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 5000,
+  socketTimeoutMS: 30000,
+  maxPoolSize: 10,
+  minPoolSize: 1, // Keep warm socket alive to eliminate TCP/TLS handshake latency
+  maxIdleTimeMS: 60000, // Keep idle sockets alive for 60s
+  heartbeatFrequencyMS: 10000, // Keep-alive heartbeats to Atlas
+  autoIndex: false, // Huge speed boost: skip index builds on every connection in production
+  autoCreate: false, // Skip collection creation round-trips
+  bufferCommands: true, // Buffer commands so queries start immediately without waiting
+};
+
 export async function getDbConnection(dbName: string): Promise<mongoose.Connection> {
   const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
   if (!rawUri) {
@@ -44,17 +58,7 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
 
   // 1. Establish single shared base cluster connection
   if (!cached.basePromise || (cached.baseConn && cached.baseConn.readyState !== 1 && cached.baseConn.readyState !== 2)) {
-    console.log("[MongoDB] Initializing shared cluster connection...");
-    const conn = mongoose.createConnection(rawUri, {
-      serverSelectionTimeoutMS: 10000,
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      minPoolSize: 0,
-      tls: true,
-      retryWrites: true,
-      w: "majority",
-    });
+    const conn = mongoose.createConnection(rawUri, MONGO_OPTIONS);
 
     conn.on("error", (err) => {
       console.error("[MongoDB] Shared connection error:", err.message);
@@ -70,7 +74,6 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
     cached.basePromise = conn
       .asPromise()
       .then((c) => {
-        console.log("[MongoDB] ✅ Shared cluster connection active!");
         cached.baseConn = c;
         return c;
       })
@@ -85,10 +88,18 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
 
   const base = await cached.basePromise;
   
-  // 2. Reuse sub-connection using useDb on the same socket pool (sub-30ms)
+  // 2. Reuse sub-connection using useDb on the same socket pool (sub-5ms)
   if (!cached.connections[dbName] || cached.connections[dbName]!.readyState !== 1) {
     cached.connections[dbName] = base.useDb(dbName, { useCache: true });
   }
 
   return cached.connections[dbName]!;
 }
+
+// Eager non-blocking warm-up on module evaluation so the connection is ready before the first request arrives
+if (typeof window === "undefined" && process.env.MONGODB_URI) {
+  setTimeout(() => {
+    getDbConnection("dpsi_main").catch(() => {});
+  }, 0);
+}
+

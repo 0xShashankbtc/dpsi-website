@@ -8,6 +8,14 @@ import type { HttpBindings } from "@hono/node-server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
+import { getDbConnection, resolveDbName } from "./lib/mongodb";
+
+// Eager non-blocking database pre-warm on boot so connection is instant on first request
+if (process.env.MONGODB_URI) {
+  getDbConnection(resolveDbName("dpsi", "main")).catch((err) => {
+    console.warn("[Boot] Background DB pre-warm notice:", err.message);
+  });
+}
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 

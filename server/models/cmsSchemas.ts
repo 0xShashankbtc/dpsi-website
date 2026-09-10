@@ -676,11 +676,19 @@ export function getActiveTenantId(): string {
   return tenantContextStorage.getStore() || "dpsi";
 }
 
+const modelsCache = new Map<string, { conn: any; models: any }>();
+
 export async function getMainModels(tenantId?: string) {
   const targetTenant = tenantId || getActiveTenantId();
   const dbName = resolveDbName(targetTenant, "main");
+
+  const cached = modelsCache.get(dbName);
+  if (cached && cached.conn?.readyState === 1) {
+    return cached.models;
+  }
+
   const conn = await getDbConnection(dbName);
-  return {
+  const models = {
     Page: conn.models.Page || conn.model<IPage>("Page", PageSchema),
     Menu: conn.models.Menu || conn.model<IMenu>("Menu", MenuSchema),
     Popup: conn.models.Popup || conn.model<IPopup>("Popup", PopupSchema),
@@ -705,6 +713,9 @@ export async function getMainModels(tenantId?: string) {
     RateLimit: conn.models.RateLimit || conn.model<IRateLimit>("RateLimit", RateLimitSchema),
     AuditLog: conn.models.AuditLog || conn.model<IAuditLog>("AuditLog", AuditLogSchema),
   };
+
+  modelsCache.set(dbName, { conn, models });
+  return models;
 }
 
 export interface IAuditLog extends Document {
@@ -817,19 +828,37 @@ export async function checkPersistentRateLimit(
 export async function getGalleryModels(tenantId?: string) {
   const targetTenant = tenantId || getActiveTenantId();
   const dbName = resolveDbName(targetTenant, "gallery");
+
+  const cached = modelsCache.get(dbName);
+  if (cached && cached.conn?.readyState === 1) {
+    return cached.models;
+  }
+
   const conn = await getDbConnection(dbName);
-  return {
+  const models = {
     GalleryCategory: conn.models.GalleryCategory || conn.model<IGalleryCategory>("GalleryCategory", GalleryCategorySchema),
     GalleryImage: conn.models.GalleryImage || conn.model<IGalleryImage>("GalleryImage", GalleryImageSchema),
     VideoGallery: conn.models.VideoGallery || conn.model<IVideoGallery>("VideoGallery", VideoGallerySchema),
   };
+
+  modelsCache.set(dbName, { conn, models });
+  return models;
 }
 
 export async function getTcModels(tenantId?: string) {
   const targetTenant = tenantId || getActiveTenantId();
   const dbName = resolveDbName(targetTenant, "tc");
+
+  const cached = modelsCache.get(dbName);
+  if (cached && cached.conn?.readyState === 1) {
+    return cached.models;
+  }
+
   const conn = await getDbConnection(dbName);
-  return {
+  const models = {
     TransferCertificate: conn.models.TransferCertificate || conn.model<ITransferCertificate>("TransferCertificate", TransferCertificateSchema),
   };
+
+  modelsCache.set(dbName, { conn, models });
+  return models;
 }
