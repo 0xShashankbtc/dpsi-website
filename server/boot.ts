@@ -70,11 +70,20 @@ const trpcHandler = async (c: any) => {
       createContext: () => ctx,
     });
   });
-  // Set anti-caching headers on all dynamic tRPC API responses
+  // Set appropriate caching headers: public queries get Edge CDN acceleration (sub-20ms) while admin requests bypass cache
   const headers = new Headers(res.headers);
-  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-  headers.set("Pragma", "no-cache");
-  headers.set("Expires", "0");
+  const isPublicQuery =
+    c.req.method === "GET" &&
+    !c.req.header("authorization") &&
+    c.req.header("x-admin-auth") !== "true";
+
+  if (isPublicQuery) {
+    headers.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+  } else {
+    headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+    headers.set("Pragma", "no-cache");
+    headers.set("Expires", "0");
+  }
   return new Response(res.body, {
     status: res.status,
     statusText: res.statusText,

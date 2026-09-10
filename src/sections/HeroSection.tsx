@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link } from "react-router";
 import {
@@ -17,11 +17,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
 
+export function optimizeMediaUrl(url?: string): string {
+  if (!url || typeof url !== "string") return "";
+  const clean = url.trim();
+  if (clean.includes("cloudinary.com") && clean.includes("/video/upload/")) {
+    if (clean.includes("/video/upload/q_auto")) return clean;
+    return clean.replace(
+      "/video/upload/",
+      "/video/upload/q_auto,vc_auto,w_1280,c_limit/"
+    );
+  }
+  if (clean.includes("cloudinary.com") && clean.includes("/image/upload/")) {
+    if (clean.includes("/image/upload/q_auto")) return clean;
+    return clean.replace(
+      "/image/upload/",
+      "/image/upload/q_auto,f_auto,w_2048,c_limit/"
+    );
+  }
+  return clean;
+}
+
 const DEFAULT_HERO_SLIDES = [
   {
     image: "/images/dps/slider_1.webp",
-    videoUrl: "/videos/campus_hero.mp4",
-    mediaType: "video" as const,
+    videoUrl: "",
+    mediaType: "image" as const,
     title: "Delhi Public School Indirapuram",
     subtitle: "Premier CBSE Day School in Ghaziabad • Nursery to Class XII",
     badge: "Admissions Open 2026-27",
@@ -43,16 +63,21 @@ export default function HeroSection() {
     cmsSliders && cmsSliders.length > 0
       ? cmsSliders
           .filter((s: any) => !s.isDeleted && s.isActive !== false)
-          .map((s: any) => ({
-            image: s.imageUrl || "/images/dps/slider_1.webp",
-            videoUrl: s.videoUrl || (s.mediaType === "video" ? "/videos/campus_hero.mp4" : ""),
-            mediaType: (s.mediaType || (s.videoUrl ? "video" : "image")) as "image" | "video",
-            title: s.title,
-            subtitle: s.subtitle || "",
-            badge: s.subtitle ? "Excellence in Education" : "Admissions Open 2026-27",
-            buttonText: s.buttonText || "Apply Now",
-            buttonLink: s.buttonLink || "/admissions",
-          }))
+          .map((s: any) => {
+            const rawVid = (s.videoUrl || "").trim();
+            const rawImg = (s.imageUrl || "").trim();
+            const isVideo = s.mediaType === "video" || Boolean(rawVid);
+            return {
+              image: rawImg || "/images/dps/slider_1.webp",
+              videoUrl: optimizeMediaUrl(rawVid),
+              mediaType: (isVideo ? "video" : "image") as "image" | "video",
+              title: s.title,
+              subtitle: s.subtitle || "",
+              badge: s.subtitle ? "Excellence in Education" : "Admissions Open 2026-27",
+              buttonText: s.buttonText || "Apply Now",
+              buttonLink: s.buttonLink || "/admissions",
+            };
+          })
       : DEFAULT_HERO_SLIDES;
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -64,8 +89,32 @@ export default function HeroSection() {
   const safeSlideIndex = activeSlides.length > 0 ? currentSlide % activeSlides.length : 0;
   const slide = activeSlides[safeSlideIndex] || DEFAULT_HERO_SLIDES[0];
 
-  const hasVideo = Boolean(slide.videoUrl || slide.mediaType === "video");
-  const videoSource = slide.videoUrl || (hasVideo ? "/videos/campus_hero.mp4" : "");
+  const hasVideo = slide.mediaType === "video" && Boolean(slide.videoUrl);
+  const videoSource = hasVideo ? slide.videoUrl : "";
+
+  // Automatically load and start video playback when videoSource or slide changes
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && hasVideo && videoSource) {
+      video.muted = isMuted;
+      video.defaultMuted = true;
+      try {
+        video.load();
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => setIsPlayingVideo(true))
+            .catch(() => {
+              video.muted = true;
+              setIsMuted(true);
+              video.play().catch(() => {});
+            });
+        }
+      } catch {
+        // Safe catch
+      }
+    }
+  }, [videoSource, safeSlideIndex, hasVideo]);
 
   // Mouse Parallax Physics for Super Smooth 3D Tilt
   const mouseX = useMotionValue(0);
@@ -155,7 +204,7 @@ export default function HeroSection() {
       {/* GPU-ACCELERATED BACKGROUND MEDIA */}
       <AnimatePresence initial={false} mode="wait">
         <motion.div
-          key={safeSlideIndex + (hasVideo ? "-vid" : "-img")}
+          key={`hero-slide-${safeSlideIndex}-${hasVideo ? videoSource : slide.image}`}
           initial={{ opacity: 0, scale: 1.02 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
@@ -165,13 +214,15 @@ export default function HeroSection() {
           {hasVideo && videoSource ? (
             <video
               ref={videoRef}
+              key={videoSource}
               src={videoSource}
               poster={slide.image || "/images/dps/slider_1.webp"}
               autoPlay
               muted={isMuted}
+              defaultMuted
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
               onPlay={() => setIsPlayingVideo(true)}
               onPause={() => setIsPlayingVideo(false)}
               onVolumeChange={() => {

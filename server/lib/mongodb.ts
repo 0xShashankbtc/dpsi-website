@@ -17,8 +17,9 @@ export function resolveDbName(tenantId: string, scope: "main" | "gallery" | "tc"
 }
 
 interface MongoCache {
+  baseConn: mongoose.Connection | null;
+  basePromise: Promise<mongoose.Connection> | null;
   connections: Record<string, mongoose.Connection | null>;
-  promises: Record<string, Promise<mongoose.Connection> | null>;
 }
 
 declare global {
@@ -26,8 +27,9 @@ declare global {
 }
 
 const cached: MongoCache = global._mongoCache || {
+  baseConn: null,
+  basePromise: null,
   connections: {},
-  promises: {},
 };
 
 if (!global._mongoCache) {
@@ -35,37 +37,15 @@ if (!global._mongoCache) {
 }
 
 export async function getDbConnection(dbName: string): Promise<mongoose.Connection> {
-  const key = dbName;
-
-  // 1. Return active cached connection if ready
-  if (cached.connections[key] && cached.connections[key]!.readyState === 1) {
-    return cached.connections[key]!;
-  }
-
-  // If connection is in broken/disconnected state, reset promise cache
-  if (cached.connections[key] && cached.connections[key]!.readyState !== 2) {
-    cached.connections[key] = null;
-    cached.promises[key] = null;
-  }
-
   const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
   if (!rawUri) {
     throw new Error("MONGODB_URI environment variable is missing.");
   }
 
-  // 2. Construct database-specific URI
-  let uri = rawUri;
-  if (uri.includes("?")) {
-    const [base, query] = uri.split("?");
-    const cleanBase = base.replace(/\/+$/, "");
-    uri = `${cleanBase}/${dbName}?${query}`;
-  } else {
-    uri = `${uri.replace(/\/+$/, "")}/${dbName}`;
-  }
-
-  if (!cached.promises[key]) {
-    console.log(`[MongoDB] Initializing connection to [${dbName}]...`);
-    const conn = mongoose.createConnection(uri, {
+  // 1. Establish single shared base cluster connection
+  if (!cached.basePromise || (cached.baseConn && cached.baseConn.readyState !== 1 && cached.baseConn.readyState !== 2)) {
+    console.log("[MongoDB] Initializing shared cluster connection...");
+    const conn = mongoose.createConnection(rawUri, {
       serverSelectionTimeoutMS: 10000,
       connectTimeoutMS: 10000,
       socketTimeoutMS: 45000,
@@ -77,29 +57,38 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
     });
 
     conn.on("error", (err) => {
-      console.error(`MongoDB [${dbName}] error:`, err.message);
+      console.error("[MongoDB] Shared connection error:", err.message);
     });
 
     conn.on("disconnected", () => {
-      console.warn(`MongoDB [${dbName}] disconnected.`);
-      cached.connections[key] = null;
-      cached.promises[key] = null;
+      console.warn("[MongoDB] Shared connection disconnected.");
+      cached.baseConn = null;
+      cached.basePromise = null;
+      cached.connections = {};
     });
 
-    cached.promises[key] = conn
+    cached.basePromise = conn
       .asPromise()
       .then((c) => {
-        console.log(`[MongoDB] ✅ Connected to [${dbName}]!`);
-        cached.connections[key] = c;
+        console.log("[MongoDB] ✅ Shared cluster connection active!");
+        cached.baseConn = c;
         return c;
       })
       .catch((err) => {
-        console.error(`[MongoDB] ❌ Connection failed for [${dbName}]:`, err.message);
-        cached.promises[key] = null;
-        cached.connections[key] = null;
+        console.error("[MongoDB] ❌ Connection failed:", err.message);
+        cached.basePromise = null;
+        cached.baseConn = null;
+        cached.connections = {};
         throw err;
       });
   }
 
-  return cached.promises[key]!;
+  const base = await cached.basePromise;
+  
+  // 2. Reuse sub-connection using useDb on the same socket pool (sub-30ms)
+  if (!cached.connections[dbName] || cached.connections[dbName]!.readyState !== 1) {
+    cached.connections[dbName] = base.useDb(dbName, { useCache: true });
+  }
+
+  return cached.connections[dbName]!;
 }

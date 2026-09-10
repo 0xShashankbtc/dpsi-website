@@ -5298,7 +5298,18 @@ export default function AdminCMS() {
                           handleMediaUpload(
                             file,
                             (videoUrl) => {
-                              setSliderForm({ ...sliderForm, videoUrl, mediaType: "video" });
+                              let autoPoster = sliderForm.imageUrl;
+                              if (!autoPoster && videoUrl.includes("cloudinary.com")) {
+                                autoPoster = videoUrl
+                                  .replace("/video/upload/", "/video/upload/so_0,w_800,c_limit,q_auto,f_auto/")
+                                  .replace(/\.[^/.]+$/, ".jpg");
+                              }
+                              setSliderForm((prev) => ({
+                                ...prev,
+                                videoUrl,
+                                imageUrl: autoPoster || prev.imageUrl || "/images/dps/slider_1.webp",
+                                mediaType: "video",
+                              }));
                             },
                             { resourceType: "video", folder: "dpsi_videos" }
                           );
@@ -5411,10 +5422,14 @@ export default function AdminCMS() {
                     isUploading
                   }
                   onClick={() => {
+                    const payload = { ...sliderForm };
+                    if (payload.mediaType === "video" && !payload.imageUrl) {
+                      payload.imageUrl = "/images/dps/slider_1.webp";
+                    }
                     if (editingSlider) {
-                      updateSlider.mutate({ id: editingSlider, ...sliderForm });
+                      updateSlider.mutate({ id: editingSlider, ...payload });
                     } else {
-                      createSlider.mutate(sliderForm);
+                      createSlider.mutate(payload);
                     }
                   }}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer"

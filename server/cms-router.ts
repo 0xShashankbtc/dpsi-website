@@ -1173,7 +1173,7 @@ export const cmsRouter = createRouter({
       z.object({
         title: z.string(),
         subtitle: z.string().optional(),
-        imageUrl: z.string(),
+        imageUrl: z.string().optional().default("/images/dps/slider_1.webp"),
         videoUrl: z.string().optional(),
         mediaType: z.enum(["image", "video"]).default("image"),
         linkUrl: z.string().optional(),
@@ -1186,6 +1186,9 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { Slider } = await getMainModels();
       const sliderData: any = { ...input };
+      if (!sliderData.imageUrl) {
+        sliderData.imageUrl = "/images/dps/slider_1.webp";
+      }
       if (input.buttonLink && !input.linkUrl) {
         sliderData.linkUrl = input.buttonLink;
       }

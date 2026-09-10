@@ -3,10 +3,10 @@ import { useLocation } from "react-router";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import FloatingSocials from "./FloatingSocials";
-import AIChatWidget from "./AIChatWidget";
 import PopupModal from "./PopupModal";
 
 const ScrollProgress = lazy(() => import("./ScrollProgress"));
+const AIChatWidget = lazy(() => import("./AIChatWidget"));
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -53,7 +53,9 @@ export default function Layout({ children }: LayoutProps) {
       <main className="flex-1">{children}</main>
       <Footer />
       <FloatingSocials />
-      <AIChatWidget />
+      <Suspense fallback={null}>
+        <AIChatWidget />
+      </Suspense>
       <PopupModal />
     </div>
   );

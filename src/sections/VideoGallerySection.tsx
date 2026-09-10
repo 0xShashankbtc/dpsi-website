@@ -22,6 +22,8 @@ function extractYoutubeInfo(url: string) {
   };
 }
 
+import { optimizeMediaUrl } from "./HeroSection";
+
 export default function VideoGallerySection() {
   const { data: cmsVideos, isLoading } = trpc.cms.listVideos.useQuery();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -41,11 +43,23 @@ export default function VideoGallerySection() {
           isDirectVideo: false,
         };
       }
+      const directVid = (v.videoUrl || v.youtubeUrl || "").trim();
+      let thumb = (v.thumbnailUrl || "").trim();
+      if (!thumb && directVid.includes("cloudinary.com") && directVid.includes("/video/upload/")) {
+        thumb = directVid.replace(
+          "/video/upload/",
+          "/video/upload/so_0,w_800,c_limit,q_auto,f_auto/"
+        ).replace(/\.[^/.]+$/, ".jpg");
+      }
+      if (!thumb) {
+        thumb = "/images/dps/slider_1.webp";
+      }
+
       return {
         id: v._id ? String(v._id) : `vid-${i}`,
         title: v.title,
-        url: v.videoUrl || v.youtubeUrl || "",
-        thumbnail: v.thumbnailUrl || "",
+        url: optimizeMediaUrl(directVid),
+        thumbnail: thumb,
         isDirectVideo: !!(v.videoUrl || targetUrl.match(/\.(mp4|webm|ogg|mov)($|\?)/i)),
       };
     });
@@ -123,8 +137,11 @@ export default function VideoGallerySection() {
                     <video
                       key={activeVideo.id}
                       src={activeVideo.url}
+                      poster={activeVideo.thumbnail}
                       controls
                       autoPlay
+                      playsInline
+                      preload="metadata"
                       className="w-full h-full object-cover"
                     />
                   ) : (
