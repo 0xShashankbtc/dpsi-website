@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Sparkles,
   CheckCircle2,
+  Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -166,6 +167,16 @@ export default function InteractiveFacilitiesSection() {
   const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery(undefined, {
     staleTime: 60000,
   });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const view360Url = getSetting("view_360_url", "https://dpsivr.vercel.app");
+  const view360Label = getSetting("view_360_label", "360 View");
+  const view360Enabled = getSetting("view_360_enabled", "true") !== "false";
 
   const facilities: FacilityItem[] =
     cmsFacilities && cmsFacilities.length > 0
@@ -203,9 +214,23 @@ export default function InteractiveFacilitiesSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider mb-3.5 border border-slate-200 dark:border-slate-700">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Interactive Campus Tour</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-3.5">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Interactive Campus Showcase</span>
+            </div>
+
+            {view360Enabled && (
+              <a
+                href={view360Url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-sm transition-all cursor-pointer border border-emerald-400/30"
+              >
+                <Compass className="w-3.5 h-3.5 animate-spin-slow text-amber-300" />
+                <span>Launch {view360Label} (VR Tour)</span>
+              </a>
+            )}
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">

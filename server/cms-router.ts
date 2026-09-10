@@ -759,11 +759,21 @@ export const cmsRouter = createRouter({
 
   // --- 4. MANAGE MENUS ---
   listMenus: publicQuery
-    .input(z.object({ location: z.enum(["header", "footer_quick", "footer_resources"]).optional() }).optional())
+    .input(
+      z
+        .object({
+          location: z.enum(["header", "footer_quick", "footer_resources"]).optional(),
+          includeDeleted: z.boolean().optional(),
+        })
+        .optional()
+    )
     .query(async ({ input }) => {
       const { Menu } = await getMainModels();
       const filter: any = {};
       if (input?.location) filter.location = input.location;
+      if (!input?.includeDeleted) {
+        filter.isDeleted = { $ne: true };
+      }
       return Menu.find(filter).sort({ order: 1 });
     }),
   createMenu: adminMutation
@@ -772,14 +782,19 @@ export const cmsRouter = createRouter({
         title: z.string(),
         url: z.string(),
         location: z.enum(["header", "footer_quick", "footer_resources"]).default("header"),
-        parent: z.string().optional(),
+        parent: z.string().nullable().optional(),
         order: z.number().default(0),
         isActive: z.boolean().default(true),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const { Menu } = await getMainModels();
-      const created = await Menu.create(input);
+      const payload: any = { ...input };
+      if (!payload.parent || payload.parent.trim() === "" || payload.parent === "None") {
+        payload.parent = null;
+      }
+      payload.isDeleted = false;
+      const created = await Menu.create(payload);
       await createImmutableAuditLog({
         action: "CREATE_MENU",
         module: "Navigation",
@@ -796,22 +811,46 @@ export const cmsRouter = createRouter({
         title: z.string().optional(),
         url: z.string().optional(),
         location: z.enum(["header", "footer_quick", "footer_resources"]).optional(),
-        parent: z.string().optional(),
+        parent: z.string().nullable().optional(),
         order: z.number().optional(),
         isActive: z.boolean().optional(),
+        isDeleted: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const { Menu } = await getMainModels();
-      const menuId = String(input.id?._id || input.id);
+      const rawId = input.id?._id || input.id;
+      const menuId = String(rawId);
       const { id, ...data } = input;
-      const updated = await Menu.findByIdAndUpdate(menuId, data, { new: true });
+
+      const updateData: any = { ...data };
+      if ("parent" in updateData) {
+        if (!updateData.parent || updateData.parent.trim() === "" || updateData.parent === "None") {
+          updateData.parent = null;
+        }
+      }
+      if (updateData.isDeleted === undefined) {
+        updateData.isDeleted = false;
+      }
+
+      let updated: any = null;
+      if (mongoose.Types.ObjectId.isValid(menuId)) {
+        updated = await Menu.findByIdAndUpdate(menuId, updateData, { new: true });
+      }
+      if (!updated) {
+        updated = await Menu.findOneAndUpdate(
+          { $or: [{ _id: menuId }, { id: menuId }, { url: menuId }, { title: menuId }] },
+          updateData,
+          { new: true }
+        );
+      }
+
       await createImmutableAuditLog({
         action: "UPDATE_MENU",
         module: "Navigation",
         performedBy: ctx.user?.username || "Admin",
         documentId: menuId,
-        details: `Updated menu link: ${updated?.title} (${updated?.url})`,
+        details: `Updated menu link: ${updated?.title || menuId} (${updated?.url || "N/A"})`,
       });
       return updated;
     }),
@@ -838,6 +877,7 @@ export const cmsRouter = createRouter({
         const siblings = await Menu.find({
           _id: { $ne: deleted._id },
           location: deleted.location,
+          isDeleted: { $ne: true },
           ...(targetParent && targetParent !== "None"
             ? { parent: targetParent }
             : { $or: [{ parent: null }, { parent: "" }, { parent: "None" }] }),
@@ -1519,10 +1559,33 @@ export const cmsRouter = createRouter({
 
   // --- 19. TOGGLE MENU ACTIVE ---
   toggleMenu: adminMutation
-    .input(z.object({ id: z.string(), isActive: z.boolean() }))
-    .mutation(async ({ input }) => {
+    .input(z.object({ id: z.union([z.string(), z.any()]), isActive: z.boolean() }))
+    .mutation(async ({ input, ctx }) => {
       const { Menu } = await getMainModels();
-      return Menu.findByIdAndUpdate(input.id, { isActive: input.isActive }, { new: true });
+      const rawId = (input.id as any)?._id || input.id;
+      const menuId = String(rawId);
+
+      let updated: any = null;
+      if (mongoose.Types.ObjectId.isValid(menuId)) {
+        updated = await Menu.findByIdAndUpdate(menuId, { isActive: input.isActive, isDeleted: false }, { new: true });
+      }
+      if (!updated) {
+        updated = await Menu.findOneAndUpdate(
+          { $or: [{ _id: menuId }, { id: menuId }] },
+          { isActive: input.isActive, isDeleted: false },
+          { new: true }
+        );
+      }
+
+      await createImmutableAuditLog({
+        action: "UPDATE_MENU",
+        module: "Navigation",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: menuId,
+        details: `Toggled menu "${updated?.title || menuId}" visibility to ${input.isActive ? "Visible" : "Hidden"}`,
+      });
+
+      return updated;
     }),
 
   // --- 20. UPDATE VIDEO ---
@@ -1616,6 +1679,9 @@ export const cmsRouter = createRouter({
         { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
         { key: "social_instagram", value: "https://instagram.com/dpsindirapuram", label: "Instagram URL", group: "social" },
         { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" },
+        { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360° Virtual Tour / VR URL", group: "virtual_tour" },
+        { key: "view_360_label", value: "360° View", label: "360° Button Label", group: "virtual_tour" },
+        { key: "view_360_enabled", value: "true", label: "Enable 360° View Button", group: "virtual_tour" },
       ];
       await SiteSettings.insertMany(defaults).catch(() => {});
       return SiteSettings.find({}).sort({ group: 1, key: 1 });

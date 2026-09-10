@@ -14,13 +14,16 @@ import { trpc } from "@/providers/trpc";
 
 export default function Footer() {
   const { data: dbQuickMenus } = trpc.cms.listMenus.useQuery({ location: "footer_quick" }, {
-    staleTime: 60000,
+    staleTime: 5000,
+    refetchOnMount: true,
   });
   const { data: dbResourceMenus } = trpc.cms.listMenus.useQuery({ location: "footer_resources" }, {
-    staleTime: 60000,
+    staleTime: 5000,
+    refetchOnMount: true,
   });
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
-    staleTime: 60000,
+    staleTime: 5000,
+    refetchOnMount: true,
   });
 
   const getSetting = (key: string, fallback: string) => {

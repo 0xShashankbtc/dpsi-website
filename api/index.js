@@ -179936,10 +179936,18 @@ var cmsRouter = createRouter({
     return deleted || { success: true, id: pageId };
   }),
   // --- 4. MANAGE MENUS ---
-  listMenus: publicQuery.input(external_exports.object({ location: external_exports.enum(["header", "footer_quick", "footer_resources"]).optional() }).optional()).query(async ({ input }) => {
+  listMenus: publicQuery.input(
+    external_exports.object({
+      location: external_exports.enum(["header", "footer_quick", "footer_resources"]).optional(),
+      includeDeleted: external_exports.boolean().optional()
+    }).optional()
+  ).query(async ({ input }) => {
     const { Menu } = await getMainModels();
     const filter = {};
     if (input?.location) filter.location = input.location;
+    if (!input?.includeDeleted) {
+      filter.isDeleted = { $ne: true };
+    }
     return Menu.find(filter).sort({ order: 1 });
   }),
   createMenu: adminMutation.input(
@@ -179947,13 +179955,18 @@ var cmsRouter = createRouter({
       title: external_exports.string(),
       url: external_exports.string(),
       location: external_exports.enum(["header", "footer_quick", "footer_resources"]).default("header"),
-      parent: external_exports.string().optional(),
+      parent: external_exports.string().nullable().optional(),
       order: external_exports.number().default(0),
       isActive: external_exports.boolean().default(true)
     })
   ).mutation(async ({ input, ctx }) => {
     const { Menu } = await getMainModels();
-    const created = await Menu.create(input);
+    const payload2 = { ...input };
+    if (!payload2.parent || payload2.parent.trim() === "" || payload2.parent === "None") {
+      payload2.parent = null;
+    }
+    payload2.isDeleted = false;
+    const created = await Menu.create(payload2);
     await createImmutableAuditLog({
       action: "CREATE_MENU",
       module: "Navigation",
@@ -179969,21 +179982,42 @@ var cmsRouter = createRouter({
       title: external_exports.string().optional(),
       url: external_exports.string().optional(),
       location: external_exports.enum(["header", "footer_quick", "footer_resources"]).optional(),
-      parent: external_exports.string().optional(),
+      parent: external_exports.string().nullable().optional(),
       order: external_exports.number().optional(),
-      isActive: external_exports.boolean().optional()
+      isActive: external_exports.boolean().optional(),
+      isDeleted: external_exports.boolean().optional()
     })
   ).mutation(async ({ input, ctx }) => {
     const { Menu } = await getMainModels();
-    const menuId = String(input.id?._id || input.id);
+    const rawId = input.id?._id || input.id;
+    const menuId = String(rawId);
     const { id, ...data2 } = input;
-    const updated = await Menu.findByIdAndUpdate(menuId, data2, { new: true });
+    const updateData = { ...data2 };
+    if ("parent" in updateData) {
+      if (!updateData.parent || updateData.parent.trim() === "" || updateData.parent === "None") {
+        updateData.parent = null;
+      }
+    }
+    if (updateData.isDeleted === void 0) {
+      updateData.isDeleted = false;
+    }
+    let updated = null;
+    if (import_mongoose15.default.Types.ObjectId.isValid(menuId)) {
+      updated = await Menu.findByIdAndUpdate(menuId, updateData, { new: true });
+    }
+    if (!updated) {
+      updated = await Menu.findOneAndUpdate(
+        { $or: [{ _id: menuId }, { id: menuId }, { url: menuId }, { title: menuId }] },
+        updateData,
+        { new: true }
+      );
+    }
     await createImmutableAuditLog({
       action: "UPDATE_MENU",
       module: "Navigation",
       performedBy: ctx.user?.username || "Admin",
       documentId: menuId,
-      details: `Updated menu link: ${updated?.title} (${updated?.url})`
+      details: `Updated menu link: ${updated?.title || menuId} (${updated?.url || "N/A"})`
     });
     return updated;
   }),
@@ -180005,6 +180039,7 @@ var cmsRouter = createRouter({
       const siblings = await Menu.find({
         _id: { $ne: deleted._id },
         location: deleted.location,
+        isDeleted: { $ne: true },
         ...targetParent && targetParent !== "None" ? { parent: targetParent } : { $or: [{ parent: null }, { parent: "" }, { parent: "None" }] }
       }).sort({ order: 1, updatedAt: -1 });
       for (let i5 = 0; i5 < siblings.length; i5++) {
@@ -180594,9 +180629,29 @@ var cmsRouter = createRouter({
     return Attachment.findByIdAndUpdate(id, data2, { new: true });
   }),
   // --- 19. TOGGLE MENU ACTIVE ---
-  toggleMenu: adminMutation.input(external_exports.object({ id: external_exports.string(), isActive: external_exports.boolean() })).mutation(async ({ input }) => {
+  toggleMenu: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]), isActive: external_exports.boolean() })).mutation(async ({ input, ctx }) => {
     const { Menu } = await getMainModels();
-    return Menu.findByIdAndUpdate(input.id, { isActive: input.isActive }, { new: true });
+    const rawId = input.id?._id || input.id;
+    const menuId = String(rawId);
+    let updated = null;
+    if (import_mongoose15.default.Types.ObjectId.isValid(menuId)) {
+      updated = await Menu.findByIdAndUpdate(menuId, { isActive: input.isActive, isDeleted: false }, { new: true });
+    }
+    if (!updated) {
+      updated = await Menu.findOneAndUpdate(
+        { $or: [{ _id: menuId }, { id: menuId }] },
+        { isActive: input.isActive, isDeleted: false },
+        { new: true }
+      );
+    }
+    await createImmutableAuditLog({
+      action: "UPDATE_MENU",
+      module: "Navigation",
+      performedBy: ctx.user?.username || "Admin",
+      documentId: menuId,
+      details: `Toggled menu "${updated?.title || menuId}" visibility to ${input.isActive ? "Visible" : "Hidden"}`
+    });
+    return updated;
   }),
   // --- 20. UPDATE VIDEO ---
   updateVideo: adminMutation.input(
@@ -180677,7 +180732,10 @@ var cmsRouter = createRouter({
         { key: "admission_status", value: "Open for 2026-27", label: "Admission Status", group: "admissions" },
         { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
         { key: "social_instagram", value: "https://instagram.com/dpsindirapuram", label: "Instagram URL", group: "social" },
-        { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" }
+        { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" },
+        { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360\xB0 Virtual Tour / VR URL", group: "virtual_tour" },
+        { key: "view_360_label", value: "360\xB0 View", label: "360\xB0 Button Label", group: "virtual_tour" },
+        { key: "view_360_enabled", value: "true", label: "Enable 360\xB0 View Button", group: "virtual_tour" }
       ];
       await SiteSettings.insertMany(defaults).catch(() => {
       });

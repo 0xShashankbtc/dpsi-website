@@ -34,6 +34,16 @@ export default function HeroSection() {
   const { data: cmsSliders } = trpc.cms.listSliders.useQuery(undefined, {
     staleTime: 60000,
   });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const view360Url = getSetting("view_360_url", "https://dpsivr.vercel.app");
+  const view360Label = getSetting("view_360_label", "360 View");
+  const view360Enabled = getSetting("view_360_enabled", "true") !== "false";
 
   const activeSlides =
     cmsSliders && cmsSliders.length > 0
@@ -256,6 +266,21 @@ export default function HeroSection() {
               Explore Campus
             </Button>
           </motion.div>
+
+          {view360Enabled && (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-xl shadow-teal-950/40 cursor-pointer flex items-center gap-2 border border-teal-300/30"
+                asChild
+              >
+                <a href={view360Url} target="_blank" rel="noopener noreferrer">
+                  <Compass className="w-4 h-4 text-cyan-200 animate-spin-slow" />
+                  {view360Label}
+                </a>
+              </Button>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* INTERACTIVE VISITOR QUICK CHIPS */}
@@ -265,6 +290,18 @@ export default function HeroSection() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="flex flex-wrap items-center justify-center gap-2 pt-2"
         >
+          {view360Enabled && (
+            <a
+              href={view360Url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 backdrop-blur-md border border-emerald-400/30 text-emerald-200 hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-sm"
+            >
+              <Compass className="w-3.5 h-3.5 text-cyan-300 animate-spin-slow" />
+              <span>{view360Label} (VR Tour)</span>
+            </a>
+          )}
+
           <button
             onClick={() => openAIChat("Tell me about Nursery to Class XI admission criteria.")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
