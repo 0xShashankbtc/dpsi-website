@@ -71,7 +71,7 @@ export default function HeroSection() {
               title: s.title,
               subtitle: s.subtitle || "",
               badge: s.subtitle ? "Excellence in Education" : "Admissions Open 2026-27",
-              buttonText: s.buttonText || "Apply Now",
+              buttonText: s.buttonText || "",
               buttonLink: s.buttonLink || "/admissions",
             };
           })
@@ -245,59 +245,7 @@ export default function HeroSection() {
         </div>
       </motion.div>
 
-      {/* DYNAMIC HERO OVERLAY (DRIVEN BY DB / CMS) */}
-      {(slide.title?.trim() || slide.subtitle?.trim() || slide.buttonText?.trim()) && (
-        <motion.div
-          style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-          className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center flex flex-col items-center will-change-transform"
-        >
-          {/* Dynamic Title */}
-          {slide.title && slide.title.trim() && (
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08] mb-5 max-w-4xl drop-shadow-md"
-            >
-              {slide.title}
-            </motion.h1>
-          )}
 
-          {/* Dynamic Subtitle */}
-          {slide.subtitle && slide.subtitle.trim() && (
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-base sm:text-xl text-slate-200 font-normal max-w-2xl mx-auto mb-8 leading-relaxed drop-shadow-md"
-            >
-              {slide.subtitle}
-            </motion.p>
-          )}
-
-          {/* Dynamic Action Button from Database */}
-          {slide.buttonText && slide.buttonText.trim() && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap items-center justify-center gap-3.5 mb-8"
-            >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-xl shadow-black/25 cursor-pointer flex items-center gap-2"
-                  asChild
-                >
-                  <Link to={slide.buttonLink || "/admissions"}>
-                    {slide.buttonText} <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </motion.div>
-            </motion.div>
-          )}
-        </motion.div>
-      )}
 
       {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM) */}
       <div className="absolute bottom-5 inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6">
