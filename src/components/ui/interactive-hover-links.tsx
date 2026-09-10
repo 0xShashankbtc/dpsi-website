@@ -98,11 +98,12 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 25 });
-  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 25 });
+  const mouseXSpring = useSpring(x, { stiffness: 220, damping: 28 });
+  const mouseYSpring = useSpring(y, { stiffness: 220, damping: 28 });
 
-  const top = useTransform(mouseYSpring, [0.5, -0.5], ["35%", "65%"]);
-  const left = useTransform(mouseXSpring, [0.5, -0.5], ["65%", "35%"]);
+  const top = useTransform(mouseYSpring, [0.5, -0.5], ["30%", "70%"]);
+  const left = useTransform(mouseXSpring, [0.5, -0.5], ["70%", "30%"]);
+  const rotate = useTransform(mouseXSpring, [-0.5, 0.5], [-8, 8]);
 
   const handleMouseMove = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
@@ -127,26 +128,28 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
 
   const Content = (
     <>
-      <div className="relative z-10 py-1">
+      <div className="relative z-10 py-1 flex-1 pr-4">
         <motion.span
           variants={{
             initial: { x: 0 },
-            whileHover: { x: -8 },
+            whileHover: { x: -6 },
           }}
           transition={{
             type: "spring",
-            staggerChildren: 0.04,
-            delayChildren: 0.1,
+            staggerChildren: 0.035,
+            delayChildren: 0.05,
+            damping: 24,
+            stiffness: 280,
           }}
-          className="relative z-10 block text-2xl font-black text-slate-800 dark:text-slate-100 transition-colors duration-300 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 sm:text-3xl md:text-5xl tracking-tight"
+          className="relative z-10 block text-2xl font-black text-slate-800 dark:text-slate-100 transition-colors duration-300 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 sm:text-3xl md:text-5xl tracking-tight leading-tight"
         >
           {heading.split("").map((l, i) => (
             <motion.span
               variants={{
                 initial: { x: 0 },
-                whileHover: { x: 8 },
+                whileHover: { x: 6 },
               }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
               className="inline-block"
               key={i}
             >
@@ -154,34 +157,44 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
             </motion.span>
           ))}
         </motion.span>
-        <span className="relative z-10 mt-1 block text-xs sm:text-sm md:text-base font-medium text-slate-500 dark:text-slate-400 transition-colors duration-300 group-hover:text-slate-900 dark:group-hover:text-slate-200">
+        <span className="relative z-10 mt-1.5 block text-xs sm:text-sm md:text-base font-medium text-slate-500 dark:text-slate-400 transition-colors duration-300 group-hover:text-slate-900 dark:group-hover:text-slate-200">
           {subheading}
         </span>
       </div>
 
-      <motion.img
+      {/* Floating Realistic Preview Card */}
+      <motion.div
         style={{
           top,
           left,
-          translateX: "-10%",
+          rotate,
+          translateX: "-20%",
           translateY: "-50%",
         }}
         variants={{
-          initial: { scale: 0, opacity: 0, rotate: "-10deg" },
-          whileHover: { scale: 1, opacity: 1, rotate: "8deg" },
+          initial: { scale: 0.8, opacity: 0, y: 10 },
+          whileHover: { scale: 1, opacity: 1, y: 0 },
         }}
-        transition={{ type: "spring", stiffness: 280, damping: 22 }}
-        src={imgSrc}
-        className="pointer-events-none absolute z-0 h-24 w-36 rounded-xl object-cover shadow-2xl ring-2 ring-emerald-500/30 md:h-36 md:w-56"
-        alt={`Image representing ${heading}`}
-        loading="lazy"
-      />
+        transition={{ type: "spring", stiffness: 260, damping: 26 }}
+        className="pointer-events-none absolute z-20 h-28 w-44 sm:h-36 sm:w-56 md:h-44 md:w-68 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-black/10 dark:ring-white/15 bg-slate-900"
+      >
+        <img
+          src={imgSrc}
+          className="w-full h-full object-cover"
+          alt={`Image representing ${heading}`}
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+        <span className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white uppercase tracking-wider px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-xs border border-white/20">
+          {heading}
+        </span>
+      </motion.div>
 
-      <div className="overflow-hidden shrink-0">
+      <div className="overflow-hidden shrink-0 relative z-10">
         <motion.div
           variants={{
             initial: {
-              x: "100%",
+              x: "60%",
               opacity: 0,
             },
             whileHover: {
@@ -189,17 +202,19 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
               opacity: 1,
             },
           }}
-          transition={{ type: "spring", stiffness: 350, damping: 25 }}
-          className="relative z-10 p-2 sm:p-4"
+          transition={{ type: "spring", stiffness: 320, damping: 26 }}
+          className="p-2 sm:p-4"
         >
-          <ArrowRight className="size-6 text-emerald-600 dark:text-emerald-400 sm:size-8 md:size-10" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm group-hover:scale-105 transition-transform">
+            <ArrowRight className="size-5 sm:size-6" />
+          </div>
         </motion.div>
       </div>
     </>
   );
 
   const sharedClasses =
-    "group relative flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 py-3 transition-colors duration-300 hover:border-emerald-600 dark:hover:border-emerald-400 md:py-5 cursor-pointer select-none";
+    "group relative flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 py-3.5 sm:py-4 md:py-5 transition-colors duration-300 hover:border-emerald-600 dark:hover:border-emerald-400 cursor-pointer select-none";
 
   if (isExternal) {
     return (

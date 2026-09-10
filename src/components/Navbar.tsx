@@ -135,6 +135,17 @@ export default function Navbar() {
     }
   }, [isDark]);
 
+  // Lock background window scroll when modal or mobile drawer is open
+  useEffect(() => {
+    if (isExploreOpen || isMobileOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isExploreOpen, isMobileOpen]);
+
   const isAdmin = true;
 
   const { data: dbMarquees } = trpc.cms.listMarquees.useQuery();
@@ -568,7 +579,7 @@ export default function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 md:p-10 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 md:p-10 bg-slate-950/92 backdrop-blur-xl overflow-y-auto overscroll-contain"
           >
             {/* Backdrop click to dismiss */}
             <div
@@ -578,14 +589,14 @@ export default function Navbar() {
             />
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              className="relative w-full max-w-4xl bg-white/98 dark:bg-slate-900/98 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-6 sm:p-10 my-auto"
+              exit={{ opacity: 0, scale: 0.96, y: 15 }}
+              transition={{ type: "spring", stiffness: 320, damping: 28 }}
+              className="relative w-full max-w-4xl max-h-[90vh] bg-white/99 dark:bg-slate-900/99 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto overscroll-contain p-6 sm:p-10 my-auto custom-scrollbar"
             >
               {/* Header with close button */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-slate-800/80">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 bg-white/99 dark:bg-slate-900/99 z-30 pt-1 -mt-1">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center">
                     <Compass className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -602,7 +613,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsExploreOpen(false)}
-                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer active:scale-95"
                   aria-label="Close explore modal"
                 >
                   <X className="w-5 h-5" />
