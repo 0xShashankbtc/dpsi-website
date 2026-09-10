@@ -74,7 +74,7 @@ export function InteractiveHoverLinks({
   })();
 
   return (
-    <section className={`bg-transparent p-2 md:p-6 w-full ${className}`}>
+    <section className={`bg-transparent p-0 w-full ${className}`}>
       <div className="mx-auto max-w-5xl">
         {resolvedLinks.map((link) => (
           <LinkItem key={link.heading} {...link} onLinkClick={onLinkClick} />
@@ -141,7 +141,7 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
             damping: 24,
             stiffness: 280,
           }}
-          className="relative z-10 block text-2xl font-black text-slate-800 dark:text-slate-100 transition-colors duration-300 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 sm:text-3xl md:text-5xl tracking-tight leading-tight"
+          className="relative z-10 block text-2xl font-black text-slate-900 dark:text-white transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 sm:text-3xl md:text-5xl tracking-tight leading-tight"
         >
           {heading.split("").map((l, i) => (
             <motion.span
@@ -157,7 +157,7 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
             </motion.span>
           ))}
         </motion.span>
-        <span className="relative z-10 mt-1.5 block text-xs sm:text-sm md:text-base font-medium text-slate-500 dark:text-slate-400 transition-colors duration-300 group-hover:text-slate-900 dark:group-hover:text-slate-200">
+        <span className="relative z-10 mt-1.5 block text-xs sm:text-sm md:text-base font-semibold text-slate-600 dark:text-slate-300 transition-colors duration-300 group-hover:text-slate-900 dark:group-hover:text-slate-100">
           {subheading}
         </span>
       </div>
@@ -214,7 +214,7 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
   );
 
   const sharedClasses =
-    "group relative flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 py-3.5 sm:py-4 md:py-5 transition-colors duration-300 hover:border-emerald-600 dark:hover:border-emerald-400 cursor-pointer select-none";
+    "group relative flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 last:border-b-0 py-3.5 sm:py-4 md:py-5 transition-colors duration-300 hover:border-emerald-600 dark:hover:border-emerald-400 cursor-pointer select-none";
 
   if (isExternal) {
     return (

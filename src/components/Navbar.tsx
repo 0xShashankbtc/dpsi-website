@@ -578,8 +578,8 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 md:p-10 bg-slate-950/92 backdrop-blur-xl overflow-y-auto overscroll-contain"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 md:p-10 bg-black/80 backdrop-blur-md overflow-hidden"
           >
             {/* Backdrop click to dismiss */}
             <div
@@ -593,12 +593,12 @@ export default function Navbar() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 15 }}
               transition={{ type: "spring", stiffness: 320, damping: 28 }}
-              className="relative w-full max-w-4xl max-h-[90vh] bg-white/99 dark:bg-slate-900/99 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto overscroll-contain p-6 sm:p-10 my-auto custom-scrollbar"
+              className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col my-auto overflow-hidden text-slate-900 dark:text-white"
             >
-              {/* Header with close button */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 bg-white/99 dark:bg-slate-900/99 z-30 pt-1 -mt-1">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center">
+              {/* Header with close button - Fixed at top, distinct from scrollable links */}
+              <div className="flex items-center justify-between px-6 sm:px-10 py-5 sm:py-6 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-950">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 flex items-center justify-center shrink-0">
                     <Compass className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
@@ -613,15 +613,15 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsExploreOpen(false)}
-                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer active:scale-95"
+                  className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer active:scale-95 shrink-0"
                   aria-label="Close explore modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Interactive Links Container */}
-              <div className="pt-2">
+              {/* Interactive Links Container - Scrollable without visible scrollbar bar */}
+              <div className="overflow-y-auto max-h-[calc(85vh-100px)] px-6 sm:px-10 py-3 sm:py-5 no-scrollbar flex-1">
                 <InteractiveHoverLinks onLinkClick={() => setIsExploreOpen(false)} />
               </div>
             </motion.div>
