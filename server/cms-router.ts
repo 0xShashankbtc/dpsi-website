@@ -1171,7 +1171,7 @@ export const cmsRouter = createRouter({
   createSlider: adminMutation
     .input(
       z.object({
-        title: z.string(),
+        title: z.string().optional().default(""),
         subtitle: z.string().optional(),
         imageUrl: z.string().optional().default("/images/dps/slider_1.webp"),
         videoUrl: z.string().optional(),

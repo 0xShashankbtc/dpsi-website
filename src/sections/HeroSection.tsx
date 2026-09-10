@@ -10,9 +10,6 @@ import {
   Volume2,
   VolumeX,
   Maximize2,
-  Sparkles,
-  Bot,
-  Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
@@ -178,21 +175,6 @@ export default function HeroSection() {
     }
   };
 
-  const openAIChat = (promptText?: string) => {
-    window.dispatchEvent(
-      new CustomEvent("dpsi:open-ai-chat", {
-        detail: { prompt: promptText || "Can you tell me about the admission procedure for 2026-27?" },
-      })
-    );
-  };
-
-  const scrollToSection = (elementId: string) => {
-    const el = document.getElementById(elementId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
   return (
     <section
       ref={containerRef}
@@ -241,116 +223,79 @@ export default function HeroSection() {
             />
           )}
 
-          {/* Minimalist Cinematic Scrim */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-slate-950/40" />
-          <div className="absolute inset-0 bg-slate-950/20 backdrop-brightness-95" />
+          {/* Ultra-subtle gradient so video is bright, crisp and clearly visible */}
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/35 via-transparent to-black/45" />
         </motion.div>
       </AnimatePresence>
 
-      {/* 3D TILT INTERACTIVE HERO OVERLAY */}
+      {/* TOP PORTION: ADMISSIONS OPEN BADGE */}
       <motion.div
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center flex flex-col items-center will-change-transform"
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="absolute top-5 sm:top-7 inset-x-0 z-20 flex justify-center px-4 pointer-events-auto"
       >
-        {/* Subtle Interactive Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          whileHover={{ scale: 1.06 }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 text-white/90 text-xs font-semibold tracking-wide mb-6 shadow-sm cursor-default transition-colors"
-        >
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-lg cursor-default transition-colors">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>{slide.badge || "Admissions Open 2026-27"}</span>
           <span className="text-white/40">|</span>
-          <span className="text-[11px] text-white/70">CBSE Affiliation No. 2130541</span>
-        </motion.div>
-
-        {/* Minimalist Bold Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08] mb-5 max-w-4xl drop-shadow-sm"
-        >
-          {slide.title}
-        </motion.h1>
-
-        {/* Minimalist Subtitle */}
-        {slide.subtitle && (
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-base sm:text-xl text-slate-200 font-normal max-w-2xl mx-auto mb-8 leading-relaxed drop-shadow-xs"
-          >
-            {slide.subtitle}
-          </motion.p>
-        )}
-
-        {/* Main Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-wrap items-center justify-center gap-3.5 mb-8"
-        >
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              size="lg"
-              className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-xl shadow-black/25 cursor-pointer flex items-center gap-2"
-              asChild
-            >
-              <Link to={slide.buttonLink || "/admissions"}>
-                {slide.buttonText || "Apply Online"} <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
-          </motion.div>
-
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => scrollToSection("interactive-facilities")}
-              className="border border-white/30 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md px-7 py-3 rounded-xl font-semibold transition-all text-sm cursor-pointer"
-            >
-              <Compass className="w-4 h-4 mr-1.5" />
-              Explore Campus
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {/* INTERACTIVE VISITOR QUICK CHIPS */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="flex flex-wrap items-center justify-center gap-2 pt-2"
-        >
-          <button
-            onClick={() => openAIChat("Tell me about Nursery to Class XI admission criteria.")}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
-          >
-            <Bot className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Ask AI About Admissions</span>
-          </button>
-
-          <button
-            onClick={() => scrollToSection("interactive-facilities")}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Interactive Campus Lab & Sports</span>
-          </button>
-
-          <Link
-            to="/transfer-certificate"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/15 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
-          >
-            <span>Verify TC Online</span>
-          </Link>
-        </motion.div>
+          <span className="text-[11px] sm:text-xs text-white/80">CBSE Affiliation No. 2130541</span>
+        </div>
       </motion.div>
+
+      {/* DYNAMIC HERO OVERLAY (DRIVEN BY DB / CMS) */}
+      {(slide.title?.trim() || slide.subtitle?.trim() || slide.buttonText?.trim()) && (
+        <motion.div
+          style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+          className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center flex flex-col items-center will-change-transform"
+        >
+          {/* Dynamic Title */}
+          {slide.title && slide.title.trim() && (
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08] mb-5 max-w-4xl drop-shadow-md"
+            >
+              {slide.title}
+            </motion.h1>
+          )}
+
+          {/* Dynamic Subtitle */}
+          {slide.subtitle && slide.subtitle.trim() && (
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-base sm:text-xl text-slate-200 font-normal max-w-2xl mx-auto mb-8 leading-relaxed drop-shadow-md"
+            >
+              {slide.subtitle}
+            </motion.p>
+          )}
+
+          {/* Dynamic Action Button from Database */}
+          {slide.buttonText && slide.buttonText.trim() && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-wrap items-center justify-center gap-3.5 mb-8"
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-xl shadow-black/25 cursor-pointer flex items-center gap-2"
+                  asChild
+                >
+                  <Link to={slide.buttonLink || "/admissions"}>
+                    {slide.buttonText} <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              </motion.div>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
 
       {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM) */}
       <div className="absolute bottom-5 inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6">

@@ -55,7 +55,7 @@ export default function Navbar() {
   };
 
   const logoUrl = getSetting("logo_url", "/images/dps/logo.webp");
-  const logoHeight = parseInt(getSetting("logo_height", "52"), 10) || 52;
+  const logoHeight = parseInt(getSetting("logo_height", "62"), 10) || 62;
   const logoShape = getSetting("logo_shape", "default");
   const logoShowText = getSetting("logo_show_text", "false") === "true";
   const schoolName = getSetting("school_name", "Delhi Public School Indirapuram");
@@ -210,6 +210,17 @@ export default function Navbar() {
                 Apply Now
               </Link>
             </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <a
+                href="https://dpsivr.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded transition-all block font-bold flex items-center gap-1 shadow-xs"
+                title="360 Virtual Tour"
+              >
+                <span>360 View</span>
+              </a>
+            </motion.div>
             {isAdmin && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
@@ -236,15 +247,15 @@ export default function Navbar() {
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+          <div className="flex items-center justify-between h-18 sm:h-20 lg:h-22">
             <Link to="/" className="flex items-center gap-3 group">
               <motion.img
                 whileHover={{ scale: 1.04 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 src={logoUrl}
                 alt={schoolName}
-                style={{ height: `${Math.min(Math.max(logoHeight, 32), 75)}px` }}
-                className={`w-auto object-contain transition-transform duration-300 ${
+                style={{ height: `${Math.min(Math.max(logoHeight, 40), 84)}px` }}
+                className={`h-13 sm:h-16 lg:h-18 w-auto object-contain transition-transform duration-300 ${
                   logoShape === "circle"
                     ? "rounded-full"
                     : logoShape === "rounded"
@@ -440,6 +451,23 @@ export default function Navbar() {
                     )}
                   </div>
                 ))}
+                <motion.div
+                  variants={{
+                    open: { opacity: 1, y: 0 },
+                    closed: { opacity: 0, y: -6 }
+                  }}
+                >
+                  <a
+                    href="https://dpsivr.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMobileOpen(false)}
+                    className="block px-3.5 py-2.5 rounded-xl text-sm font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200/60 dark:border-sky-800/50 flex items-center justify-between"
+                  >
+                    <span>360 View</span>
+                    <span className="text-xs">↗</span>
+                  </a>
+                </motion.div>
                 {isAdmin && (
                   <motion.div
                     variants={{

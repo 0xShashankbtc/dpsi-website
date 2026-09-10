@@ -5230,7 +5230,7 @@ export default function AdminCMS() {
               </div>
 
               <Input
-                placeholder="Slider Title (e.g. Admissions Open 2026-27)"
+                placeholder="Slider Title (Optional - leave empty for clean full-screen video)"
                 value={sliderForm.title}
                 onChange={(e) => setSliderForm({ ...sliderForm, title: e.target.value })}
                 className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
@@ -5417,7 +5417,6 @@ export default function AdminCMS() {
                 </Button>
                 <Button
                   disabled={
-                    !sliderForm.title ||
                     (sliderForm.mediaType === "video" ? !sliderForm.videoUrl : !sliderForm.imageUrl) ||
                     isUploading
                   }

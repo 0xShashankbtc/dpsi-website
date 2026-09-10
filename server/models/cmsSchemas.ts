@@ -155,8 +155,8 @@ export interface ISlider extends Document {
 
 const SliderSchema = new Schema<ISlider>(
   {
-    title: { type: String, required: true },
-    subtitle: { type: String },
+    title: { type: String, default: "" },
+    subtitle: { type: String, default: "" },
     imageUrl: { type: String, default: "" },
     videoUrl: { type: String, default: "" },
     mediaType: { type: String, enum: ["image", "video"], default: "image" },

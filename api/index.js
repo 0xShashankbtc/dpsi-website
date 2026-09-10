@@ -76900,29 +76900,13 @@ function resolveDbName(tenantId, scope) {
   return `tenant_${cleanTenant}_${scope}`;
 }
 async function getDbConnection(dbName) {
-  const key = dbName;
-  if (cached3.connections[key] && cached3.connections[key].readyState === 1) {
-    return cached3.connections[key];
-  }
-  if (cached3.connections[key] && cached3.connections[key].readyState !== 2) {
-    cached3.connections[key] = null;
-    cached3.promises[key] = null;
-  }
   const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
   if (!rawUri) {
     throw new Error("MONGODB_URI environment variable is missing.");
   }
-  let uri = rawUri;
-  if (uri.includes("?")) {
-    const [base, query] = uri.split("?");
-    const cleanBase = base.replace(/\/+$/, "");
-    uri = `${cleanBase}/${dbName}?${query}`;
-  } else {
-    uri = `${uri.replace(/\/+$/, "")}/${dbName}`;
-  }
-  if (!cached3.promises[key]) {
-    console.log(`[MongoDB] Initializing connection to [${dbName}]...`);
-    const conn = import_mongoose4.default.createConnection(uri, {
+  if (!cached3.basePromise || cached3.baseConn && cached3.baseConn.readyState !== 1 && cached3.baseConn.readyState !== 2) {
+    console.log("[MongoDB] Initializing shared cluster connection...");
+    const conn = import_mongoose4.default.createConnection(rawUri, {
       serverSelectionTimeoutMS: 1e4,
       connectTimeoutMS: 1e4,
       socketTimeoutMS: 45e3,
@@ -76933,33 +76917,40 @@ async function getDbConnection(dbName) {
       w: "majority"
     });
     conn.on("error", (err) => {
-      console.error(`MongoDB [${dbName}] error:`, err.message);
+      console.error("[MongoDB] Shared connection error:", err.message);
     });
     conn.on("disconnected", () => {
-      console.warn(`MongoDB [${dbName}] disconnected.`);
-      cached3.connections[key] = null;
-      cached3.promises[key] = null;
+      console.warn("[MongoDB] Shared connection disconnected.");
+      cached3.baseConn = null;
+      cached3.basePromise = null;
+      cached3.connections = {};
     });
-    cached3.promises[key] = conn.asPromise().then((c5) => {
-      console.log(`[MongoDB] \u2705 Connected to [${dbName}]!`);
-      cached3.connections[key] = c5;
+    cached3.basePromise = conn.asPromise().then((c5) => {
+      console.log("[MongoDB] \u2705 Shared cluster connection active!");
+      cached3.baseConn = c5;
       return c5;
     }).catch((err) => {
-      console.error(`[MongoDB] \u274C Connection failed for [${dbName}]:`, err.message);
-      cached3.promises[key] = null;
-      cached3.connections[key] = null;
+      console.error("[MongoDB] \u274C Connection failed:", err.message);
+      cached3.basePromise = null;
+      cached3.baseConn = null;
+      cached3.connections = {};
       throw err;
     });
   }
-  return cached3.promises[key];
+  const base = await cached3.basePromise;
+  if (!cached3.connections[dbName] || cached3.connections[dbName].readyState !== 1) {
+    cached3.connections[dbName] = base.useDb(dbName, { useCache: true });
+  }
+  return cached3.connections[dbName];
 }
 var import_mongoose4, cached3;
 var init_mongodb = __esm({
   "server/lib/mongodb.ts"() {
     import_mongoose4 = __toESM(require_mongoose2(), 1);
     cached3 = global._mongoCache || {
-      connections: {},
-      promises: {}
+      baseConn: null,
+      basePromise: null,
+      connections: {}
     };
     if (!global._mongoCache) {
       global._mongoCache = cached3;
@@ -180295,7 +180286,7 @@ var cmsRouter = createRouter({
     external_exports.object({
       title: external_exports.string(),
       subtitle: external_exports.string().optional(),
-      imageUrl: external_exports.string(),
+      imageUrl: external_exports.string().optional().default("/images/dps/slider_1.webp"),
       videoUrl: external_exports.string().optional(),
       mediaType: external_exports.enum(["image", "video"]).default("image"),
       linkUrl: external_exports.string().optional(),
@@ -180307,6 +180298,9 @@ var cmsRouter = createRouter({
   ).mutation(async ({ input, ctx }) => {
     const { Slider } = await getMainModels();
     const sliderData = { ...input };
+    if (!sliderData.imageUrl) {
+      sliderData.imageUrl = "/images/dps/slider_1.webp";
+    }
     if (input.buttonLink && !input.linkUrl) {
       sliderData.linkUrl = input.buttonLink;
     }
@@ -181601,9 +181595,14 @@ var trpcHandler = async (c5) => {
     });
   });
   const headers = new Headers(res.headers);
-  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-  headers.set("Pragma", "no-cache");
-  headers.set("Expires", "0");
+  const isPublicQuery = c5.req.method === "GET" && !c5.req.header("authorization") && c5.req.header("x-admin-auth") !== "true";
+  if (isPublicQuery) {
+    headers.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+  } else {
+    headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+    headers.set("Pragma", "no-cache");
+    headers.set("Expires", "0");
+  }
   return new Response(res.body, {
     status: res.status,
     statusText: res.statusText,
