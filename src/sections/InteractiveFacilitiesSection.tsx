@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router";
 import {
@@ -12,6 +12,11 @@ import {
   Sparkles,
   CheckCircle2,
   Compass,
+  Music,
+  Palette,
+  Dumbbell,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +33,86 @@ interface FacilityItem {
 }
 
 const FACILITIES_DATA: FacilityItem[] = [
+  {
+    id: "sports-aquatic",
+    name: "Sports & Aquatic Complex",
+    category: "Athletics & Swimming",
+    icon: Dumbbell,
+    image: "/images/facilities/swimming_pool.webp",
+    tagline: "World-Class Athletic & Heated Aquatic Arenas",
+    description:
+      "All-weather heated half-Olympic competition pool paired with floodlit synthetic tennis, basketball, squash courts, cricket practice nets, and indoor wooden badminton arenas.",
+    highlights: [
+      "Half-Olympic 25m heated pool with certified FINA lifesavers",
+      "Synthetic tennis, basketball & indoor wooden badminton courts",
+      "Cricket nets with high-speed automated bowling machines",
+    ],
+    metrics: [
+      { value: "25m", label: "Heated Pool" },
+      { value: "8+", label: "Sport Disciplines" },
+      { value: "100%", label: "NIS Coaches" },
+    ],
+  },
+  {
+    id: "digital-knowledge",
+    name: "Digital Knowledge",
+    category: "Academic Research & Media",
+    icon: BookOpen,
+    image: "/images/facilities/library.webp",
+    tagline: "35,000+ Curated Volumes & Digital Knowledge Repositories",
+    description:
+      "An expansive, quiet knowledge haven offering digital e-readers, JSTOR scientific archives, RFID smart cataloging, automated checkouts, and silent research pods.",
+    highlights: [
+      "Automated RFID borrowing & smart digital kiosk",
+      "Direct portal access to global JSTOR & scientific journals",
+      "Ergonomic silent research carrels with high-speed fiber Wi-Fi",
+    ],
+    metrics: [
+      { value: "35K+", label: "Physical Books" },
+      { value: "10K+", label: "E-Journals" },
+      { value: "200+", label: "Seating Capacity" },
+    ],
+  },
+  {
+    id: "performing-arts",
+    name: "Performance Arts & Music Studio",
+    category: "Creative Expression",
+    icon: Music,
+    image: "/images/facilities/music_dance.webp",
+    tagline: "Acoustically Tuned Studios for Instrumental & Performing Arts",
+    description:
+      "Specialized soundproofed rehearsal spaces equipped with grand pianos, orchestral instruments, Indian classical instruments, dance mirrors, and studio-grade sound recording consoles.",
+    highlights: [
+      "Soundproofed acoustic recording and audio mastering suite",
+      "Classical Indian & Western orchestral instrument stations",
+      "Sprung-floor dance studio with full-wall rehearsal mirrors",
+    ],
+    metrics: [
+      { value: "100%", label: "Acoustic Treated" },
+      { value: "30+", label: "Instruments" },
+      { value: "1,200+", label: "Auditorium Seats" },
+    ],
+  },
+  {
+    id: "art-craft",
+    name: "Art & Craft Studio",
+    category: "Visual Design & Crafts",
+    icon: Palette,
+    image: "/images/facilities/art_craft_studio.webp",
+    tagline: "Vibrant Creative Hub for Fine Arts, Pottery & Sculpting",
+    description:
+      "Sunlit studio fostering creative innovation through canvas painting, clay sculpting with pottery wheels, ceramic kilns, printmaking, and student exhibition galleries.",
+    highlights: [
+      "Pottery wheels, clay modeling tools, and high-temp ceramic kiln",
+      "Easel painting stations with natural daylight skylights",
+      "Annual curated student fine arts & design exhibitions",
+    ],
+    metrics: [
+      { value: "40+", label: "Easel Stations" },
+      { value: "Electric", label: "Kiln & Wheels" },
+      { value: "National", label: "Art Laurels" },
+    ],
+  },
   {
     id: "ai-lab",
     name: "AI & Robotics Lab",
@@ -49,26 +134,6 @@ const FACILITIES_DATA: FacilityItem[] = [
     ],
   },
   {
-    id: "swimming",
-    name: "Olympic Swimming Pool",
-    category: "Aquatic Sports",
-    icon: Waves,
-    image: "/images/facilities/swimming_pool.webp",
-    tagline: "All-Weather Heated Aquatic Facility",
-    description:
-      "Half-Olympic sized heated swimming pool built to international standards with certified FINA lifesavers, water purification plant, and separate learner pools.",
-    highlights: [
-      "Temperature-regulated water year-round",
-      "Dedicated certified NIS swimming coaches",
-      "Host of CBSE National Aquatic Meets",
-    ],
-    metrics: [
-      { value: "25m", label: "Pool Length" },
-      { value: "6", label: "Competition Lanes" },
-      { value: "100%", label: "Trained Lifeguards" },
-    ],
-  },
-  {
     id: "science",
     name: "Advanced Science Labs",
     category: "Experiential Learning",
@@ -86,46 +151,6 @@ const FACILITIES_DATA: FacilityItem[] = [
       { value: "4", label: "Dedicated Labs" },
       { value: "1:1", label: "Student Apparatus" },
       { value: "Zero", label: "Safety Incidents" },
-    ],
-  },
-  {
-    id: "library",
-    name: "Knowledge Hub & Library",
-    category: "Academic Resources",
-    icon: BookOpen,
-    image: "/images/facilities/library.webp",
-    tagline: "Over 35,000 Curated Volumes & Digital Repositories",
-    description:
-      "An expansive, serene reading sanctuary housing thousands of global literary classics, research journals, digital e-book readers, and quiet study carrels.",
-    highlights: [
-      "Automated RFID cataloging and circulation",
-      "Access to global JSTOR & scientific journals",
-      "Dedicated primary and senior reading sections",
-    ],
-    metrics: [
-      { value: "35K+", label: "Physical Books" },
-      { value: "10K+", label: "E-Journals" },
-      { value: "200+", label: "Seating Capacity" },
-    ],
-  },
-  {
-    id: "sports",
-    name: "Multisport Complex",
-    category: "Athletic Excellence",
-    icon: Trophy,
-    image: "/images/facilities/sports_complex.webp",
-    tagline: "World-Class Outdoor & Indoor Arenas",
-    description:
-      "Comprehensive sports arena featuring floodlit synthetic tennis courts, wooden indoor badminton courts, cricket nets with bowling machines, and basketball courts.",
-    highlights: [
-      "Certified trainers for football, cricket & basketball",
-      "Regular inter-school tournaments & coaching clinics",
-      "State-of-the-art injury prevention & medical care",
-    ],
-    metrics: [
-      { value: "8+", label: "Major Sports" },
-      { value: "12", label: "National Players" },
-      { value: "Floodlit", label: "Night Matches" },
     ],
   },
   {
@@ -158,6 +183,9 @@ const ICON_LOOKUP: Record<string, React.ComponentType<{ className?: string }>> =
   Trophy,
   GraduationCap,
   Microscope: FlaskConical,
+  Music,
+  Palette,
+  Dumbbell,
   Default: Sparkles,
 };
 
@@ -166,6 +194,7 @@ import { trpc } from "@/providers/trpc";
 export default function InteractiveFacilitiesSection() {
   const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery();
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
@@ -200,6 +229,16 @@ export default function InteractiveFacilitiesSection() {
   const activeFacility = facilities.find((f) => f.id === activeTab) || facilities[0] || FACILITIES_DATA[0];
   const IconComponent = activeFacility.icon;
 
+  const scrollSlider = (direction: "left" | "right") => {
+    if (sliderRef.current) {
+      const scrollAmount = 260;
+      sliderRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <section
       id="interactive-facilities"
@@ -207,7 +246,7 @@ export default function InteractiveFacilitiesSection() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-3xl mx-auto mb-10">
           <div className="flex flex-wrap items-center justify-center gap-2 mb-3.5">
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -219,37 +258,66 @@ export default function InteractiveFacilitiesSection() {
             World-Class Infrastructure
           </h2>
           <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
-            Click any facility below to preview our cutting-edge learning spaces, laboratories, and sports arenas.
+            Explore our state-of-the-art facilities using the smooth interactive slider below.
           </p>
         </div>
 
-        {/* Interactive Tab Switcher */}
-        <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto pb-4 mb-10 no-scrollbar">
-          {facilities.map((facility) => {
-            const TabIcon = facility.icon;
-            const isSelected = facility.id === activeTab;
-            return (
-              <button
-                key={facility.id}
-                onClick={() => setActiveTab(facility.id)}
-                className={`relative px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                }`}
-              >
-                <TabIcon className="w-4 h-4" />
-                <span>{facility.name}</span>
-                {isSelected && (
-                  <motion.div
-                    layoutId="activeFacilityIndicator"
-                    className="absolute inset-0 rounded-xl ring-2 ring-slate-900 dark:ring-white pointer-events-none"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
-                )}
-              </button>
-            );
-          })}
+        {/* Super Smooth Interactive Facilities Slider with Chevron Navigation */}
+        <div className="relative mb-10 group">
+          {/* Left Arrow Button */}
+          <button
+            type="button"
+            onClick={() => scrollSlider("left")}
+            aria-label="Previous facility"
+            className="absolute -left-2 sm:-left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-110 active:scale-95 transition-all cursor-pointer opacity-90 hover:opacity-100"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Right Arrow Button */}
+          <button
+            type="button"
+            onClick={() => scrollSlider("right")}
+            aria-label="Next facility"
+            className="absolute -right-2 sm:-right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-110 active:scale-95 transition-all cursor-pointer opacity-90 hover:opacity-100"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          {/* Scrollable Track */}
+          <div
+            ref={sliderRef}
+            className="flex items-center gap-3 overflow-x-auto py-2 px-1 sm:px-3 no-scrollbar scroll-smooth snap-x snap-mandatory"
+            style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+          >
+            {facilities.map((facility) => {
+              const TabIcon = facility.icon;
+              const isSelected = facility.id === activeTab;
+              return (
+                <motion.button
+                  key={facility.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setActiveTab(facility.id)}
+                  className={`relative px-4 sm:px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2.5 shrink-0 transition-all cursor-pointer snap-center select-none ${
+                    isSelected
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg shadow-black/10 dark:shadow-white/5"
+                      : "bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60"
+                  }`}
+                >
+                  <TabIcon className={`w-4 h-4 shrink-0 ${isSelected ? "text-amber-400 dark:text-amber-600" : "text-slate-500 dark:text-slate-400"}`} />
+                  <span className="whitespace-nowrap">{facility.name}</span>
+                  {isSelected && (
+                    <motion.div
+                      layoutId="activeFacilityIndicator"
+                      className="absolute inset-0 rounded-2xl ring-2 ring-slate-900 dark:ring-white pointer-events-none"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Interactive Showcase Card with Smooth Transitions */}

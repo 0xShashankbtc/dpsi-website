@@ -112,11 +112,11 @@ export default function PrincipalMessage() {
                   whileHover={{ y: -4 }}
                   className="flat-card bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-2xl flex items-center gap-4 p-4 cursor-pointer group shadow-sm hover:shadow-md transition-all"
                 >
-                  <div className="w-13 h-13 bg-slate-900 dark:bg-slate-700 text-white rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm">
-                    <span className="text-lg font-black leading-none">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 bg-slate-900/95 dark:bg-slate-800 text-white rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-md border border-slate-700/40 group-hover:scale-105 transition-transform">
+                    <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight text-amber-400">
                       {new Date(event.eventDate).getDate()}
                     </span>
-                    <span className="text-[10px] font-bold uppercase mt-0.5 text-slate-400">
+                    <span className="text-[11px] font-extrabold uppercase mt-1 text-slate-300 tracking-wider">
                       {new Date(event.eventDate).toLocaleString("default", { month: "short" })}
                     </span>
                   </div>

@@ -400,103 +400,134 @@ export default function Navbar() {
 
         <AnimatePresence>
           {isMobileOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800/80 overflow-hidden"
-            >
+            <>
+              {/* Tap-outside backdrop to dismiss */}
               <motion.div
-                initial="closed"
-                animate="open"
-                exit="closed"
-                variants={{
-                  open: { transition: { staggerChildren: 0.04, delayChildren: 0.05 } },
-                  closed: { transition: { staggerChildren: 0.02, staggerDirection: -1 } }
-                }}
-                className="px-4 py-4 space-y-1"
+                key="mobile-nav-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                onClick={() => setIsMobileOpen(false)}
+                className="fixed inset-0 top-[72px] sm:top-[80px] bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden"
+                aria-hidden="true"
+              />
+
+              {/* Slideable & Scrollable Drawer Container */}
+              <motion.div
+                key="mobile-nav-drawer"
+                initial={{ opacity: 0, y: -10, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -10, height: 0 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                className="lg:hidden fixed left-0 right-0 top-[72px] sm:top-[80px] max-h-[calc(100dvh-80px)] overflow-y-auto overscroll-contain bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl border-b border-slate-200/80 dark:border-slate-800/80 shadow-2xl z-50 custom-scrollbar"
               >
-                {activeNavItems.map((link) => (
-                  <div key={link.label}>
-                    <Link
-                      to={link.href}
+                <div className="max-w-md mx-auto px-4 pt-3 pb-8 space-y-3">
+                  {/* Top Slideable Quick Action Bar */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-1 px-1">
+                    <a
+                      href="https://dpsivr.vercel.app"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => setIsMobileOpen(false)}
-                      className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                        location.pathname === link.href
-                          ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-                          : "text-slate-700 dark:text-slate-200 hover:text-emerald-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                      }`}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 border border-sky-200/80 dark:border-sky-800/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform"
                     >
-                      {link.label}
-                    </Link>
-                    {link.children && (
-                      <div className="pl-4 space-y-1">
-                        {link.children.map((child) => (
-                          <Link
-                            key={child.label}
-                            to={child.href}
-                            onClick={() => setIsMobileOpen(false)}
-                            className="block px-3 py-1.5 text-sm text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
-                          >
-                            {child.label}
-                          </Link>
-                        ))}
-                      </div>
+                      <span>🌐 360 View</span>
+                      <span className="text-[11px] opacity-70">↗</span>
+                    </a>
+                    <a
+                      href="https://dpsindp.schoolforschools.ai/login"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMobileOpen(false)}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300/70 dark:border-amber-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform"
+                    >
+                      <span>⚡ SchoolsOS Login</span>
+                      <span className="text-[11px] opacity-70">↗</span>
+                    </a>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsMobileOpen(false)}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/70 dark:border-emerald-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform"
+                      >
+                        <span>🔒 Admin CMS</span>
+                      </Link>
                     )}
                   </div>
-                ))}
-                <motion.div
-                  variants={{
-                    open: { opacity: 1, y: 0 },
-                    closed: { opacity: 0, y: -6 }
-                  }}
-                >
-                  <a
-                    href="https://dpsivr.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMobileOpen(false)}
-                    className="block px-3.5 py-2.5 rounded-xl text-sm font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200/60 dark:border-sky-800/50 flex items-center justify-between"
-                  >
-                    <span>360 View</span>
-                    <span className="text-xs">↗</span>
-                  </a>
-                </motion.div>
-                {isAdmin && (
-                  <motion.div
-                    variants={{
-                      open: { opacity: 1, y: 0 },
-                      closed: { opacity: 0, y: -6 }
-                    }}
-                  >
-                    <Link
-                      to="/admin"
-                      onClick={() => setIsMobileOpen(false)}
-                      className="block px-3.5 py-2.5 rounded-xl text-sm font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50"
-                    >
-                      Admin CMS
-                    </Link>
-                  </motion.div>
-                )}
 
-                <div className="pt-3 mt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center gap-3 px-3">
-                  <img
-                    src="/images/dps/international_logo.webp"
-                    alt="British Council International Dimension in Schools"
-                    className="h-14 w-auto object-contain rounded drop-shadow-xs"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                      British Council IDS Accredited
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      International Dimension in Schools
-                    </span>
+                  {/* Navigation Links with generous tap targets */}
+                  <motion.div
+                    initial="closed"
+                    animate="open"
+                    exit="closed"
+                    variants={{
+                      open: { transition: { staggerChildren: 0.03, delayChildren: 0.02 } },
+                      closed: { transition: { staggerChildren: 0.02, staggerDirection: -1 } }
+                    }}
+                    className="space-y-1 pt-1"
+                  >
+                    {activeNavItems.map((link) => {
+                      const isActive = location.pathname === link.href;
+                      return (
+                        <motion.div
+                          key={link.label}
+                          variants={{
+                            open: { opacity: 1, x: 0 },
+                            closed: { opacity: 0, x: -8 }
+                          }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Link
+                            to={link.href}
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.99] touch-manipulation ${
+                              isActive
+                                ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 shadow-xs"
+                                : "text-slate-800 dark:text-slate-100 hover:text-emerald-700 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+                            }`}
+                          >
+                            <span>{link.label}</span>
+                            {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                          </Link>
+                          {link.children && (
+                            <div className="pl-4 pr-2 py-1 space-y-1">
+                              {link.children.map((child) => (
+                                <Link
+                                  key={child.label}
+                                  to={child.href}
+                                  onClick={() => setIsMobileOpen(false)}
+                                  className="block px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors touch-manipulation"
+                                >
+                                  {child.label}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
+
+                  {/* Accreditations at Drawer Bottom */}
+                  <div className="pt-4 mt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center gap-3 px-2">
+                    <img
+                      src="/images/dps/international_logo.webp"
+                      alt="British Council International Dimension in Schools"
+                      className="h-12 w-auto object-contain rounded drop-shadow-xs"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        British Council IDS Accredited
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        International Dimension in Schools
+                      </span>
+                    </div>
                   </div>
                 </div>
               </motion.div>
-            </motion.div>
+            </>
           )}
         </AnimatePresence>
       </motion.header>
