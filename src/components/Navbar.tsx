@@ -8,7 +8,10 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  Sparkles,
+  Compass,
 } from "lucide-react";
+import { InteractiveHoverLinks } from "@/components/ui/interactive-hover-links";
 
 
 const navLinks = [
@@ -41,6 +44,7 @@ const navLinks = [
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isExploreOpen, setIsExploreOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
@@ -119,6 +123,7 @@ export default function Navbar() {
   if (prevPath !== location.pathname) {
     setPrevPath(location.pathname);
     setIsMobileOpen(false);
+    setIsExploreOpen(false);
     setActiveDropdown(null);
   }
 
@@ -358,6 +363,19 @@ export default function Navbar() {
 
             <div className="flex items-center gap-2 sm:gap-3">
 
+              {/* Interactive Hover Links / Explore Campus Trigger */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsExploreOpen(true)}
+                className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer"
+                title="Quick Interactive Explore"
+              >
+                <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-spin-slow" />
+                <span>Explore</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </motion.button>
+
               <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
                 <motion.img
                   whileHover={{ scale: 1.06 }}
@@ -509,6 +527,15 @@ export default function Navbar() {
                     })}
                   </motion.div>
 
+                  {/* Interactive Quick Highlights with hover animations */}
+                  <div className="pt-3 mt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                    <p className="px-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <span>Explore Key Portals</span>
+                    </p>
+                    <InteractiveHoverLinks onLinkClick={() => setIsMobileOpen(false)} />
+                  </div>
+
                   {/* Accreditations at Drawer Bottom */}
                   <div className="pt-4 mt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center gap-3 px-2">
                     <img
@@ -528,6 +555,62 @@ export default function Navbar() {
                 </div>
               </motion.div>
             </>
+          )}
+        </AnimatePresence>
+
+        {/* Full-Screen Interactive Hover Links Modal for Desktop & Tablet */}
+        <AnimatePresence>
+          {isExploreOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-slate-950/75 backdrop-blur-md overflow-y-auto"
+            >
+              <div
+                className="fixed inset-0"
+                onClick={() => setIsExploreOpen(false)}
+                aria-hidden="true"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                className="relative z-10 w-full max-w-4xl bg-white/98 dark:bg-slate-900/98 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-6 sm:p-10"
+              >
+                {/* Header with close button */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-slate-800/80">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center">
+                      <Compass className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                        Interactive Campus Directory
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        Hover over any section to reveal immersive imagery and quick links
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsExploreOpen(false)}
+                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    aria-label="Close explore modal"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Interactive Links Container */}
+                <div className="pt-2">
+                  <InteractiveHoverLinks onLinkClick={() => setIsExploreOpen(false)} />
+                </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
       </motion.header>
