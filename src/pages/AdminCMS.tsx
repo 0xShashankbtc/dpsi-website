@@ -414,8 +414,8 @@ export default function AdminCMS() {
 
   // Mutations
   const adminLoginMutation = trpc.cms.adminLogin.useMutation();
-  const changePasswordMutation = trpc.cms.changePassword.useMutation();
   const uploadTranscode = trpc.cms.uploadAndTranscode.useMutation();
+  const getUploadSignatureMutation = trpc.cms.getUploadSignature.useMutation();
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1499,31 +1499,130 @@ export default function AdminCMS() {
   };
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleMediaUpload = async (file: File, callback: (webpUrl: string) => void) => {
+  const handleMediaUpload = async (
+    file: File,
+    callback: (url: string) => void,
+    options?: { resourceType?: "image" | "video" | "auto"; folder?: string }
+  ) => {
+    const isVideo = file.type.startsWith("video/") || options?.resourceType === "video";
+    const resourceType = isVideo ? "video" : options?.resourceType || (file.type.startsWith("image/") ? "image" : "auto");
+    const folder = options?.folder || (isVideo ? "dpsi_videos" : "dpsi_cms");
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    const toastId = toast.loading(
+      isVideo ? `Preparing upload for video: ${file.name}...` : `Uploading ${file.name}...`
+    );
+
     try {
-      setIsUploading(true);
-      toast.info(`Uploading ${file.name} to Cloudinary CDN with auto-WebP...`);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64Data = reader.result as string;
-        const res = await uploadTranscode.mutateAsync({
-          fileName: file.name,
-          fileType: file.type,
-          base64Data,
-        });
-        if (res.success && res.dataUrl) {
-          toast.success(`Uploaded to Cloudinary CDN! Size: ${Math.round((res.size || 0) / 1024)} KB`);
-          callback(res.dataUrl);
-        } else {
-          toast.error("Failed to upload media");
+      // Step 1: Request signed upload credentials from server (bypasses Vercel 4.5MB payload limit)
+      const sigData = await getUploadSignatureMutation.mutateAsync({
+        folder,
+        resourceType,
+      });
+
+      // Step 2: Upload directly to Cloudinary using FormData and XMLHttpRequest for live progress
+      const uploadedUrl = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const endpoint = `https://api.cloudinary.com/v1_1/${sigData.cloudName}/${resourceType}/upload`;
+
+        xhr.open("POST", endpoint, true);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(percent);
+            toast.loading(`Uploading ${file.name}: ${percent}%`, { id: toastId });
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const resp = JSON.parse(xhr.responseText);
+              const secureUrl = resp.secure_url || resp.url;
+              if (secureUrl) {
+                resolve(secureUrl);
+              } else {
+                reject(new Error("Cloudinary response missing URL"));
+              }
+            } catch (err: any) {
+              reject(new Error("Failed to parse Cloudinary response: " + err.message));
+            }
+          } else {
+            let errMsg = `Upload failed with HTTP ${xhr.status}`;
+            try {
+              const errObj = JSON.parse(xhr.responseText);
+              if (errObj.error?.message) errMsg = errObj.error.message;
+            } catch {}
+            reject(new Error(errMsg));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error("Network error during file upload. Please check your connection."));
+        };
+
+        xhr.ontimeout = () => {
+          reject(new Error("Upload timed out. Please check your network speed."));
+        };
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", sigData.apiKey);
+        formData.append("timestamp", String(sigData.timestamp));
+        formData.append("signature", sigData.signature);
+        formData.append("folder", sigData.folder);
+
+        xhr.send(formData);
+      });
+
+      toast.success(
+        isVideo ? "Video uploaded successfully to CDN!" : "Media uploaded successfully to CDN!",
+        { id: toastId }
+      );
+      callback(uploadedUrl);
+    } catch (directErr: any) {
+      console.warn("Direct upload error, checking fallback:", directErr);
+      // Fallback for smaller files (< 4MB) if direct upload had issues
+      if (file.size <= 4 * 1024 * 1024) {
+        try {
+          toast.loading("Retrying via serverless upload...", { id: toastId });
+          await new Promise<void>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async () => {
+              try {
+                const base64Data = reader.result as string;
+                const res = await uploadTranscode.mutateAsync({
+                  fileName: file.name,
+                  fileType: file.type,
+                  base64Data,
+                });
+                if (res.success && res.dataUrl) {
+                  toast.success("Uploaded successfully!", { id: toastId });
+                  callback(res.dataUrl);
+                  resolve();
+                } else {
+                  reject(new Error(res.error || "Failed to upload media"));
+                }
+              } catch (e) {
+                reject(e);
+              }
+            };
+            reader.onerror = () => reject(new Error("Failed to read file"));
+            reader.readAsDataURL(file);
+          });
+        } catch (fbErr: any) {
+          toast.error(fbErr.message || "Backup upload failed", { id: toastId });
         }
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      } else {
+        toast.error(directErr.message || "Upload failed. Please try a smaller video or check network.", { id: toastId });
+      }
+    } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -5087,40 +5186,91 @@ export default function AdminCMS() {
               {/* MEDIA UPLOADER */}
               {sliderForm.mediaType === "video" ? (
                 <div className="space-y-3">
+                  {isUploading && (
+                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between text-xs font-semibold text-purple-900 mb-1">
+                          <span>Uploading video to CDN...</span>
+                          <span>{uploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-purple-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${Math.max(5, uploadProgress)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="border-2 border-dashed border-purple-300 rounded-lg p-5 text-center hover:border-purple-600 transition-colors bg-purple-50/40">
                     <Upload className="w-8 h-8 text-purple-700 mx-auto mb-2" />
                     <p className="text-xs font-semibold text-slate-800">Upload Video File</p>
-                    <p className="text-[10px] text-slate-500 mt-1">Uploaded directly to Cloudinary CDN with instant streaming</p>
+                    <p className="text-[10px] text-slate-500 mt-1">MP4, WebM, MOV supported • High-speed direct CDN upload</p>
                     <input
                       type="file"
                       accept="video/*"
+                      disabled={isUploading}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          handleMediaUpload(file, (videoUrl) => {
-                            setSliderForm({ ...sliderForm, videoUrl, mediaType: "video" });
-                          });
+                          handleMediaUpload(
+                            file,
+                            (videoUrl) => {
+                              setSliderForm({ ...sliderForm, videoUrl, mediaType: "video" });
+                            },
+                            { resourceType: "video", folder: "dpsi_videos" }
+                          );
                         }
                       }}
-                      className="mt-3 text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-purple-700 file:text-white hover:file:bg-purple-800 cursor-pointer"
+                      className="mt-3 text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-purple-700 file:text-white hover:file:bg-purple-800 cursor-pointer disabled:opacity-50"
                     />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <span className="text-slate-500 text-[11px]">Or choose preset:</span>
+                    <button
+                      type="button"
+                      onClick={() => setSliderForm({ ...sliderForm, videoUrl: "/videos/campus_hero.mp4", mediaType: "video" })}
+                      className="px-2.5 py-1 rounded bg-purple-100 hover:bg-purple-200 text-purple-800 text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer border border-purple-200"
+                    >
+                      <span>🎬 Use Campus Video (/videos/campus_hero.mp4)</span>
+                    </button>
                   </div>
 
                   <div className="relative">
                     <Input
-                      placeholder="Or enter direct video URL (e.g. https://.../video.mp4)"
+                      placeholder="Or paste direct video URL (e.g. https://.../video.mp4 or /videos/campus_hero.mp4)"
                       value={sliderForm.videoUrl}
                       onChange={(e) => setSliderForm({ ...sliderForm, videoUrl: e.target.value, mediaType: "video" })}
-                      className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                      className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-mono"
                     />
                   </div>
 
                   {sliderForm.videoUrl && (
-                    <div className="relative rounded-lg overflow-hidden h-36 bg-slate-900 border border-slate-200">
-                      <video src={sliderForm.videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-purple-700 text-[9px] text-white font-bold">
-                        Video Loaded
-                      </span>
+                    <div className="relative rounded-lg overflow-hidden h-44 bg-slate-950 border border-slate-200">
+                      <video
+                        src={sliderForm.videoUrl}
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded bg-purple-700 text-[9px] text-white font-bold">
+                          Video Ready
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSliderForm({ ...sliderForm, videoUrl: "" })}
+                        className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/75 hover:bg-red-600 text-[10px] text-white font-semibold transition-colors cursor-pointer"
+                      >
+                        Remove
+                      </button>
                     </div>
                   )}
                 </div>

@@ -13,18 +13,9 @@ import { motion } from "framer-motion";
 import { trpc } from "@/providers/trpc";
 
 export default function Footer() {
-  const { data: dbQuickMenus } = trpc.cms.listMenus.useQuery({ location: "footer_quick" }, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
-  const { data: dbResourceMenus } = trpc.cms.listMenus.useQuery({ location: "footer_resources" }, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
+  const { data: dbQuickMenus } = trpc.cms.listMenus.useQuery({ location: "footer_quick" });
+  const { data: dbResourceMenus } = trpc.cms.listMenus.useQuery({ location: "footer_resources" });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);

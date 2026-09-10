@@ -21,18 +21,18 @@ export async function uploadToCloudinary(
   resourceType: "image" | "video" | "raw" | "auto" = "auto"
 ): Promise<{ url: string; secure_url: string; public_id: string; format: string; bytes: number; width?: number; height?: number }> {
   return new Promise((resolve, reject) => {
+    const uploadOptions: any = {
+      folder,
+      resource_type: resourceType,
+    };
+
+    if (resourceType === "image") {
+      uploadOptions.format = "webp";
+      uploadOptions.transformation = [{ quality: "auto:good", fetch_format: "webp" }];
+    }
+
     const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: resourceType,
-        format: resourceType === "image" ? "webp" : resourceType === "video" ? "webm" : undefined,
-        transformation:
-          resourceType === "image"
-            ? [{ quality: "auto:good", fetch_format: "webp" }]
-            : resourceType === "video"
-            ? [{ quality: "auto", fetch_format: "webm" }]
-            : undefined,
-      },
+      uploadOptions,
       (error, result) => {
         if (error) {
           return reject(error);

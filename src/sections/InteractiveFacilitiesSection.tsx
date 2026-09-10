@@ -164,23 +164,13 @@ const ICON_LOOKUP: Record<string, React.ComponentType<{ className?: string }>> =
 import { trpc } from "@/providers/trpc";
 
 export default function InteractiveFacilitiesSection() {
-  const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery(undefined, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
+  const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
     return item?.value?.trim() || fallback;
   };
-
-  const view360Url = getSetting("view_360_url", "https://dpsivr.vercel.app");
-  const view360Label = getSetting("view_360_label", "360 View");
-  const view360Enabled = getSetting("view_360_enabled", "false") === "true";
 
   const facilities: FacilityItem[] =
     cmsFacilities && cmsFacilities.length > 0
@@ -223,18 +213,6 @@ export default function InteractiveFacilitiesSection() {
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>Interactive Campus Showcase</span>
             </div>
-
-            {view360Enabled && (
-              <a
-                href={view360Url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-sm transition-all cursor-pointer border border-emerald-400/30"
-              >
-                <Compass className="w-3.5 h-3.5 animate-spin-slow text-amber-300" />
-                <span>Launch {view360Label} (VR Tour)</span>
-              </a>
-            )}
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">

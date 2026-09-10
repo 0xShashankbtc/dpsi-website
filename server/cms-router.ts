@@ -449,6 +449,44 @@ export const cmsRouter = createRouter({
       if (!updated) throw new Error("Tenant not found.");
       return updated;
     }),
+  // --- 0. DIRECT CLOUDINARY SIGNATURE FOR VIDEO & LARGE MEDIA ---
+  getUploadSignature: adminMutation
+    .input(
+      z
+        .object({
+          folder: z.string().optional(),
+          resourceType: z.enum(["image", "video", "raw", "auto"]).default("auto"),
+        })
+        .optional()
+    )
+    .mutation(async ({ input }) => {
+      const { default: cloudinary } = await import("./lib/cloudinary");
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const isVideo = input?.resourceType === "video";
+      const folder = input?.folder || (isVideo ? "dpsi_videos" : "dpsi_cms");
+      const apiSecret = (process.env.CLOUDINARY_API_SECRET || "").trim();
+      const apiKey = (process.env.CLOUDINARY_API_KEY || "").trim();
+      const cloudName = (process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+
+      if (!apiSecret || !apiKey || !cloudName) {
+        throw new Error("Cloudinary credentials are not properly configured on the server.");
+      }
+
+      const signature = cloudinary.utils.api_sign_request(
+        { folder, timestamp },
+        apiSecret
+      );
+
+      return {
+        signature,
+        timestamp,
+        folder,
+        apiKey,
+        cloudName,
+        resourceType: input?.resourceType || "auto",
+      };
+    }),
+
   // --- 1. MEDIA CONVERSION & CLOUDINARY UPLOAD ---
   uploadAndTranscode: adminMutation
     .input(

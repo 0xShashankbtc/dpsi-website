@@ -46,14 +46,8 @@ export default function Navbar() {
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const location = useLocation();
 
-  const { data: dbMenus } = trpc.cms.listMenus.useQuery({ location: "header" }, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
+  const { data: dbMenus } = trpc.cms.listMenus.useQuery({ location: "header" });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
@@ -71,8 +65,13 @@ export default function Navbar() {
   const dynamicNavLinks = (() => {
     if (!dbMenus || dbMenus.length === 0) return navLinks;
 
-    const parents = dbMenus
-      .filter((m: any) => (!m.parent || m.parent.trim() === "" || m.parent === "None") && m.isActive !== false && !m.isDeleted)
+    const headerMenus = dbMenus.filter(
+      (m: any) => (!m.location || m.location === "header") && m.isActive !== false && !m.isDeleted
+    );
+    if (headerMenus.length === 0) return navLinks;
+
+    const parents = headerMenus
+      .filter((m: any) => !m.parent || m.parent.trim() === "" || m.parent === "None")
       .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
     return parents.map((p: any) => {
@@ -80,9 +79,9 @@ export default function Navbar() {
       const pId = p._id ? p._id.toString() : "";
       const pUrl = (p.url || "").trim().toLowerCase();
 
-      const children = dbMenus
+      const children = headerMenus
         .filter((c: any) => {
-          if (!c.parent || c.parent.trim() === "" || c.parent === "None" || c.isActive === false || c.isDeleted) return false;
+          if (!c.parent || c.parent.trim() === "" || c.parent === "None") return false;
           const cParent = c.parent.trim().toLowerCase();
           return cParent === pTitle || cParent === pId || cParent === pUrl;
         })
@@ -133,10 +132,7 @@ export default function Navbar() {
 
   const isAdmin = true;
 
-  const { data: dbMarquees } = trpc.cms.listMarquees.useQuery(undefined, {
-    staleTime: 5000,
-    refetchOnMount: true,
-  });
+  const { data: dbMarquees } = trpc.cms.listMarquees.useQuery();
 
   const phone = getSetting("contact_phone", "+91-0120-4660000, 4670000");
   const email = getSetting("contact_email", "INFO@DPSINDIRAPURAM.COM");
