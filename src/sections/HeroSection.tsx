@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { Link } from "react-router";
 import {
   ArrowRight,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -265,7 +266,6 @@ export default function HeroSection() {
               poster={slide.image || "/images/dps/slider_1.webp"}
               autoPlay
               muted={isMuted}
-              defaultMuted
               loop
               playsInline
               preload="metadata"

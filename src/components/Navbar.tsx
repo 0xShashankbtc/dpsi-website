@@ -65,6 +65,7 @@ export default function Navbar() {
   const logoShape = getSetting("logo_shape", "default");
   const logoShowText = getSetting("logo_show_text", "false") === "true";
   const schoolName = getSetting("school_name", "Delhi Public School Indirapuram");
+  const schoolTagline = getSetting("school_tagline", "Excellence in Education");
   const internationalLogoUrl = getSetting("international_logo_url", "/images/dps/international_logo.webp");
   const showInternationalLogo = getSetting("show_international_logo", "true") !== "false";
   const secondaryLogoShape = getSetting("secondary_logo_shape", "square");

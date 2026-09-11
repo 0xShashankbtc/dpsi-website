@@ -97,7 +97,7 @@ export async function getDbConnection(dbName: string): Promise<mongoose.Connecti
 }
 
 // Eager non-blocking warm-up on module evaluation so the connection is ready before the first request arrives
-if (typeof window === "undefined" && process.env.MONGODB_URI) {
+if (typeof process !== "undefined" && process.env.MONGODB_URI) {
   setTimeout(() => {
     getDbConnection("dpsi_main").catch(() => {});
   }, 0);

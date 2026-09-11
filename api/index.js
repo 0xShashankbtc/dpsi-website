@@ -76962,7 +76962,7 @@ var init_mongodb = __esm({
       bufferCommands: true
       // Buffer commands so queries start immediately without waiting
     };
-    if (typeof window === "undefined" && process.env.MONGODB_URI) {
+    if (typeof process !== "undefined" && process.env.MONGODB_URI) {
       setTimeout(() => {
         getDbConnection("dpsi_main").catch(() => {
         });

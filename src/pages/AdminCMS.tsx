@@ -926,6 +926,8 @@ export default function AdminCMS() {
     },
   });
 
+  const changePasswordMutation = trpc.cms.changePassword.useMutation();
+
   const updateAiConfigMutation = trpc.cms.updateAiConfig.useMutation({
     onSuccess: () => {
       toast.success("AI configuration saved and active!");
