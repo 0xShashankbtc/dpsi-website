@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 
-export function optimizeMediaUrl(url?: string, isMobile: boolean = false): string {
+export function optimizeMediaUrl(url?: string, _isMobile: boolean = false): string {
   if (!url || typeof url !== "string") return "";
   const clean = url.trim();
   if (clean.includes("cloudinary.com") && clean.includes("/video/upload/")) {
@@ -21,9 +21,10 @@ export function optimizeMediaUrl(url?: string, isMobile: boolean = false): strin
     const hasTransform = parts.length > 1 && !/^v\d+$/.test(parts[0]);
     const cleanPath = hasTransform ? parts.slice(1).join("/") : afterUpload;
 
-    if (isMobile) {
-      return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:best,vc_auto,w_720,c_limit/${cleanPath}`;
-    }
+    // Deliver pristine 1080p 60fps video on all devices (mobile & desktop).
+    // On mobile devices, because the video is landscape (16:9) and rendered with object-cover on tall portrait screens (852px-932px height),
+    // downscaling to w_720 gave only ~404px vertical resolution, which caused severe pixelation and blurriness when stretched over a 2556px+ Retina display.
+    // Serving w_1920 ensures full 1080 vertical lines, delivering razor-sharp HD clarity with hardware-accelerated H.264 decoding.
     return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:best,vc_auto,w_1920,c_limit/${cleanPath}`;
   }
   if (clean.includes("cloudinary.com") && clean.includes("/image/upload/")) {
@@ -259,7 +260,7 @@ export default function HeroSection() {
               muted={isMuted}
               loop
               playsInline
-              preload="metadata"
+              preload="auto"
               onPlay={() => setIsPlayingVideo(true)}
               onPause={() => setIsPlayingVideo(false)}
               onVolumeChange={() => {
@@ -267,7 +268,7 @@ export default function HeroSection() {
                   setIsMuted(videoRef.current.muted);
                 }
               }}
-              className="w-full h-full object-cover object-center scale-[1.02] will-change-transform"
+              className="w-full h-full object-cover object-center will-change-transform"
             />
           ) : (
             <img
