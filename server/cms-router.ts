@@ -1788,10 +1788,43 @@ export const cmsRouter = createRouter({
           { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360° Virtual Tour / VR URL", group: "virtual_tour" },
           { key: "view_360_label", value: "360° View", label: "360° Button Label", group: "virtual_tour" },
           { key: "view_360_enabled", value: "true", label: "Enable 360° View Button", group: "virtual_tour" },
+          { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+          { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
+          { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
+          { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
+          { key: "explore_button_enabled", value: "true", label: "Enable Explore Button", group: "buttons" },
+          { key: "explore_hero_enabled", value: "true", label: "Show Explore Button in Hero", group: "buttons" },
+          { key: "ai_bot_button_text", value: "Ask DPSI AI", label: "AI Bot Button Label", group: "buttons" },
+          { key: "ai_bot_button_style", value: "liquid_metal", label: "AI Bot Button Style (liquid_metal/classic)", group: "buttons" },
+          { key: "ai_bot_button_mode", value: "text", label: "AI Bot Button Mode (text/icon)", group: "buttons" },
+          { key: "ai_bot_button_enabled", value: "true", label: "Enable AI Bot Floating Widget", group: "buttons" },
+          { key: "ai_bot_hero_enabled", value: "true", label: "Show AI Bot Button in Hero", group: "buttons" },
         ];
         await SiteSettings.insertMany(defaults).catch(() => {});
         return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
       }
+
+      // Check if any button settings are missing in existing database and insert them
+      const existingKeys = new Set(settings.map((s: any) => s.key));
+      const missingDefaults = [
+        { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+        { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
+        { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
+        { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
+        { key: "explore_button_enabled", value: "true", label: "Enable Explore Button", group: "buttons" },
+        { key: "explore_hero_enabled", value: "true", label: "Show Explore Button in Hero", group: "buttons" },
+        { key: "ai_bot_button_text", value: "Ask DPSI AI", label: "AI Bot Button Label", group: "buttons" },
+        { key: "ai_bot_button_style", value: "liquid_metal", label: "AI Bot Button Style (liquid_metal/classic)", group: "buttons" },
+        { key: "ai_bot_button_mode", value: "text", label: "AI Bot Button Mode (text/icon)", group: "buttons" },
+        { key: "ai_bot_button_enabled", value: "true", label: "Enable AI Bot Floating Widget", group: "buttons" },
+        { key: "ai_bot_hero_enabled", value: "true", label: "Show AI Bot Button in Hero", group: "buttons" },
+      ].filter((d) => !existingKeys.has(d.key));
+
+      if (missingDefaults.length > 0) {
+        await SiteSettings.insertMany(missingDefaults).catch(() => {});
+        return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
+      }
+
       return settings;
     });
   }),

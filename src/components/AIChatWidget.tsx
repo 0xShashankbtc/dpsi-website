@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Bot, MessageSquare, GraduationCap, RotateCcw, ExternalLink, Phone, Mail, Mic, Calendar, Volume2, VolumeX, Square } from "lucide-react";
 import { trpc } from "@/providers/trpc";
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
@@ -66,6 +67,12 @@ export default function AIChatWidget() {
   const calendarPdfUrl = getSetting("calendar_pdf_url", "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf");
   const phone = getSetting("contact_phone", "+91-0120-4660000");
   const email = getSetting("contact_email", "info@dpsindirapuram.com");
+
+  // Dynamic AI Bot Button Settings from MongoDB
+  const aiBotButtonText = getSetting("ai_bot_button_text", "Ask DPSI AI");
+  const aiBotButtonStyle = getSetting("ai_bot_button_style", "liquid_metal");
+  const aiBotButtonMode = (getSetting("ai_bot_button_mode", "text") as "text" | "icon");
+  const aiBotButtonEnabled = getSetting("ai_bot_button_enabled", "true") !== "false";
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -944,6 +951,27 @@ export default function AIChatWidget() {
                 </div>
               </form>
             </motion.div>
+          ) : !aiBotButtonEnabled ? null : aiBotButtonStyle === "liquid_metal" ? (
+            /* Floating Trigger Button - WebGL Liquid Metal Button */
+            <motion.div
+              key="dpsi-ai-trigger-liquid-metal"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="pointer-events-auto rounded-full shadow-2xl shadow-black/40"
+            >
+              <LiquidMetalButton
+                label={aiBotButtonText}
+                viewMode={aiBotButtonMode}
+                onClick={() => {
+                  unlockMobileAudio();
+                  setIsOpen(true);
+                }}
+                title="Click to open DPSI AI Assistant"
+                icon={<Bot className="w-4 h-4 text-cyan-300" />}
+              />
+            </motion.div>
           ) : (
             /* Floating Trigger Button - Firmly Fixed Anchor without Layout Shift */
             <motion.button
@@ -965,7 +993,7 @@ export default function AIChatWidget() {
                 <Bot className="w-4 h-4 text-white" />
               </div>
               <div className="text-left pr-1 pointer-events-none">
-                <p className="font-extrabold text-slate-900 text-xs leading-none">DPSI AI</p>
+                <p className="font-extrabold text-slate-900 text-xs leading-none">{aiBotButtonText}</p>
                 <p className="text-[10px] text-slate-600 font-medium leading-none mt-1">Ask Anything</p>
               </div>
             </motion.button>

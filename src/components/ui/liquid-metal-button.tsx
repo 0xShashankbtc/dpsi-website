@@ -9,6 +9,7 @@ interface LiquidMetalButtonProps {
   viewMode?: "text" | "icon";
   className?: string;
   title?: string;
+  icon?: React.ReactNode;
 }
 
 export function LiquidMetalButton({
@@ -17,6 +18,7 @@ export function LiquidMetalButton({
   viewMode = "text",
   className = "",
   title,
+  icon,
 }: LiquidMetalButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -40,7 +42,8 @@ export function LiquidMetalButton({
         shaderHeight: 46,
       };
     } else {
-      const calculatedWidth = Math.max(142, Math.min(260, (label?.length || 11) * 8.5 + 40));
+      const extraPad = icon ? 54 : 38;
+      const calculatedWidth = Math.max(130, Math.min(270, (label?.length || 11) * 8.5 + extraPad));
       return {
         width: Math.round(calculatedWidth),
         height: 46,
@@ -50,7 +53,7 @@ export function LiquidMetalButton({
         shaderHeight: 46,
       };
     }
-  }, [viewMode, label]);
+  }, [viewMode, label, icon]);
 
   useEffect(() => {
     const styleId = "shader-canvas-style-exploded";
@@ -200,31 +203,64 @@ export function LiquidMetalButton({
             }}
           >
             {viewMode === "icon" && (
-              <Sparkles
-                size={16}
-                style={{
-                  color: isHovered ? "#ffffff" : "#a1a1aa",
-                  filter: "drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.5))",
-                  transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                  transform: isHovered ? "scale(1.1)" : "scale(1)",
-                }}
-              />
+              icon ? (
+                <span
+                  style={{
+                    color: isHovered ? "#ffffff" : "#cbd5e1",
+                    filter: "drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.5))",
+                    transition: "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    transform: isHovered ? "scale(1.15)" : "scale(1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {icon}
+                </span>
+              ) : (
+                <Sparkles
+                  size={16}
+                  style={{
+                    color: isHovered ? "#ffffff" : "#a1a1aa",
+                    filter: "drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.5))",
+                    transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    transform: isHovered ? "scale(1.1)" : "scale(1)",
+                  }}
+                />
+              )
             )}
             {viewMode === "text" && (
-              <span
-                style={{
-                  fontSize: "14px",
-                  color: isHovered ? "#ffffff" : "#e4e4e7",
-                  fontWeight: 500,
-                  textShadow: "0px 1px 2px rgba(0, 0, 0, 0.7)",
-                  transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                  transform: isPressed ? "scale(0.97)" : "scale(1)",
-                  whiteSpace: "nowrap",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {label}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                {icon && (
+                  <span
+                    style={{
+                      color: isHovered ? "#ffffff" : "#94a3b8",
+                      filter: "drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.5))",
+                      transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      transform: isHovered ? "scale(1.1)" : "scale(1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {icon}
+                  </span>
+                )}
+                <span
+                  style={{
+                    fontSize: "13px",
+                    color: isHovered ? "#ffffff" : "#e4e4e7",
+                    fontWeight: 600,
+                    textShadow: "0px 1px 2px rgba(0, 0, 0, 0.7)",
+                    transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    transform: isPressed ? "scale(0.97)" : "scale(1)",
+                    whiteSpace: "nowrap",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  {label}
+                </span>
+              </div>
             )}
           </div>
 

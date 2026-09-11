@@ -13,6 +13,7 @@ import {
   Compass,
 } from "lucide-react";
 import { InteractiveHoverLinks } from "@/components/ui/interactive-hover-links";
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 
 
 const navLinks = [
@@ -193,6 +194,13 @@ export default function Navbar() {
     }
   }, [isExploreOpen, isMobileOpen]);
 
+  // Global listener to open explore modal from any component (HeroSection, QuickLinks, etc.)
+  useEffect(() => {
+    const handleOpenExplore = () => setIsExploreOpen(true);
+    window.addEventListener("dpsi:open-explore", handleOpenExplore);
+    return () => window.removeEventListener("dpsi:open-explore", handleOpenExplore);
+  }, []);
+
   const isAdmin = true;
 
   const { data: dbMarquees } = trpc.cms.listMarquees.useQuery();
@@ -202,6 +210,28 @@ export default function Navbar() {
   const affiliationNo = getSetting("cbse_affiliation_no", "2130663");
   const schoolCode = getSetting("school_code", "60297");
   const tagline = getSetting("school_tagline", "ADMISSIONS OPEN FOR SESSION 2026-27");
+
+  // Dynamic Explore Button configuration from MongoDB
+  const exploreEnabled = getSetting("explore_button_enabled", "true") !== "false";
+  const exploreLabel = getSetting("explore_button_text", "Explore");
+  const exploreMode = (getSetting("explore_button_mode", "text") as "text" | "icon");
+  const exploreActionType = getSetting("explore_action_type", "modal");
+  const exploreLink = getSetting("explore_button_link", "#interactive-facilities");
+
+  const handleExploreClick = () => {
+    if (exploreActionType === "link") {
+      if (exploreLink.startsWith("#")) {
+        const el = document.querySelector(exploreLink);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+          return;
+        }
+      }
+      window.location.href = exploreLink;
+    } else {
+      setIsExploreOpen(true);
+    }
+  };
 
   const activeMarquees = dbMarquees?.filter((m: any) => m.isActive !== false && !m.isDeleted);
 
@@ -550,18 +580,18 @@ export default function Navbar() {
 
             <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 shrink-0 z-10">
 
-              {/* Interactive Hover Links / Explore Campus Trigger */}
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setIsExploreOpen(true)}
-                className="hidden md:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer shrink-0"
-                title="Quick Interactive Explore"
-              >
-                <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-spin-slow" />
-                <span>Explore</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              </motion.button>
+              {/* Interactive Liquid Metal Explore Campus Trigger */}
+              {exploreEnabled && (
+                <div className="hidden md:flex items-center shrink-0">
+                  <LiquidMetalButton
+                    label={exploreLabel}
+                    viewMode={exploreMode}
+                    onClick={handleExploreClick}
+                    title="Explore Campus Facilities & Key Links"
+                    icon={<Compass className="w-3.5 h-3.5 text-emerald-400" />}
+                  />
+                </div>
+              )}
 
               {showInternationalLogo && (
                 <div className="flex items-center pl-1.5 sm:pl-2.5 border-l border-slate-200 dark:border-slate-800 shrink-0">
@@ -641,16 +671,18 @@ export default function Navbar() {
                 <div className="max-w-md mx-auto px-4 pt-3 pb-8 space-y-3">
                   {/* Top Slideable Quick Action Bar */}
                   <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-1 px-1">
-                    <button
-                      onClick={() => {
-                        setIsMobileOpen(false);
-                        setIsExploreOpen(true);
-                      }}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/80 dark:border-emerald-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer"
-                    >
-                      <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>🧭 Explore</span>
-                    </button>
+                    {exploreEnabled && (
+                      <button
+                        onClick={() => {
+                          setIsMobileOpen(false);
+                          handleExploreClick();
+                        }}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/80 dark:border-emerald-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer"
+                      >
+                        <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>🧭 {exploreLabel}</span>
+                      </button>
+                    )}
                     <a
                       href="https://dpsivr.vercel.app"
                       target="_blank"

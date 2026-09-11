@@ -180903,9 +180903,39 @@ var cmsRouter = createRouter({
           { key: "social_youtube", value: "https://youtube.com/@dpsindirapuram", label: "YouTube URL", group: "social" },
           { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360\xB0 Virtual Tour / VR URL", group: "virtual_tour" },
           { key: "view_360_label", value: "360\xB0 View", label: "360\xB0 Button Label", group: "virtual_tour" },
-          { key: "view_360_enabled", value: "true", label: "Enable 360\xB0 View Button", group: "virtual_tour" }
+          { key: "view_360_enabled", value: "true", label: "Enable 360\xB0 View Button", group: "virtual_tour" },
+          { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+          { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
+          { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
+          { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
+          { key: "explore_button_enabled", value: "true", label: "Enable Explore Button", group: "buttons" },
+          { key: "explore_hero_enabled", value: "true", label: "Show Explore Button in Hero", group: "buttons" },
+          { key: "ai_bot_button_text", value: "Ask DPSI AI", label: "AI Bot Button Label", group: "buttons" },
+          { key: "ai_bot_button_style", value: "liquid_metal", label: "AI Bot Button Style (liquid_metal/classic)", group: "buttons" },
+          { key: "ai_bot_button_mode", value: "text", label: "AI Bot Button Mode (text/icon)", group: "buttons" },
+          { key: "ai_bot_button_enabled", value: "true", label: "Enable AI Bot Floating Widget", group: "buttons" },
+          { key: "ai_bot_hero_enabled", value: "true", label: "Show AI Bot Button in Hero", group: "buttons" }
         ];
         await SiteSettings.insertMany(defaults).catch(() => {
+        });
+        return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
+      }
+      const existingKeys = new Set(settings.map((s) => s.key));
+      const missingDefaults = [
+        { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+        { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
+        { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
+        { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
+        { key: "explore_button_enabled", value: "true", label: "Enable Explore Button", group: "buttons" },
+        { key: "explore_hero_enabled", value: "true", label: "Show Explore Button in Hero", group: "buttons" },
+        { key: "ai_bot_button_text", value: "Ask DPSI AI", label: "AI Bot Button Label", group: "buttons" },
+        { key: "ai_bot_button_style", value: "liquid_metal", label: "AI Bot Button Style (liquid_metal/classic)", group: "buttons" },
+        { key: "ai_bot_button_mode", value: "text", label: "AI Bot Button Mode (text/icon)", group: "buttons" },
+        { key: "ai_bot_button_enabled", value: "true", label: "Enable AI Bot Floating Widget", group: "buttons" },
+        { key: "ai_bot_hero_enabled", value: "true", label: "Show AI Bot Button in Hero", group: "buttons" }
+      ].filter((d5) => !existingKeys.has(d5.key));
+      if (missingDefaults.length > 0) {
+        await SiteSettings.insertMany(missingDefaults).catch(() => {
         });
         return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
       }

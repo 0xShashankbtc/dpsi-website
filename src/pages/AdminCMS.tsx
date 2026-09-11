@@ -50,6 +50,7 @@ import {
   Volume2,
   Camera,
   Save,
+  Sparkles,
 } from "lucide-react";
 
 import { trpc } from "@/providers/trpc";
@@ -57,6 +58,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 import { toast } from "sonner";
 import { formatISTDate } from "@/lib/dateUtils";
 import RichTextEditor from "@/components/RichTextEditor";
@@ -4432,6 +4434,331 @@ export default function AdminCMS() {
                           <CheckCircle className="w-3.5 h-3.5 mr-1" />
                           {updateSiteSettingsMutation.isPending ? "Saving..." : "Save 360° Tour Settings"}
                         </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* LIQUID METAL BUTTONS CONTROL CENTER (EXPLORE & AI BOT) */}
+                  <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                    <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-600/80 border border-indigo-400/40 text-white flex items-center justify-center shadow-sm">
+                          <Sparkles className="w-4 h-4 text-indigo-200" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-xs font-bold uppercase tracking-wide text-white">Liquid Metal Buttons (Explore & AI Assistant)</h3>
+                            <span className="text-[9px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">WebGL Shader</span>
+                          </div>
+                          <p className="text-[10px] text-slate-300">Manage interactive 3D WebGL metallic buttons across Homepage Hero, Navbar, and AI Assistant</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const updates = [
+                              { key: "explore_button_text", value: settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore Campus" },
+                              { key: "explore_button_link", value: settingsEdits["explore_button_link"] !== undefined ? settingsEdits["explore_button_link"] : (siteSettings || []).find((s: any) => s.key === "explore_button_link")?.value || "#interactive-facilities" },
+                              { key: "explore_action_type", value: settingsEdits["explore_action_type"] !== undefined ? settingsEdits["explore_action_type"] : (siteSettings || []).find((s: any) => s.key === "explore_action_type")?.value || "modal" },
+                              { key: "explore_button_mode", value: settingsEdits["explore_button_mode"] !== undefined ? settingsEdits["explore_button_mode"] : (siteSettings || []).find((s: any) => s.key === "explore_button_mode")?.value || "text" },
+                              { key: "explore_button_enabled", value: settingsEdits["explore_button_enabled"] !== undefined ? settingsEdits["explore_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_button_enabled")?.value || "true" },
+                              { key: "explore_hero_enabled", value: settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "true" },
+                              { key: "ai_bot_button_text", value: settingsEdits["ai_bot_button_text"] !== undefined ? settingsEdits["ai_bot_button_text"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_text")?.value || "Ask DPSI AI" },
+                              { key: "ai_bot_button_style", value: settingsEdits["ai_bot_button_style"] !== undefined ? settingsEdits["ai_bot_button_style"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_style")?.value || "liquid_metal" },
+                              { key: "ai_bot_button_mode", value: settingsEdits["ai_bot_button_mode"] !== undefined ? settingsEdits["ai_bot_button_mode"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_mode")?.value || "text" },
+                              { key: "ai_bot_button_enabled", value: settingsEdits["ai_bot_button_enabled"] !== undefined ? settingsEdits["ai_bot_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_enabled")?.value || "true" },
+                              { key: "ai_bot_hero_enabled", value: settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "true" },
+                            ];
+                            updateSiteSettingsMutation.mutate({ updates });
+                            toast.success("Liquid Metal Button settings updated successfully!");
+                          }}
+                          disabled={updateSiteSettingsMutation.isPending}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-3 shadow-sm cursor-pointer"
+                        >
+                          <Save className="w-3.5 h-3.5 mr-1" />
+                          {updateSiteSettingsMutation.isPending ? "Saving..." : "Save Metal Buttons"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-6">
+                      {/* LIVE PREVIEW CANVAS */}
+                      <div className="bg-slate-950 rounded-xl p-5 border border-slate-800 shadow-inner">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                            Live Interactive Metal Shader Preview
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">Move mouse or hover over buttons to inspect fluidity</span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-center gap-6 py-3 min-h-[70px]">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <LiquidMetalButton
+                              label={settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore Campus"}
+                              viewMode={(settingsEdits["explore_button_mode"] !== undefined ? settingsEdits["explore_button_mode"] : (siteSettings || []).find((s: any) => s.key === "explore_button_mode")?.value || "text") as "text" | "icon"}
+                              icon={<Compass className="w-3.5 h-3.5 text-emerald-400" />}
+                              title="Explore Button Live Preview"
+                            />
+                            <span className="text-[10px] text-slate-400 font-medium">Explore Button</span>
+                          </div>
+
+                          <div className="flex flex-col items-center gap-1.5">
+                            <LiquidMetalButton
+                              label={settingsEdits["ai_bot_button_text"] !== undefined ? settingsEdits["ai_bot_button_text"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_text")?.value || "Ask DPSI AI"}
+                              viewMode={(settingsEdits["ai_bot_button_mode"] !== undefined ? settingsEdits["ai_bot_button_mode"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_mode")?.value || "text") as "text" | "icon"}
+                              icon={<Bot className="w-3.5 h-3.5 text-cyan-400" />}
+                              title="AI Bot Button Live Preview"
+                            />
+                            <span className="text-[10px] text-slate-400 font-medium">AI Bot Button</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* TWO-COLUMN CONTROLS: EXPLORE BUTTON & AI BOT BUTTON */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* EXPLORE BUTTON CONTROLS */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                            <div className="flex items-center gap-2">
+                              <Compass className="w-4 h-4 text-emerald-600" />
+                              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Explore Button Settings</h4>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              (settingsEdits["explore_button_enabled"] !== undefined ? settingsEdits["explore_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_button_enabled")?.value || "true") === "true"
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                : "bg-rose-100 text-rose-800 border-rose-300"
+                            }`}>
+                              {(settingsEdits["explore_button_enabled"] !== undefined ? settingsEdits["explore_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_button_enabled")?.value || "true") === "true" ? "Navbar Enabled" : "Navbar Disabled"}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-slate-700">Button Label / Text</label>
+                            <Input
+                              placeholder="Explore Campus"
+                              value={settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore Campus"}
+                              onChange={(e) => setSettingsEdits({ ...settingsEdits, explore_button_text: e.target.value })}
+                              className="bg-white border-slate-200 text-slate-900 text-xs"
+                            />
+                            <p className="text-[10px] text-slate-400">Display text rendered on the liquid metal button</p>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-slate-700">Click Action Behavior</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSettingsEdits({ ...settingsEdits, explore_action_type: "modal" })}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-left ${
+                                  (settingsEdits["explore_action_type"] !== undefined ? settingsEdits["explore_action_type"] : (siteSettings || []).find((s: any) => s.key === "explore_action_type")?.value || "modal") === "modal"
+                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                }`}
+                              >
+                                <span className="block font-bold">Interactive Modal</span>
+                                <span className="text-[10px] opacity-80">Opens 3D explore portal</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSettingsEdits({ ...settingsEdits, explore_action_type: "link" })}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-left ${
+                                  (settingsEdits["explore_action_type"] !== undefined ? settingsEdits["explore_action_type"] : (siteSettings || []).find((s: any) => s.key === "explore_action_type")?.value || "modal") === "link"
+                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                }`}
+                              >
+                                <span className="block font-bold">Direct URL / Anchor</span>
+                                <span className="text-[10px] opacity-80">Smooth scrolls or links</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-slate-700">Destination URL or Anchor (When Action is Link)</label>
+                            <Input
+                              placeholder="#interactive-facilities"
+                              value={settingsEdits["explore_button_link"] !== undefined ? settingsEdits["explore_button_link"] : (siteSettings || []).find((s: any) => s.key === "explore_button_link")?.value || "#interactive-facilities"}
+                              onChange={(e) => setSettingsEdits({ ...settingsEdits, explore_button_link: e.target.value })}
+                              className="bg-white border-slate-200 text-slate-900 text-xs font-mono"
+                            />
+                            <p className="text-[10px] text-slate-400">Target URL or section hash like #interactive-facilities or /facilities</p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                            <div>
+                              <label className="text-[11px] font-semibold text-slate-700 block mb-1.5">Display Mode</label>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, explore_button_mode: "text" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["explore_button_mode"] !== undefined ? settingsEdits["explore_button_mode"] : (siteSettings || []).find((s: any) => s.key === "explore_button_mode")?.value || "text") === "text"
+                                      ? "bg-slate-800 text-white border-slate-800"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Text + Icon
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, explore_button_mode: "icon" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["explore_button_mode"] !== undefined ? settingsEdits["explore_button_mode"] : (siteSettings || []).find((s: any) => s.key === "explore_button_mode")?.value || "text") === "icon"
+                                      ? "bg-slate-800 text-white border-slate-800"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Icon Only
+                                </button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-[11px] font-semibold text-slate-700 block mb-1.5">Hero Dock Visibility</label>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, explore_hero_enabled: "true" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "true") === "true"
+                                      ? "bg-emerald-600 text-white border-emerald-600"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Visible
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, explore_hero_enabled: "false" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "true") === "false"
+                                      ? "bg-rose-600 text-white border-rose-600"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Hidden
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* AI BOT BUTTON CONTROLS */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                            <div className="flex items-center gap-2">
+                              <Bot className="w-4 h-4 text-cyan-600" />
+                              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">AI Bot Button Settings</h4>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              (settingsEdits["ai_bot_button_enabled"] !== undefined ? settingsEdits["ai_bot_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_enabled")?.value || "true") === "true"
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                : "bg-rose-100 text-rose-800 border-rose-300"
+                            }`}>
+                              {(settingsEdits["ai_bot_button_enabled"] !== undefined ? settingsEdits["ai_bot_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_enabled")?.value || "true") === "true" ? "Widget Enabled" : "Widget Disabled"}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-slate-700">AI Bot Button Label</label>
+                            <Input
+                              placeholder="Ask DPSI AI"
+                              value={settingsEdits["ai_bot_button_text"] !== undefined ? settingsEdits["ai_bot_button_text"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_text")?.value || "Ask DPSI AI"}
+                              onChange={(e) => setSettingsEdits({ ...settingsEdits, ai_bot_button_text: e.target.value })}
+                              className="bg-white border-slate-200 text-slate-900 text-xs"
+                            />
+                            <p className="text-[10px] text-slate-400">Custom label shown inside the AI assistant metal button</p>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-slate-700">Button Style</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_button_style: "liquid_metal" })}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-left ${
+                                  (settingsEdits["ai_bot_button_style"] !== undefined ? settingsEdits["ai_bot_button_style"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_style")?.value || "liquid_metal") === "liquid_metal"
+                                    ? "bg-cyan-700 text-white border-cyan-700 shadow-xs"
+                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                }`}
+                              >
+                                <span className="block font-bold">Liquid Metal</span>
+                                <span className="text-[10px] opacity-80">WebGL Metallic Shader</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_button_style: "classic" })}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-left ${
+                                  (settingsEdits["ai_bot_button_style"] !== undefined ? settingsEdits["ai_bot_button_style"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_style")?.value || "liquid_metal") === "classic"
+                                    ? "bg-cyan-700 text-white border-cyan-700 shadow-xs"
+                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                                }`}
+                              >
+                                <span className="block font-bold">Classic Pill</span>
+                                <span className="text-[10px] opacity-80">Glassmorphism badge</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                            <div>
+                              <label className="text-[11px] font-semibold text-slate-700 block mb-1.5">Display Mode</label>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_button_mode: "text" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["ai_bot_button_mode"] !== undefined ? settingsEdits["ai_bot_button_mode"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_mode")?.value || "text") === "text"
+                                      ? "bg-slate-800 text-white border-slate-800"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Text + Icon
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_button_mode: "icon" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["ai_bot_button_mode"] !== undefined ? settingsEdits["ai_bot_button_mode"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_mode")?.value || "text") === "icon"
+                                      ? "bg-slate-800 text-white border-slate-800"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Icon Only
+                                </button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-[11px] font-semibold text-slate-700 block mb-1.5">Hero Dock Visibility</label>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_hero_enabled: "true" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "true") === "true"
+                                      ? "bg-emerald-600 text-white border-emerald-600"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Visible
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_hero_enabled: "false" })}
+                                  className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
+                                    (settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "true") === "false"
+                                      ? "bg-rose-600 text-white border-rose-600"
+                                      : "bg-white text-slate-600 border-slate-200"
+                                  }`}
+                                >
+                                  Hidden
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

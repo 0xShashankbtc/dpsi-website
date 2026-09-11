@@ -10,8 +10,11 @@ import {
   Volume2,
   VolumeX,
   Maximize2,
+  Bot,
+  Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 import { trpc } from "@/providers/trpc";
 
 export function optimizeMediaUrl(url?: string): string {
@@ -54,6 +57,36 @@ export default function HeroSection() {
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
     return item?.value?.trim() || fallback;
+  };
+
+  // Dynamic Explore and AI Bot Button Settings from MongoDB
+  const exploreHeroEnabled = getSetting("explore_hero_enabled", "true") !== "false";
+  const exploreText = getSetting("explore_button_text", "Explore Campus");
+  const exploreMode = (getSetting("explore_button_mode", "text") as "text" | "icon");
+  const exploreActionType = getSetting("explore_action_type", "modal");
+  const exploreLink = getSetting("explore_button_link", "#interactive-facilities");
+
+  const aiBotHeroEnabled = getSetting("ai_bot_hero_enabled", "true") !== "false";
+  const aiBotText = getSetting("ai_bot_button_text", "Ask DPSI AI");
+  const aiBotMode = (getSetting("ai_bot_button_mode", "text") as "text" | "icon");
+
+  const handleHeroExploreClick = () => {
+    if (exploreActionType === "link") {
+      if (exploreLink.startsWith("#")) {
+        const el = document.querySelector(exploreLink);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+          return;
+        }
+      }
+      window.location.href = exploreLink;
+    } else {
+      window.dispatchEvent(new CustomEvent("dpsi:open-explore"));
+    }
+  };
+
+  const handleHeroAiClick = () => {
+    window.dispatchEvent(new CustomEvent("dpsi:open-ai-chat"));
   };
 
   const activeSlides =
@@ -246,6 +279,36 @@ export default function HeroSection() {
       </motion.div>
 
 
+
+      {/* PROMINENT LIQUID METAL QUICK-ACTIONS DOCK (EXPLORE & AI BOT) */}
+      {(exploreHeroEnabled || aiBotHeroEnabled) && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="absolute bottom-16 sm:bottom-18 md:bottom-20 inset-x-0 z-20 flex items-center justify-center flex-wrap gap-3 sm:gap-4 px-4 pointer-events-auto"
+        >
+          {exploreHeroEnabled && (
+            <LiquidMetalButton
+              label={exploreText}
+              viewMode={exploreMode}
+              onClick={handleHeroExploreClick}
+              title="Explore Campus Facilities & Key Links"
+              icon={<Compass className="w-4 h-4 text-emerald-300" />}
+            />
+          )}
+
+          {aiBotHeroEnabled && (
+            <LiquidMetalButton
+              label={aiBotText}
+              viewMode={aiBotMode}
+              onClick={handleHeroAiClick}
+              title="Chat with DPSI AI Assistant"
+              icon={<Bot className="w-4 h-4 text-cyan-300" />}
+            />
+          )}
+        </motion.div>
+      )}
 
       {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM) */}
       <div className="absolute bottom-5 inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6">
