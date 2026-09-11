@@ -1469,7 +1469,7 @@ export default function AdminCMS() {
   const [aiPromptEdit, setAiPromptEdit] = useState("");
   const [aiModelEdit, setAiModelEdit] = useState("llama-3.3-70b-versatile");
   const [aiTempEdit, setAiTempEdit] = useState(0.4);
-  const [aiTtsProviderEdit, setAiTtsProviderEdit] = useState<"google" | "elevenlabs" | "auto">("google");
+  const [aiTtsProviderEdit, setAiTtsProviderEdit] = useState<"google" | "elevenlabs" | "auto">("elevenlabs");
   const [aiGoogleKeyEdit, setAiGoogleKeyEdit] = useState("");
   const [aiGoogleVoiceEdit, setAiGoogleVoiceEdit] = useState("en-IN-Journey-F");
   const [aiElevenlabsKeyEdit, setAiElevenlabsKeyEdit] = useState("");
@@ -4390,21 +4390,11 @@ export default function AdminCMS() {
                           {/* Light Header Preview */}
                           <div className="p-4 rounded-xl border border-slate-200 bg-white/95 flex items-center justify-between shadow-xs">
                             <div className="flex items-center gap-3">
-                              <div
-                                className={`aspect-square h-10 w-10 p-1 border border-slate-200 bg-white shadow-2xs flex items-center justify-center shrink-0 overflow-hidden ${
-                                  (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "circle"
-                                    ? "rounded-full"
-                                    : (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "rounded"
-                                    ? "rounded-xl"
-                                    : "rounded-lg"
-                                }`}
-                              >
-                                <img
-                                  src={settingsEdits["international_logo_url"] || (siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp"}
-                                  alt="Secondary Logo Preview Light"
-                                  className="w-full h-full object-contain aspect-square"
-                                />
-                              </div>
+                              <img
+                                src={settingsEdits["international_logo_url"] || (siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp"}
+                                alt="Secondary Logo Preview Light"
+                                className="h-9 w-9 object-contain aspect-square shrink-0"
+                              />
                               <div>
                                 <p className="text-xs font-bold text-slate-800">
                                   {settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School"}
@@ -4418,21 +4408,11 @@ export default function AdminCMS() {
                           {/* Dark Header Preview */}
                           <div className="p-4 rounded-xl border border-slate-800 bg-slate-900 flex items-center justify-between shadow-xs">
                             <div className="flex items-center gap-3">
-                              <div
-                                className={`aspect-square h-10 w-10 p-1 border border-slate-800 bg-slate-900 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden ${
-                                  (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "circle"
-                                    ? "rounded-full"
-                                    : (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "rounded"
-                                    ? "rounded-xl"
-                                    : "rounded-lg"
-                                }`}
-                              >
-                                <img
-                                  src={settingsEdits["international_logo_url"] || (siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp"}
-                                  alt="Secondary Logo Preview Dark"
-                                  className="w-full h-full object-contain aspect-square"
-                                />
-                              </div>
+                              <img
+                                src={settingsEdits["international_logo_url"] || (siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp"}
+                                alt="Secondary Logo Preview Dark"
+                                className="h-9 w-9 object-contain aspect-square shrink-0"
+                              />
                               <div>
                                 <p className="text-xs font-bold text-slate-100">
                                   {settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School"}
@@ -5171,13 +5151,13 @@ export default function AdminCMS() {
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-slate-600">Active TTS Provider</label>
                           <select
-                            value={aiTtsProviderEdit || aiConfig?.ttsProvider || "google"}
+                            value={aiTtsProviderEdit || aiConfig?.ttsProvider || "elevenlabs"}
                             onChange={(e) => setAiTtsProviderEdit(e.target.value as any)}
                             className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2.5 text-xs font-medium"
                           >
+                            <option value="elevenlabs">ElevenLabs Turbo (AI Female Voice)</option>
                             <option value="google">Google Cloud (Neural2 & Journey Indian Voices)</option>
-                            <option value="elevenlabs">ElevenLabs Turbo</option>
-                            <option value="auto">Auto (Google Cloud with ElevenLabs Fallback)</option>
+                            <option value="auto">Auto (ElevenLabs with Google Fallback)</option>
                           </select>
                           <p className="text-[10px] text-slate-500">Google Cloud Journey voices provide warm Indian conversational speech.</p>
                         </div>

@@ -254,8 +254,7 @@ export default function InteractiveFacilitiesSection() {
           className="text-center max-w-3xl mx-auto mb-10"
         >
           <div className="flex flex-wrap items-center justify-center gap-2 mb-3.5">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
               <span>Interactive Campus Showcase</span>
             </div>
           </div>

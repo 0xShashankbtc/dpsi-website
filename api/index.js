@@ -178266,7 +178266,7 @@ ${config2.systemPrompt}`;
     if (!isTtsAllowed) {
       return { audioBase64: null };
     }
-    let ttsProvider = "google";
+    let ttsProvider = "elevenlabs";
     let googleApiKey = (process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_TTS_API_KEY || "").trim();
     let googleVoice = "en-IN-Journey-F";
     let elevenlabsApiKey = (process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
@@ -178295,7 +178295,45 @@ ${config2.systemPrompt}`;
     }
     const cleanPrompt = input.text.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<thought>[\s\S]*?<\/thought>/gi, "").replace(/```[\s\S]*?```/g, "").replace(/https?:\/\/\S+/g, "").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, " ").replace(/[|\s]*[-—–_=]{2,}[+|\s\-—–_=]*/g, " ").replace(/\b2026[-–—]27\b/g, "2026 to 2027").replace(/\bPre[-–—]Nursery\b/gi, "Pre Nursery").replace(/\bIX\s*&\s*XI\b/gi, "9 and 11").replace(/\bIX\b/g, "9").replace(/\bXI\b/g, "11").replace(/\bXII\b/g, "12").replace(/\bDPSI\b/gi, "DPS Indirapuram").replace(/\+?91[- ]?0?120[- ]?4660000/g, "0 1 2 0 4 6 6 0 0 0 0").replace(/info@dpsindirapuram\.com/gi, "info at dps indirapuram com").replace(/([0-9]+)\.([0-9]+)%?/g, "$1 point $2 percent").replace(/[,.;:!?'"“”‘’`~@#$%^&*()_+=\-[\]{}|\\/<>•·▪▫◦]/g, " ").replace(/\s+/g, " ").slice(0, 220).trim();
     const hasHindi = /[\u0900-\u097F]/.test(cleanPrompt);
-    if ((ttsProvider === "google" || ttsProvider === "auto") && googleApiKey) {
+    if ((ttsProvider === "elevenlabs" || ttsProvider === "auto") && elevenlabsApiKey && Date.now() > elevenlabsCircuitBreakerUntil) {
+      const ttsModels = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2"];
+      for (const modelId of ttsModels) {
+        try {
+          const response = await fetch(
+            `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabsVoiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
+            {
+              method: "POST",
+              headers: {
+                Accept: "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": elevenlabsApiKey
+              },
+              body: JSON.stringify({
+                text: cleanPrompt,
+                model_id: modelId,
+                voice_settings: {
+                  stability: 0.5,
+                  similarity_boost: 0.8,
+                  style: 0,
+                  use_speaker_boost: true
+                }
+              }),
+              signal: AbortSignal.timeout(3500)
+            }
+          );
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            const base643 = Buffer.from(arrayBuffer).toString("base64");
+            return { audioBase64: `data:audio/mpeg;base64,${base643}` };
+          } else if (response.status === 401 || response.status === 403 || response.status === 429) {
+            elevenlabsCircuitBreakerUntil = Date.now() + 30 * 1e3;
+            break;
+          }
+        } catch {
+        }
+      }
+    }
+    if (googleApiKey) {
       try {
         const langCode = hasHindi ? "hi-IN" : googleVoice.startsWith("hi") ? "hi-IN" : "en-IN";
         const selectedVoice = hasHindi ? "hi-IN-Neural2-A" : googleVoice;
@@ -178327,44 +178365,6 @@ ${config2.systemPrompt}`;
           }
         }
       } catch {
-      }
-    }
-    if (elevenlabsApiKey && Date.now() > elevenlabsCircuitBreakerUntil) {
-      const ttsModels = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2"];
-      for (const modelId of ttsModels) {
-        try {
-          const response = await fetch(
-            `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabsVoiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
-            {
-              method: "POST",
-              headers: {
-                Accept: "audio/mpeg",
-                "Content-Type": "application/json",
-                "xi-api-key": elevenlabsApiKey
-              },
-              body: JSON.stringify({
-                text: cleanPrompt,
-                model_id: modelId,
-                voice_settings: {
-                  stability: 0.5,
-                  similarity_boost: 0.8,
-                  style: 0,
-                  use_speaker_boost: true
-                }
-              }),
-              signal: AbortSignal.timeout(2500)
-            }
-          );
-          if (response.ok) {
-            const arrayBuffer = await response.arrayBuffer();
-            const base643 = Buffer.from(arrayBuffer).toString("base64");
-            return { audioBase64: `data:audio/mpeg;base64,${base643}` };
-          } else if (response.status === 401 || response.status === 403 || response.status === 429) {
-            elevenlabsCircuitBreakerUntil = Date.now() + 15 * 60 * 1e3;
-            break;
-          }
-        } catch {
-        }
       }
     }
     return { audioBase64: null };

@@ -80,7 +80,7 @@ export default function FloatingSocials() {
   };
 
   return (
-    <div className="fixed left-4 bottom-24 sm:bottom-8 z-40 flex flex-col items-center">
+    <div className="hidden md:flex fixed left-4 bottom-8 z-40 flex-col items-center">
       <AnimatePresence>
         {isOpen && (
           <motion.div

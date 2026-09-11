@@ -357,7 +357,7 @@ export const aiRouter = createRouter({
         return { audioBase64: null };
       }
 
-      let ttsProvider: "google" | "elevenlabs" | "auto" = "google";
+      let ttsProvider: "google" | "elevenlabs" | "auto" = "elevenlabs";
       let googleApiKey = (
         process.env.GOOGLE_TTS_API_KEY ||
         process.env.GOOGLE_CLOUD_API_KEY ||
@@ -421,8 +421,52 @@ export const aiRouter = createRouter({
         .trim();
       const hasHindi = /[\u0900-\u097F]/.test(cleanPrompt);
 
-      // 1. Google Cloud Text-to-Speech Engine (Journey & Neural2)
-      if ((ttsProvider === "google" || ttsProvider === "auto") && googleApiKey) {
+      // 1. ElevenLabs Engine (High-Fidelity AI Female Voice)
+      if ((ttsProvider === "elevenlabs" || ttsProvider === "auto") && elevenlabsApiKey && Date.now() > elevenlabsCircuitBreakerUntil) {
+        const ttsModels = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2"];
+
+        for (const modelId of ttsModels) {
+          try {
+            const response = await fetch(
+              `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabsVoiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
+              {
+                method: "POST",
+                headers: {
+                  Accept: "audio/mpeg",
+                  "Content-Type": "application/json",
+                  "xi-api-key": elevenlabsApiKey,
+                },
+                body: JSON.stringify({
+                  text: cleanPrompt,
+                  model_id: modelId,
+                  voice_settings: {
+                    stability: 0.50,
+                    similarity_boost: 0.80,
+                    style: 0.0,
+                    use_speaker_boost: true,
+                  },
+                }),
+                signal: AbortSignal.timeout(3500),
+              }
+            );
+
+            if (response.ok) {
+              const arrayBuffer = await response.arrayBuffer();
+              const base64 = Buffer.from(arrayBuffer).toString("base64");
+              return { audioBase64: `data:audio/mpeg;base64,${base64}` };
+            } else if (response.status === 401 || response.status === 403 || response.status === 429) {
+              // 30s transient cooldown so admin updating keys can immediately retry
+              elevenlabsCircuitBreakerUntil = Date.now() + 30 * 1000;
+              break;
+            }
+          } catch {
+            // Model failover
+          }
+        }
+      }
+
+      // 2. Google Cloud Text-to-Speech Engine (Journey & Neural2)
+      if (googleApiKey) {
         try {
           const langCode = hasHindi ? "hi-IN" : (googleVoice.startsWith("hi") ? "hi-IN" : "en-IN");
           const selectedVoice = hasHindi ? "hi-IN-Neural2-A" : googleVoice;
@@ -456,51 +500,7 @@ export const aiRouter = createRouter({
             }
           }
         } catch {
-          // Fall through to ElevenLabs if Google Cloud encounters an error
-        }
-      }
-
-      // 2. ElevenLabs Engine Fallback with Circuit Breaker
-      if (elevenlabsApiKey && Date.now() > elevenlabsCircuitBreakerUntil) {
-        const ttsModels = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2"];
-
-        for (const modelId of ttsModels) {
-          try {
-            const response = await fetch(
-              `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabsVoiceId}?optimize_streaming_latency=4&output_format=mp3_22050_32`,
-              {
-                method: "POST",
-                headers: {
-                  Accept: "audio/mpeg",
-                  "Content-Type": "application/json",
-                  "xi-api-key": elevenlabsApiKey,
-                },
-                body: JSON.stringify({
-                  text: cleanPrompt,
-                  model_id: modelId,
-                  voice_settings: {
-                    stability: 0.50,
-                    similarity_boost: 0.80,
-                    style: 0.0,
-                    use_speaker_boost: true,
-                  },
-                }),
-                signal: AbortSignal.timeout(2500),
-              }
-            );
-
-            if (response.ok) {
-              const arrayBuffer = await response.arrayBuffer();
-              const base64 = Buffer.from(arrayBuffer).toString("base64");
-              return { audioBase64: `data:audio/mpeg;base64,${base64}` };
-            } else if (response.status === 401 || response.status === 403 || response.status === 429) {
-              // Trip circuit breaker for 15 minutes to prevent recurring latency lag
-              elevenlabsCircuitBreakerUntil = Date.now() + 15 * 60 * 1000;
-              break;
-            }
-          } catch {
-            // Model failover
-          }
+          // Fall through
         }
       }
 

@@ -51,6 +51,7 @@ function getDynamicAction(query: string, text?: string, settings?: { calendarPdf
 
 export default function AIChatWidget() {
   const aiChatMutation = trpc.ai.chat.useMutation();
+  const ttsMutation = trpc.ai.synthesizeSpeech.useMutation();
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
     staleTime: 60000,
   });
@@ -298,14 +299,19 @@ export default function AIChatWidget() {
     const voices = window.speechSynthesis.getVoices();
 
     if (voices && voices.length > 0) {
+      // Strictly exclude male voices and robotic/joke synthesizer engines
+      const isMaleOrJunk = (name: string) =>
+        /david|george|mark|richard|james|oliver|ravi|rishi|guy|male|fred|bruce|daniel|alex|ralph|junior|albert|bells|boing|cellos|deranged|hysterical|organ|trinoids|whisper|zarvox/i.test(name);
+
+      const femaleVoices = voices.filter((v) => !isMaleOrJunk(v.name));
+
       if (hasHindi) {
         const naturalHindi =
-          voices.find((v) => /hi[-_]IN/i.test(v.lang) && /natural|neural|online/i.test(v.name)) ||
-          voices.find((v) => /hi[-_]IN/i.test(v.lang) && /swara|madhur|kalpana|hemant/i.test(v.name)) ||
-          voices.find((v) => /hi[-_]IN/i.test(v.lang) && /google/i.test(v.name)) ||
-          voices.find((v) => /hi[-_]IN/i.test(v.lang)) ||
-          voices.find((v) => v.lang.startsWith("hi")) ||
-          voices.find((v) => /en[-_]IN/i.test(v.lang) && /natural|neural/i.test(v.name));
+          femaleVoices.find((v) => /hi[-_]IN/i.test(v.lang) && /natural|neural|online|swara|kalpana/i.test(v.name)) ||
+          femaleVoices.find((v) => /hi[-_]IN/i.test(v.lang) && /google/i.test(v.name)) ||
+          femaleVoices.find((v) => /hi[-_]IN/i.test(v.lang)) ||
+          femaleVoices.find((v) => v.lang.startsWith("hi")) ||
+          femaleVoices.find((v) => /en[-_]IN/i.test(v.lang) && /neerja|swara/i.test(v.name));
 
         if (naturalHindi) {
           utterance.voice = naturalHindi;
@@ -314,27 +320,26 @@ export default function AIChatWidget() {
           utterance.lang = "hi-IN";
         }
       } else {
-        const realPersonVoice =
-          // 1. Natural Indian English
-          voices.find((v) => /en[-_]IN/i.test(v.lang) && /natural|neural|online|premium|enhanced/i.test(v.name)) ||
-          voices.find((v) => /en[-_]IN/i.test(v.lang) && /neerja|sonia|heera|veena|kavya|rishi|anjali/i.test(v.name)) ||
-          // 2. Apple Enhanced Human Voices
-          voices.find((v) => /samantha|ava|serena|moira|karen|oliver|zoe/i.test(v.name) && /enhanced|premium|natural/i.test(v.name)) ||
-          // 3. Microsoft Natural Human Voices
-          voices.find((v) => /en[-_](US|GB|UK)/i.test(v.lang) && /natural|neural|online/i.test(v.name) && /jenny|aria|emma|sonia|ava/i.test(v.name)) ||
-          // 4. Google Natural Voices
-          voices.find((v) => /google/i.test(v.name) && /uk english female|us english|india english/i.test(v.name)) ||
-          // 5. Standard en-IN Regional
-          voices.find((v) => /en[-_]IN/i.test(v.lang)) ||
-          // 6. Any English voice
-          voices.find((v) => v.lang.startsWith("en")) ||
-          // 7. System default
-          voices.find((v) => v.default) ||
+        // High-Quality Human Female Voices
+        const naturalFemaleVoice =
+          // 1. Apple Enhanced Human Female Voices (Samantha, Ava, Victoria, Karen, Moira, Serena)
+          femaleVoices.find((v) => /samantha/i.test(v.name)) ||
+          femaleVoices.find((v) => /ava|victoria|karen|moira|serena|zoe/i.test(v.name)) ||
+          // 2. Microsoft Natural Online Female Voices (Jenny, Aria, Neerja, Sonia)
+          femaleVoices.find((v) => /jenny|aria|neerja|sonia|zira/i.test(v.name)) ||
+          // 3. Google High-Quality Female Voices
+          femaleVoices.find((v) => /google/i.test(v.name) && /female|uk english female|india/i.test(v.name)) ||
+          // 4. Any voice with "female" or "woman" explicitly tagged
+          femaleVoices.find((v) => /female|woman/i.test(v.name)) ||
+          // 5. English / Regional Indian Female Voices
+          femaleVoices.find((v) => /en[-_]IN/i.test(v.lang)) ||
+          femaleVoices.find((v) => v.lang.startsWith("en")) ||
+          femaleVoices[0] ||
           voices[0];
 
-        if (realPersonVoice) {
-          utterance.voice = realPersonVoice;
-          utterance.lang = realPersonVoice.lang;
+        if (naturalFemaleVoice) {
+          utterance.voice = naturalFemaleVoice;
+          utterance.lang = naturalFemaleVoice.lang;
         } else {
           utterance.lang = "en-US";
         }
@@ -343,9 +348,9 @@ export default function AIChatWidget() {
       utterance.lang = hasHindi ? "hi-IN" : "en-US";
     }
 
-    // Natural human speaking rate and pitch
+    // Natural human female speaking rate and pitch
     utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.pitch = 1.06; // Soft, warm, articulate female pitch
     utterance.volume = 1.0;
 
     try {
@@ -357,7 +362,7 @@ export default function AIChatWidget() {
     }
   };
 
-  const speakAnswerOnce = (text: string, forcePlay = false) => {
+  const speakAnswerOnce = async (text: string, forcePlay = false) => {
     if (typeof window === "undefined") return;
     if (!forcePlay && isMuted) return;
     if (spokenResponseRef.current === text && !forcePlay && isSpeaking) return;
@@ -370,7 +375,7 @@ export default function AIChatWidget() {
     const cleanText = sanitizeVoiceText(text).slice(0, 320).trim();
     if (!cleanText) return;
 
-    // If cached high-fidelity server audio exists, play it
+    // 1. If cached high-fidelity server audio exists, play it instantly
     if (audioCacheRef.current.has(cleanText)) {
       const cached = audioCacheRef.current.get(cleanText);
       if (cached && audioRef.current) {
@@ -378,7 +383,10 @@ export default function AIChatWidget() {
         audioRef.current.src = cached;
         audioRef.current.currentTime = 0;
         audioRef.current.onended = () => setIsSpeaking(false);
-        audioRef.current.onerror = () => setIsSpeaking(false);
+        audioRef.current.onerror = () => {
+          setIsSpeaking(false);
+          playBrowserVoice(cleanText);
+        };
         audioRef.current.play().catch(() => {
           playBrowserVoice(cleanText);
         });
@@ -386,7 +394,35 @@ export default function AIChatWidget() {
       }
     }
 
-    // Instant synchronous browser voice playback (No network blocking)
+    // 2. Request ElevenLabs / Neural AI Female Voice from backend
+    try {
+      const res = await ttsMutation.mutateAsync({
+        text: cleanText,
+        voiceId: "EXAVITQu4vr4xnSDxMaL", // ElevenLabs Female Voice (Sarah / Rachel)
+      });
+
+      if (res?.audioBase64) {
+        audioCacheRef.current.set(cleanText, res.audioBase64);
+        if (audioRef.current) {
+          setIsSpeaking(true);
+          audioRef.current.src = res.audioBase64;
+          audioRef.current.currentTime = 0;
+          audioRef.current.onended = () => setIsSpeaking(false);
+          audioRef.current.onerror = () => {
+            setIsSpeaking(false);
+            playBrowserVoice(cleanText);
+          };
+          audioRef.current.play().catch(() => {
+            playBrowserVoice(cleanText);
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Server TTS synthesis fallback:", err);
+    }
+
+    // 3. Fallback to natural human female browser voice
     playBrowserVoice(cleanText);
   };
 

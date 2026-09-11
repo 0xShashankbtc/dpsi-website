@@ -239,7 +239,7 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="bg-emerald-900 text-white text-xs py-2 overflow-hidden border-b border-emerald-700/50">
+      <div className="bg-emerald-900 text-white text-xs pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 overflow-hidden border-b border-emerald-700/50">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <div className="flex-1 overflow-hidden relative">
             <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-semibold text-emerald-200">
@@ -345,7 +345,7 @@ export default function Navbar() {
                 src={logoUrl}
                 alt={schoolName}
                 style={{ height: `${Math.min(Math.max(logoHeight, 40), 84)}px` }}
-                className={`h-13 sm:h-16 lg:h-18 w-auto object-contain transition-transform duration-300 shrink-0 ${
+                className={`h-10 sm:h-14 lg:h-18 w-auto object-contain transition-transform duration-300 shrink-0 ${
                   logoShape === "circle"
                     ? "rounded-full"
                     : logoShape === "rounded"
@@ -595,34 +595,24 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* Square Secondary School Logo (located on right side of Explore Campus button) */}
+              {/* Secondary School Logo (located on right side of Explore Campus button) */}
               {showInternationalLogo && (
-                <div className="flex items-center pl-1.5 sm:pl-2.5 border-l border-slate-200 dark:border-slate-800 shrink-0">
-                  <motion.div
-                    whileHover={{ scale: 1.06 }}
+                <div className="hidden sm:flex items-center pl-1.5 sm:pl-2.5 border-l border-slate-200 dark:border-slate-800 shrink-0">
+                  <motion.img
+                    whileHover={{ scale: 1.08 }}
                     transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                    className={`aspect-square h-8 w-8 sm:h-9 sm:w-9 lg:h-9 lg:w-9 p-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex items-center justify-center shrink-0 cursor-pointer overflow-hidden ${
-                      secondaryLogoShape === "circle"
-                        ? "rounded-full"
-                        : secondaryLogoShape === "rounded"
-                        ? "rounded-xl"
-                        : "rounded-lg"
-                    }`}
+                    src={internationalLogoUrl}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes("/images/dps/international_logo.webp")) {
+                        target.src = "/images/dps/international_logo.webp";
+                      }
+                    }}
+                    alt={secondaryLogoTitle}
+                    className="h-8 w-8 sm:h-9 sm:w-9 lg:h-9 lg:w-9 object-contain aspect-square shrink-0 cursor-pointer"
                     title={secondaryLogoTitle}
-                  >
-                    <img
-                      src={internationalLogoUrl}
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (!target.src.includes("/images/dps/international_logo.webp")) {
-                          target.src = "/images/dps/international_logo.webp";
-                        }
-                      }}
-                      alt={secondaryLogoTitle}
-                      className="w-full h-full object-contain aspect-square"
-                      loading="eager"
-                    />
-                  </motion.div>
+                    loading="eager"
+                  />
                 </div>
               )}
 
