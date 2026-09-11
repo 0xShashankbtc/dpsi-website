@@ -125,29 +125,40 @@
 \setlist[itemize] {itemsep=3pt, parsep=1pt, topsep=4pt}
 \setlist[enumerate]{itemsep=3pt, parsep=1pt, topsep=4pt}
 
-% ── Hyperlinks ────────────────────────────────────────────────────────────────
-\usepackage[hyphens]{url}
-\usepackage[
-  colorlinks      = true,
-  linkcolor       = sectioncol,
-  urlcolor        = linkblue,
-  citecolor       = dpsgreen,
-  bookmarks       = true,
-  bookmarksnumbered = true,
-  pdfstartview    = FitH,
-  pdftitle        = {DPS Indirapuram — Comprehensive Technical Documentation},
-  pdfauthor       = {Shashank Jangid},
-  pdfsubject      = {Web Platform Architecture},
-  pdfkeywords     = {React,TypeScript,tRPC,MongoDB,WebGL,VR,AI}
-]{hyperref}
-
-% ── Mathematics & Layout ──────────────────────────────────────────────────────
+% ── Mathematics & Layout (loaded before hyperref) ─────────────────────────────
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{parskip}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage{amsmath}
-\usepackage{amssymb}
+
+% ── Hyperlinks & PDF Metadata (must be loaded after amsmath/float) ────────────
+\usepackage[hyphens]{url}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks        = true,
+  linkcolor         = sectioncol,
+  urlcolor          = linkblue,
+  citecolor         = dpsgreen,
+  bookmarks         = true,
+  bookmarksnumbered = true,
+  pdfstartview      = FitH,
+  pdfencoding       = auto,
+  psdextra          = true,
+  pdftitle          = {DPS Indirapuram -- Comprehensive Technical Documentation},
+  pdfauthor         = {Shashank Jangid},
+  pdfsubject        = {Web Platform Architecture},
+  pdfkeywords       = {React, TypeScript, tRPC, MongoDB, WebGL, VR, AI}
+}
+\pdfstringdefDisableCommands{
+  \def\\{}
+  \def\textbf#1{#1}
+  \def\texttt#1{#1}
+  \def\textbar{|}
+  \def\&{and}
+  \def\textasciitilde{~}
+}
 
 % ── Custom Macros ─────────────────────────────────────────────────────────────
 \newcommand{\tech}[1]{\texttt{\textcolor{dpsgreen}{\textbf{#1}}}}
@@ -224,7 +235,7 @@
 %  CHAPTER 1 — EXECUTIVE SUMMARY & PROJECT ABSTRACT
 % ============================================================================
 
-\chapter{Executive Summary \& Project Abstract}
+\chapter{Executive Summary \texorpdfstring{\&}{and} Project Abstract}
 
 \section{Executive Summary}
 
@@ -245,7 +256,7 @@ Content Management System (CMS) with multi-tenant institutional isolation.
   node distance = 0.9cm and 1.3cm,
   box/.style    = {rectangle, rounded corners=6pt, draw=bordercol,
                    fill=codebg, text width=4.0cm, minimum height=1.7cm,
-                   align=center, drop shadow, font=\small},
+                   align=center, font=\small},
   accent/.style = {box, draw=dpsgreen, fill=dpsgreen!8, font=\small\bfseries},
   line/.style   = {-{Stealth[scale=0.9]}, thick, draw=sectioncol!65}
 ]
@@ -444,7 +455,7 @@ systemic limitations:
 %  CHAPTER 3 — SYSTEM ARCHITECTURE & VISUAL DIAGRAMS
 % ============================================================================
 
-\chapter{System Architecture \& Visual Diagrams}
+\chapter{System Architecture \texorpdfstring{\&}{and} Visual Diagrams}
 
 \section{Decoupled Monolith Topology}
 
@@ -543,7 +554,7 @@ pipeline designed to reject malicious traffic at the earliest possible boundary:
   node distance = 0.32cm,
   step/.style  = {rectangle, rounded corners=4pt, draw=sectioncol!50,
                   fill=codebg, minimum width=10.9cm, minimum height=0.85cm,
-                  align=left, drop shadow, inner sep=6pt},
+                  align=left, inner sep=6pt},
   pass/.style  = {step, draw=dpsgreen!80, fill=dpsgreen!7},
   arrow/.style = {-{Stealth[scale=0.8]}, thick, draw=dpsgreen}
 ]
@@ -619,7 +630,7 @@ database connection at query time.
 %  CHAPTER 4 — VR 360° CAMPUS TOUR, 3D ENGINE & WEBGL SHADER SUBSYSTEMS
 % ============================================================================
 
-\chapter{VR 360$^\circ$ Campus Tour, 3D Engine \& WebGL Shader Subsystems}
+\chapter{VR \texorpdfstring{360$^\circ$}{360-Degree} Campus Tour, 3D Engine \texorpdfstring{\&}{and} WebGL Shader Subsystems}
 
 \section{Immersive Campus Experience Overview}
 
@@ -644,7 +655,7 @@ The 3D graphics pipeline is implemented using \textbf{WebGL},
   scale=0.87, every node/.style={transform shape},
   sbox/.style = {rectangle, rounded corners=6pt, draw=sectioncol!55,
                  fill=codebg, text width=3.7cm, minimum height=1.8cm,
-                 align=center, font=\scriptsize, drop shadow},
+                 align=center, font=\scriptsize},
   core/.style = {sbox, draw=dpsgreen, fill=dpsgreen!10},
   arrow/.style = {-{Stealth[scale=0.9]}, thick, draw=sectioncol!75}
 ]
@@ -879,7 +890,7 @@ Precached PWA Assets                                       & 109 (4\,246\,KB) \\
 %  CHAPTER 6 — DATABASE ARCHITECTURE & SCHEMA CATALOGUE
 % ============================================================================
 
-\chapter{Database Architecture \& Schema Catalogue}
+\chapter{Database Architecture \texorpdfstring{\&}{and} Schema Catalogue}
 
 \section{Database Design Philosophy}
 
@@ -970,7 +981,7 @@ AuditLogSchema.pre('deleteOne', function() {
 %  CHAPTER 7 — API ARCHITECTURE & tRPC PROCEDURE DEFINITIONS
 % ============================================================================
 
-\chapter{API Architecture \& tRPC Procedure Definitions}
+\chapter{API Architecture \texorpdfstring{\&}{and} tRPC Procedure Definitions}
 
 \section{The tRPC End-to-End Type-Safety Paradigm}
 
@@ -1011,7 +1022,7 @@ compile-time errors to every frontend call site.
 %  CHAPTER 8 — CONVERSATIONAL AI & NEURAL VOICE SYSTEM
 % ============================================================================
 
-\chapter{Conversational AI \& Neural Voice System}
+\chapter{Conversational AI \texorpdfstring{\&}{and} Neural Voice System}
 
 \section{RAG AI Architecture Overview}
 
@@ -1026,7 +1037,7 @@ bottom-right corner of every page (\texttt{AIChatWidget.tsx}).
   scale=0.87, every node/.style={transform shape},
   box/.style   = {rectangle, rounded corners=5pt, draw=sectioncol!65,
                   fill=codebg, text width=3.7cm, minimum height=1.5cm,
-                  align=center, font=\scriptsize, drop shadow},
+                  align=center, font=\scriptsize},
   engine/.style= {box, draw=dpsgreen, fill=dpsgreen!10},
   voice/.style = {box, draw=dpsgold, fill=dpsgold!10},
   arrow/.style = {-{Stealth[scale=0.9]}, thick, draw=sectioncol!75}
@@ -1061,7 +1072,7 @@ bottom-right corner of every page (\texttt{AIChatWidget.tsx}).
 %  CHAPTER 9 — FRONTEND ARCHITECTURE, UI/UX, PWA & PERFORMANCE
 % ============================================================================
 
-\chapter{Frontend Architecture, UI/UX, PWA \& Performance}
+\chapter{Frontend Architecture, UI/UX, PWA \texorpdfstring{\&}{and} Performance}
 
 \section{Client-Side Page Route Manifest}
 
@@ -1241,7 +1252,7 @@ fluctuations at 60\,FPS and ${<}1.5\,\%$ CPU utilisation.
 %  CHAPTER 10 — CYBERSECURITY AUDIT & HARDENING REPORT
 % ============================================================================
 
-\chapter{Cybersecurity Audit \& Hardening Report}
+\chapter{Cybersecurity Audit \texorpdfstring{\&}{and} Hardening Report}
 
 \section{Security Posture Summary}
 
@@ -1325,7 +1336,7 @@ A10: SSRF                     & Outbound HTTP restricted to R2, Cloudinary, and 
 %  CHAPTER 11 — AUTOMATED TESTING SUITE & VERIFICATION
 % ============================================================================
 
-\chapter{Automated Testing Suite \& Verification}
+\chapter{Automated Testing Suite \texorpdfstring{\&}{and} Verification}
 
 \section{Test Framework Configuration}
 
@@ -1359,7 +1370,7 @@ sub-second feedback cycles during development.
 %  CHAPTER 12 — DEPLOYMENT PIPELINE & DEVOPS
 % ============================================================================
 
-\chapter{Deployment Pipeline \& DevOps}
+\chapter{Deployment Pipeline \texorpdfstring{\&}{and} DevOps}
 
 \section{CI/CD Build and Release Workflow}
 
@@ -1369,7 +1380,7 @@ sub-second feedback cycles during development.
   node distance = 0.55cm,
   step/.style   = {rectangle, rounded corners=4pt, draw=sectioncol!55,
                    fill=codebg, minimum width=11.0cm, minimum height=0.88cm,
-                   align=left, drop shadow, inner sep=6pt},
+                   align=left, inner sep=6pt},
   final/.style  = {step, draw=dpsgreen!80, fill=dpsgreen!8},
   arrow/.style  = {-{Stealth[scale=0.85]}, thick, draw=dpsgreen}
 ]
@@ -1427,7 +1438,7 @@ Secret Management         & Doppler       & \$0             & Community tier (fr
 %  CHAPTER 14 — FUTURE SCOPE & INSTITUTIONAL EXPANSION
 % ============================================================================
 
-\chapter{Future Scope \& Institutional Expansion Roadmap}
+\chapter{Future Scope \texorpdfstring{\&}{and} Institutional Expansion Roadmap}
 
 \begin{enumerate}
   \item \textbf{Multilingual Support (Hindi \& Regional i18n).}\
