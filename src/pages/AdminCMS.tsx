@@ -4399,7 +4399,7 @@ export default function AdminCMS() {
                                 <p className="text-xs font-bold text-slate-800">
                                   {settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School"}
                                 </p>
-                                <p className="text-[10px] text-slate-400">Position: Right of Explore Campus button</p>
+                                <p className="text-[10px] text-slate-400">Position: Right of Explore button</p>
                               </div>
                             </div>
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Light Navbar</span>
@@ -4417,7 +4417,7 @@ export default function AdminCMS() {
                                 <p className="text-xs font-bold text-slate-100">
                                   {settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School"}
                                 </p>
-                                <p className="text-[10px] text-slate-400">Position: Right of Explore Campus button</p>
+                                <p className="text-[10px] text-slate-400">Position: Right of Explore button</p>
                               </div>
                             </div>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Dark Navbar</span>
@@ -4662,7 +4662,7 @@ export default function AdminCMS() {
                           size="sm"
                           onClick={() => {
                             const updates = [
-                              { key: "explore_button_text", value: settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore Campus" },
+                              { key: "explore_button_text", value: settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore" },
                               { key: "explore_button_link", value: settingsEdits["explore_button_link"] !== undefined ? settingsEdits["explore_button_link"] : (siteSettings || []).find((s: any) => s.key === "explore_button_link")?.value || "#interactive-facilities" },
                               { key: "explore_action_type", value: settingsEdits["explore_action_type"] !== undefined ? settingsEdits["explore_action_type"] : (siteSettings || []).find((s: any) => s.key === "explore_action_type")?.value || "modal" },
                               { key: "explore_button_mode", value: settingsEdits["explore_button_mode"] !== undefined ? settingsEdits["explore_button_mode"] : (siteSettings || []).find((s: any) => s.key === "explore_button_mode")?.value || "text" },
@@ -4699,7 +4699,7 @@ export default function AdminCMS() {
                         <div className="flex flex-wrap items-center justify-center gap-6 py-3 min-h-[70px]">
                           <div className="flex flex-col items-center gap-1.5">
                             <LiquidMetalButton
-                              label={settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore Campus"}
+                              label={settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore"}
                               viewMode={(settingsEdits["explore_button_mode"] !== undefined ? settingsEdits["explore_button_mode"] : (siteSettings || []).find((s: any) => s.key === "explore_button_mode")?.value || "text") as "text" | "icon"}
                               icon={<Compass className="w-3.5 h-3.5 text-emerald-400" />}
                               title="Explore Button Live Preview"
@@ -4740,8 +4740,8 @@ export default function AdminCMS() {
                           <div className="space-y-1">
                             <label className="text-[11px] font-semibold text-slate-700">Button Label / Text</label>
                             <Input
-                              placeholder="Explore Campus"
-                              value={settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore Campus"}
+                              placeholder="Explore"
+                              value={settingsEdits["explore_button_text"] !== undefined ? settingsEdits["explore_button_text"] : (siteSettings || []).find((s: any) => s.key === "explore_button_text")?.value || "Explore"}
                               onChange={(e) => setSettingsEdits({ ...settingsEdits, explore_button_text: e.target.value })}
                               className="bg-white border-slate-200 text-slate-900 text-xs"
                             />

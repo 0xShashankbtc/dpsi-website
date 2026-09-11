@@ -582,7 +582,7 @@ export default function Navbar() {
 
             <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 shrink-0 z-20">
 
-              {/* Interactive Liquid Metal Explore Campus Trigger */}
+              {/* Interactive Liquid Metal Explore Trigger */}
               {exploreEnabled && (
                 <div className="hidden md:flex items-center shrink-0 my-auto">
                   <LiquidMetalButton
@@ -595,7 +595,7 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* Secondary School Logo (located on right side of Explore Campus button) */}
+              {/* Secondary School Logo (located on right side of Explore button) */}
               {showInternationalLogo && (
                 <div className="hidden sm:flex items-center pl-1.5 sm:pl-2.5 border-l border-slate-200 dark:border-slate-800 shrink-0">
                   <motion.img

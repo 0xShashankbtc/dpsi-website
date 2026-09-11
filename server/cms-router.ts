@@ -1792,7 +1792,7 @@ export const cmsRouter = createRouter({
           { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360° Virtual Tour / VR URL", group: "virtual_tour" },
           { key: "view_360_label", value: "360° View", label: "360° Button Label", group: "virtual_tour" },
           { key: "view_360_enabled", value: "true", label: "Enable 360° View Button", group: "virtual_tour" },
-          { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+          { key: "explore_button_text", value: "Explore", label: "Explore Button Label", group: "buttons" },
           { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
           { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
           { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
@@ -1815,7 +1815,7 @@ export const cmsRouter = createRouter({
       // Check if any button or secondary logo settings are missing in existing database and insert them
       const existingKeys = new Set(settings.map((s: any) => s.key));
       const missingDefaults = [
-        { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+        { key: "explore_button_text", value: "Explore", label: "Explore Button Label", group: "buttons" },
         { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
         { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
         { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },

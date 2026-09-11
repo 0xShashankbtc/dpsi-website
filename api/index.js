@@ -180910,7 +180910,7 @@ var cmsRouter = createRouter({
           { key: "view_360_url", value: "https://dpsivr.vercel.app", label: "360\xB0 Virtual Tour / VR URL", group: "virtual_tour" },
           { key: "view_360_label", value: "360\xB0 View", label: "360\xB0 Button Label", group: "virtual_tour" },
           { key: "view_360_enabled", value: "true", label: "Enable 360\xB0 View Button", group: "virtual_tour" },
-          { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+          { key: "explore_button_text", value: "Explore", label: "Explore Button Label", group: "buttons" },
           { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
           { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
           { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
@@ -180932,7 +180932,7 @@ var cmsRouter = createRouter({
       }
       const existingKeys = new Set(settings.map((s) => s.key));
       const missingDefaults = [
-        { key: "explore_button_text", value: "Explore Campus", label: "Explore Button Label", group: "buttons" },
+        { key: "explore_button_text", value: "Explore", label: "Explore Button Label", group: "buttons" },
         { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
         { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
         { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
