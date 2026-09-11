@@ -585,42 +585,41 @@ database connection at query time.
 
 \begin{figure}[H]
 \centering
-% Explicit absolute coordinates to prevent overlap.
-% Column 1 (x=0): Request boxes   |  Column 2 (x=4.8): ALS router  |  Column 3 (x=9.8): DB cylinders
 \begin{tikzpicture}[
-  box/.style   = {rectangle, rounded corners=5pt, draw=sectioncol,
-                  fill=codebg, text width=3.6cm, minimum height=1.2cm,
+  scale=0.88, every node/.style={transform shape},
+  box/.style   = {rectangle, rounded corners=5pt, draw=sectioncol!70,
+                  fill=codebg, text width=3.8cm, minimum height=1.3cm,
                   align=center, font=\scriptsize},
-  als/.style   = {rectangle, rounded corners=5pt, draw=dpsgold, fill=dpsgold!12,
-                  text width=4.0cm, minimum height=2.8cm, align=center,
+  als/.style   = {rectangle, rounded corners=6pt, draw=dpsgold!90, fill=dpsgold!10,
+                  text width=4.2cm, minimum height=3.6cm, align=center,
                   font=\scriptsize\bfseries},
-  db/.style    = {cylinder, shape border rotate=90, draw=dpsgreen, fill=dpsgreen!15,
-                  aspect=0.28, text width=2.6cm, minimum height=1.3cm,
+  db/.style    = {cylinder, shape border rotate=90, draw=dpsgreen!80, fill=dpsgreen!12,
+                  aspect=0.3, text width=2.8cm, minimum height=1.5cm,
                   align=center, font=\scriptsize\bfseries},
-  arrow/.style = {-{Stealth[scale=0.9]}, thick}
+  arrow/.style = {-{Stealth[scale=0.95]}, thick}
 ]
-  % ── Request nodes (left column) ─────────────────────────────────────────
-  \node[box] at (0, 0.8)   (r1){Request: DPS Indirapuram\\(\texttt{x-tenant-id: dpsi})};
-  \node[box] at (0, -0.8)  (r2){Request: Partner School\\(\texttt{x-tenant-id: partner})};
+  % ── Request nodes (left column: y = +1.5 and -1.5) ─────────────────────────
+  \node[box] at (0, 1.5)   (r1){\textbf{Request: DPS Indirapuram}\\[2pt](\texttt{x-tenant-id: dpsi})};
+  \node[box] at (0, -1.5)  (r2){\textbf{Request: Partner School}\\[2pt](\texttt{x-tenant-id: partner})};
 
-  % ── AsyncLocalStorage router (centre) ───────────────────────────────────
-  \node[als] at (5.0, 0)   (als){Node.js\\[2pt]\texttt{AsyncLocalStorage}\\[4pt]Execution Context\\[2pt]{\small\texttt{tenantContextStorage}}\\[1pt]{\small\texttt{.run()}}};
+  % ── AsyncLocalStorage router (centre column) ──────────────────────────────
+  \node[als] at (5.1, 0)   (als){Node.js\\[3pt]\texttt{AsyncLocalStorage}\\[5pt]Execution Context Scope\\[4pt]{\small\texttt{tenantContextStorage}}\\[2pt]{\small\texttt{.run()}}};
 
-  % ── MongoDB cylinders (right column) ────────────────────────────────────
-  \node[db]  at (10.0, 0.8)  (db1){MongoDB\\\texttt{dpsi\_main}};
-  \node[db]  at (10.0, -0.8) (db2){MongoDB\\\texttt{partner\_main}};
+  % ── MongoDB cylinders (right column: y = +1.5 and -1.5) ───────────────────
+  \node[db]  at (10.2, 1.5)  (db1){MongoDB Database\\\texttt{dpsi\_main}};
+  \node[db]  at (10.2, -1.5) (db2){MongoDB Database\\\texttt{partner\_main}};
 
-  % ── Connectors ──────────────────────────────────────────────────────────
-  \draw[arrow, draw=linkblue] (r1.east)  -- (als.west);
-  \draw[arrow, draw=dpsgold]  (r2.east)  -- (als.west);
-  \draw[arrow, draw=dpsgreen] (als.east) -- ++(0.4,0) |- (db1.west);
-  \draw[arrow, draw=dpsgreen] (als.east) -- ++(0.4,0) |- (db2.west);
+  % ── Routing Connectors ───────────────────────────────────────────────────
+  \draw[arrow, draw=linkblue] (r1.east)  -- (als.west |- r1.east);
+  \draw[arrow, draw=dpsgold!90]  (r2.east)  -- (als.west |- r2.east);
+  \draw[arrow, draw=dpsgreen] (als.east |- db1.west) -- (db1.west);
+  \draw[arrow, draw=dpsgreen] (als.east |- db2.west) -- (db2.west);
 
-  % ── Labels ──────────────────────────────────────────────────────────────
-  \node[font=\tiny, text=gray, above=3pt of r1]  {Tenant A};
-  \node[font=\tiny, text=gray, above=3pt of r2]  {Tenant B};
-  \node[font=\tiny, text=gray, above=3pt of db1] {Isolated DB};
-  \node[font=\tiny, text=gray, above=3pt of db2] {Isolated DB};
+  % ── Group / Badge Labels (placed with safe clearances) ───────────────────
+  \node[font=\tiny\bfseries, text=linkblue, above=4pt of r1]  {TENANT INGRESS A};
+  \node[font=\tiny\bfseries, text=dpsgold!90!black, above=4pt of r2]  {TENANT INGRESS B};
+  \node[font=\tiny\bfseries, text=dpsgreen!80!black, above=6pt of db1] {ISOLATED TENANT DB};
+  \node[font=\tiny\bfseries, text=dpsgreen!80!black, above=6pt of db2] {ISOLATED TENANT DB};
 \end{tikzpicture}
 \caption{Multi-Tenant Dynamic Database Routing via AsyncLocalStorage (Shared Runtime, Isolated DBs)}
 \label{fig:multi-tenant-diagram}
