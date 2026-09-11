@@ -373,41 +373,64 @@ systemic limitations:
 
 \section{Core Web Vitals Performance Benchmark}
 
+% Bar chart — each metric group normalised to its own maximum (= 5.0 data units).
+% y-scale 0.85cm/unit, axis to 7.0 → chart height = 5.95 cm, ample headroom.
+% All bar tops + labels verified < 6.0 data units.
+%
+% Scale factors:  LCP max = 4.8 s  → 5.0 units (1 unit = 0.96 s)
+%                 TTFB max = 1.8 s  → 5.0 units (1 unit = 0.36 s)
+%                 Lighthouse max = 98  → 5.0 units (1 unit = 19.6 pts)
+%
+% Bar height formula:  h [cm]  = (value / max) × 5.0 × 0.85
+% Bar centre formula:  y [units]= h_units / 2  = (value / max) × 2.5
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  x=1.3cm, y=0.7cm,
-  bar/.style  = {rectangle, draw=none, rounded corners=2pt},
-  axis/.style = {thick, -{Stealth}}
+  x=1.3cm, y=0.85cm,
+  bar/.style  = {rectangle, draw=none, rounded corners=3pt},
+  axis/.style = {thick, -{Stealth[scale=0.9]}}
 ]
-  \draw[axis] (0,0) -- (10.5,0) node[right]{\footnotesize Metric};
-  \draw[axis] (0,0) -- (0,6.8)  node[above]{\footnotesize Value};
-  \foreach \y in {1,...,5}{
-    \draw[gray!20, dashed] (0,\y) -- (10,\y);
+  % ── Axes ────────────────────────────────────────────────────────────────────
+  \draw[axis] (0,0) -- (10.6,0) node[right]{\footnotesize Metric};
+  \draw[axis] (0,0) -- (0,7.0)  node[above]{\footnotesize Normalised Value};
+
+  % ── Grid ────────────────────────────────────────────────────────────────────
+  \foreach \y in {1,...,6}{
+    \draw[gray!18, dashed] (0,\y) -- (10.3,\y);
   }
-  % ── LCP ──
-  \node[bar, fill=red!65, minimum width=0.8cm, minimum height=3.36cm] at (1.5,2.32){};
-  \node[above, font=\footnotesize]      at (1.5,4.15){4.8\,s};
-  \node[bar, fill=dpsgreen, minimum width=0.8cm, minimum height=0.49cm] at (2.5,0.35){};
-  \node[above, font=\footnotesize\bfseries] at (2.5,0.75){0.7\,s};
-  \node[below, font=\scriptsize] at (2.0,-0.25){LCP};
-  % ── TTFB ──
-  \node[bar, fill=red!65, minimum width=0.8cm, minimum height=1.96cm] at (4.5,1.38){};
-  \node[above, font=\footnotesize]      at (4.5,2.41){1.8\,s};
-  \node[bar, fill=dpsgreen, minimum width=0.8cm, minimum height=0.21cm] at (5.5,0.15){};
-  \node[above, font=\footnotesize\bfseries] at (5.5,0.38){0.08\,s};
-  \node[below, font=\scriptsize] at (5.0,-0.25){TTFB};
-  % ── Lighthouse ──
-  \node[bar, fill=red!65, minimum width=0.8cm, minimum height=2.38cm] at (7.5,1.69){};
-  \node[above, font=\footnotesize]      at (7.5,2.95){42/100};
-  \node[bar, fill=dpsgreen, minimum width=0.8cm, minimum height=5.60cm] at (8.5,4.0){};
-  \node[above, font=\footnotesize\bfseries] at (8.5,7.1){98/100};
-  \node[below, font=\scriptsize] at (8.0,-0.25){Lighthouse Score};
-  % ── Legend ──
-  \node[bar, fill=red!65, minimum width=0.4cm, minimum height=0.25cm] at (3.5,6.2){};
-  \node[right, font=\scriptsize] at (3.7,6.2){Legacy PHP / WordPress};
-  \node[bar, fill=dpsgreen, minimum width=0.4cm, minimum height=0.25cm] at (6.5,6.2){};
-  \node[right, font=\scriptsize] at (6.7,6.2){Modern DPSI Platform};
+
+  % ── LCP  (max = 4.8 s → 5.0 units) ─────────────────────────────────────────
+  % Legacy  4.8 s: h = 5.00 units → 4.250 cm,  centre y = 2.50
+  \node[bar, fill=red!65,  minimum width=0.82cm, minimum height=4.25cm] at (1.5,2.50){};
+  \node[above, font=\footnotesize]           at (1.5,5.15){4.8\,s};
+  % Modern  0.7 s: h = 0.729 units → 0.620 cm, centre y = 0.365
+  \node[bar, fill=dpsgreen,minimum width=0.82cm, minimum height=0.62cm] at (2.5,0.365){};
+  \node[above, font=\footnotesize\bfseries]  at (2.5,0.80){0.7\,s};
+  \node[below, font=\scriptsize\bfseries]    at (2.0,-0.30){LCP};
+
+  % ── TTFB  (max = 1.8 s → 5.0 units) ────────────────────────────────────────
+  % Legacy  1.8 s: h = 5.00 units → 4.250 cm,  centre y = 2.50
+  \node[bar, fill=red!65,  minimum width=0.82cm, minimum height=4.25cm] at (4.5,2.50){};
+  \node[above, font=\footnotesize]           at (4.5,5.15){1.8\,s};
+  % Modern  0.08 s: h = 0.222 units → 0.189 cm, centre y = 0.111
+  \node[bar, fill=dpsgreen,minimum width=0.82cm, minimum height=0.19cm] at (5.5,0.111){};
+  \node[above, font=\footnotesize\bfseries]  at (5.5,0.38){0.08\,s};
+  \node[below, font=\scriptsize\bfseries]    at (5.0,-0.30){TTFB};
+
+  % ── Lighthouse  (max = 98 pts → 5.0 units) ──────────────────────────────────
+  % Legacy  42 pts: h = 2.143 units → 1.821 cm, centre y = 1.071
+  \node[bar, fill=red!65,  minimum width=0.82cm, minimum height=1.82cm] at (7.5,1.071){};
+  \node[above, font=\footnotesize]           at (7.5,2.20){42/100};
+  % Modern  98 pts: h = 5.00 units → 4.250 cm,  centre y = 2.50
+  \node[bar, fill=dpsgreen,minimum width=0.82cm, minimum height=4.25cm] at (8.5,2.50){};
+  \node[above, font=\footnotesize\bfseries]  at (8.5,5.15){98/100};
+  \node[below, font=\scriptsize\bfseries]    at (8.0,-0.30){Lighthouse Score};
+
+  % ── Legend ──────────────────────────────────────────────────────────────────
+  \node[bar, fill=red!65,  minimum width=0.38cm, minimum height=0.28cm] at (2.2,6.35){};
+  \node[right, font=\scriptsize] at (2.42,6.35){Legacy PHP\,/\,WordPress};
+  \node[bar, fill=dpsgreen,minimum width=0.38cm, minimum height=0.28cm] at (6.0,6.35){};
+  \node[right, font=\scriptsize] at (6.22,6.35){Modern DPSI Platform};
 \end{tikzpicture}
 \caption{Performance Benchmark: Legacy WordPress vs.\ Modern Platform}
 \label{fig:performance-benchmark}
