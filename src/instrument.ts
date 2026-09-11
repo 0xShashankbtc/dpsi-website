@@ -51,8 +51,8 @@ Sentry.init({
     /^https:\/\/dpsi-website\.vercel\.app/,
   ],
 
-  // Session Replay sample rates
-  replaysSessionSampleRate: 0.1,
+  // Session Replay sample rates: 0 for normal browsing to avoid main-thread scroll jank, 1.0 on errors
+  replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
 
   // Enable structured logging API (Sentry.logger.*)

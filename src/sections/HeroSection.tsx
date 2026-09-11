@@ -1,7 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -54,7 +53,6 @@ const DEFAULT_HERO_SLIDES = [
 
 export default function HeroSection() {
   const { data: cmsSliders } = trpc.cms.listSliders.useQuery();
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== "undefined") {
@@ -71,11 +69,6 @@ export default function HeroSection() {
     window.addEventListener("resize", checkMobile, { passive: true });
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-
-  const getSetting = (key: string, fallback: string) => {
-    const item = siteSettings?.find((s: any) => s.key === key);
-    return item?.value?.trim() || fallback;
-  };
 
   const activeSlides =
     cmsSliders && cmsSliders.length > 0
@@ -158,53 +151,50 @@ export default function HeroSection() {
     }
   }, [videoSource, safeSlideIndex, hasVideo, isMuted]);
 
-  // Mouse Parallax Physics for Super Smooth 3D Tilt
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const springConfig = { damping: 25, stiffness: 200, mass: 0.5 };
-  const smoothX = useSpring(mouseX, springConfig);
-  const smoothY = useSpring(mouseY, springConfig);
-  const rotateX = useTransform(smoothY, [-0.5, 0.5], [5, -5]);
-  const rotateY = useTransform(smoothX, [-0.5, 0.5], [-6, 6]);
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      mouseX.set(x);
-      mouseY.set(y);
-    },
-    [mouseX, mouseY]
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    mouseX.set(0);
-    mouseY.set(0);
-  }, [mouseX, mouseY]);
-
-  // Pause video hardware decode loop when hero scrolls off-screen to preserve GPU/CPU for smooth 60/120fps scroll
+  // Eagerly pause video hardware decode loop as soon as user scrolls down to preserve 100% GPU/CPU for smooth 60/120fps scrolling
   useEffect(() => {
-    if (typeof window === "undefined" || !("IntersectionObserver" in window)) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!videoRef.current) return;
-        if (entry.isIntersecting) {
-          if (videoRef.current.paused && isPlayingVideo) {
-            videoRef.current.play().catch(() => {});
-          }
-        } else {
-          if (!videoRef.current.paused) {
-            videoRef.current.pause();
-          }
+    if (typeof window === "undefined") return;
+
+    const handleScrollPause = () => {
+      if (!videoRef.current) return;
+      if (window.scrollY > 220) {
+        if (!videoRef.current.paused) {
+          videoRef.current.pause();
         }
-      },
-      { threshold: 0.05 }
-    );
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+      } else {
+        if (videoRef.current.paused && isPlayingVideo) {
+          videoRef.current.play().catch(() => {});
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScrollPause, { passive: true });
+
+    let observer: IntersectionObserver | null = null;
+    if ("IntersectionObserver" in window) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (!videoRef.current) return;
+          if (entry.isIntersecting && entry.intersectionRatio > 0.25) {
+            if (videoRef.current.paused && isPlayingVideo && window.scrollY < 220) {
+              videoRef.current.play().catch(() => {});
+            }
+          } else {
+            if (!videoRef.current.paused) {
+              videoRef.current.pause();
+            }
+          }
+        },
+        { threshold: [0, 0.25] }
+      );
+      if (containerRef.current) {
+        observer.observe(containerRef.current);
+      }
     }
-    return () => observer.disconnect();
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollPause);
+      observer?.disconnect();
+    };
   }, [isPlayingVideo]);
 
   const handleNextSlide = () => {
@@ -247,10 +237,7 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       className="relative w-full h-[100dvh] min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950 text-white select-none contain-paint"
-      style={{ perspective: "1000px" }}
     >
       {/* GPU-ACCELERATED BACKGROUND MEDIA */}
       <AnimatePresence initial={false} mode="wait">

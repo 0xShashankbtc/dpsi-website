@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router";
-import { ArrowRight, Clock, Newspaper, Sparkles } from "lucide-react";
+import { ArrowRight, Clock, Newspaper } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { formatISTDate } from "@/lib/dateUtils";
 
@@ -45,7 +45,7 @@ export default function NewsHighlights() {
   if (!isLoading && allNews.length === 0) return null;
 
   return (
-    <section className="py-20 bg-white dark:bg-slate-950 relative overflow-hidden">
+    <section className="py-12 sm:py-16 bg-white dark:bg-slate-950 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">

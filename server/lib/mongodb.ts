@@ -38,8 +38,8 @@ if (!global._mongoCache) {
 
 // Optimized options for rapid instant connectivity in Serverless & Node environments
 const MONGO_OPTIONS: mongoose.ConnectOptions = {
-  serverSelectionTimeoutMS: 5000,
-  connectTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
   socketTimeoutMS: 30000,
   maxPoolSize: 10,
   minPoolSize: 1, // Keep warm socket alive to eliminate TCP/TLS handshake latency

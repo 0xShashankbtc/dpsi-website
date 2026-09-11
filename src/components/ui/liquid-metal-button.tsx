@@ -116,6 +116,21 @@ export function LiquidMetalButton({
       }
     };
 
+    // Throttle / pause shader rendering during active window scroll to yield 100% GPU to compositor
+    let scrollStopTimer: any = null;
+    const handleScroll = () => {
+      if (shaderMount.current?.setSpeed) {
+        shaderMount.current.setSpeed(0);
+      }
+      clearTimeout(scrollStopTimer);
+      scrollStopTimer = setTimeout(() => {
+        if (shaderMount.current?.setSpeed) {
+          shaderMount.current.setSpeed(0.6);
+        }
+      }, 120);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
     let observer: IntersectionObserver | null = null;
     if (typeof window !== "undefined" && "IntersectionObserver" in window && buttonRef.current) {
       observer = new IntersectionObserver(
@@ -139,6 +154,8 @@ export function LiquidMetalButton({
     }
 
     return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollStopTimer);
       observer?.disconnect();
       if (shaderMount.current?.destroy) {
         shaderMount.current.destroy();
@@ -335,12 +352,11 @@ export function LiquidMetalButton({
                 width: `${dimensions.width}px`,
                 borderRadius: "100px",
                 boxShadow: isPressed
-                  ? "0px 0px 0px 1px rgba(0, 0, 0, 0.5), 0px 1px 2px 0px rgba(0, 0, 0, 0.3)"
+                  ? "0px 1px 2px rgba(0, 0, 0, 0.4)"
                   : isHovered
-                    ? "0px 0px 0px 1px rgba(0, 0, 0, 0.4), 0px 12px 6px 0px rgba(0, 0, 0, 0.05), 0px 8px 5px 0px rgba(0, 0, 0, 0.1), 0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.2)"
-                    : "0px 0px 0px 1px rgba(0, 0, 0, 0.3), 0px 36px 14px 0px rgba(0, 0, 0, 0.02), 0px 20px 12px 0px rgba(0, 0, 0, 0.08), 0px 9px 9px 0px rgba(0, 0, 0, 0.12), 0px 2px 5px 0px rgba(0, 0, 0, 0.15)",
-                transition:
-                  "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+                    ? "0 8px 16px -4px rgba(0, 0, 0, 0.3)"
+                    : "0 4px 10px -2px rgba(0, 0, 0, 0.2)",
+                transition: "width 0.3s ease, height 0.3s ease, box-shadow 0.2s ease",
                 background: "rgb(0 0 0 / 0)",
               }}
             >

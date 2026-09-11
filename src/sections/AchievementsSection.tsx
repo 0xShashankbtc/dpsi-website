@@ -20,7 +20,7 @@ export default function AchievementsSection() {
   if (!isLoading && slides.length === 0) return null;
 
   return (
-    <section className="py-20 sm:py-24 bg-white dark:bg-slate-950 relative overflow-hidden border-t border-slate-200 dark:border-slate-800">
+    <section className="py-12 sm:py-16 bg-white dark:bg-slate-950 relative overflow-hidden border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}

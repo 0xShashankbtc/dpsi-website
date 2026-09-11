@@ -327,10 +327,10 @@ export default function Navbar() {
       </div>
 
       <motion.header
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        className={`sticky top-0 z-50 w-full transition-colors duration-200 transform-gpu ${
           isScrolled
-            ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-lg border-b border-slate-200/60 dark:border-slate-800/60"
-            : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md"
+            ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md border-b border-slate-200/60 dark:border-slate-800/60"
+            : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs"
         }`}
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import HeroSection from "@/sections/HeroSection";
 import AnnouncementsBar from "@/sections/AnnouncementsBar";
@@ -21,13 +20,29 @@ export default function Home() {
       <div id="home-content" className="relative z-10 bg-white dark:bg-slate-950 transition-colors">
         <AnnouncementsBar />
         <QuickStats />
-        <InteractiveFacilitiesSection />
-        <NewsHighlights />
-        <PrincipalMessage />
-        <AchievementsSection />
-        <VideoGallerySection />
-        <TestimonialsSection />
-        <CTASection />
+        
+        {/* Below-the-fold sections with deferred rendering for butter-smooth 60/120fps scrolling */}
+        <div className="content-visibility-auto">
+          <InteractiveFacilitiesSection />
+        </div>
+        <div className="content-visibility-auto">
+          <NewsHighlights />
+        </div>
+        <div className="content-visibility-auto">
+          <PrincipalMessage />
+        </div>
+        <div className="content-visibility-auto">
+          <AchievementsSection />
+        </div>
+        <div className="content-visibility-auto">
+          <VideoGallerySection />
+        </div>
+        <div className="content-visibility-auto">
+          <TestimonialsSection />
+        </div>
+        <div className="content-visibility-auto">
+          <CTASection />
+        </div>
       </div>
     </Layout>
   );

@@ -76945,8 +76945,8 @@ var init_mongodb = __esm({
       global._mongoCache = cached3;
     }
     MONGO_OPTIONS = {
-      serverSelectionTimeoutMS: 5e3,
-      connectTimeoutMS: 5e3,
+      serverSelectionTimeoutMS: 1e4,
+      connectTimeoutMS: 1e4,
       socketTimeoutMS: 3e4,
       maxPoolSize: 10,
       minPoolSize: 1,

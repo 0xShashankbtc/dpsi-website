@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router";
-import { ArrowRight, Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 import { trpc } from "@/providers/trpc";
@@ -29,7 +29,7 @@ export default function CTASection() {
 
   return (
     <section
-      className="relative py-20 text-white overflow-hidden border-t border-slate-800"
+      className="relative py-12 sm:py-16 text-white overflow-hidden border-t border-slate-800"
       style={{
         backgroundColor: customBg || "#0f172a", // Sleek minimalist dark slate or dynamic CMS color (No hardcoded blue)
       }}

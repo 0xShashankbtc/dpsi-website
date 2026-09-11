@@ -90,7 +90,7 @@ export default function VideoGallerySection() {
   return (
     <div className="w-full flex flex-col">
       {/* MINIMALIST VIDEO GALLERY HEADER (NO HARDCODED BLUE) */}
-      <div className="w-full py-16 bg-white dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
+      <div className="w-full py-12 sm:py-14 bg-white dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 24 }}

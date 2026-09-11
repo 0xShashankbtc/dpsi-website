@@ -73,7 +73,7 @@ export default function QuickStats() {
   };
 
   return (
-    <section className="py-16 sm:py-20 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
+    <section className="py-10 sm:py-14 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

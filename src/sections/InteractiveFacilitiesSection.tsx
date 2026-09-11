@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Sparkles,
   CheckCircle2,
-  Compass,
   Music,
   Palette,
   Dumbbell,
@@ -193,13 +192,7 @@ import { trpc } from "@/providers/trpc";
 
 export default function InteractiveFacilitiesSection() {
   const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery();
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
   const sliderRef = useRef<HTMLDivElement>(null);
-
-  const getSetting = (key: string, fallback: string) => {
-    const item = siteSettings?.find((s: any) => s.key === key);
-    return item?.value?.trim() || fallback;
-  };
 
   const facilities: FacilityItem[] =
     cmsFacilities && cmsFacilities.length > 0
@@ -242,7 +235,7 @@ export default function InteractiveFacilitiesSection() {
   return (
     <section
       id="interactive-facilities"
-      className="py-20 sm:py-24 bg-white dark:bg-slate-950 text-slate-900 dark:text-white relative overflow-hidden border-t border-slate-200 dark:border-slate-800"
+      className="py-12 sm:py-16 bg-white dark:bg-slate-950 text-slate-900 dark:text-white relative overflow-hidden border-t border-slate-200 dark:border-slate-800"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header with smooth entrance */}
