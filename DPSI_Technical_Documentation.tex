@@ -1444,23 +1444,205 @@ Secret Management         & Doppler       & \$0             & Community tier (fr
 
 \chapter{Future Scope \texorpdfstring{\&}{and} Institutional Expansion Roadmap}
 
+\section{Autonomous Admissions \& Lead-to-Enrollment AI Agent}
+
+Conventional educational portals deploy passive search bots that merely echo
+static FAQ hyperlinks.  The upcoming platform evolution transitions the
+conversational layer into an \textbf{Autonomous Admissions \& Counseling Agent}
+operating on an \textit{Observe--Orient--Decide--Act} (OODA) operational loop:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  scale=0.88, every node/.style={transform shape},
+  agentbox/.style = {rectangle, rounded corners=5pt, draw=sectioncol!70,
+                     fill=codebg, text width=3.4cm, minimum height=1.5cm,
+                     align=center, font=\scriptsize},
+  corebox/.style  = {agentbox, draw=dpsgreen!80, fill=dpsgreen!10, font=\scriptsize\bfseries},
+  actionbox/.style= {agentbox, draw=dpsgold!90, fill=dpsgold!10, font=\scriptsize\bfseries},
+  arrow/.style    = {-{Stealth[scale=0.9]}, thick, draw=sectioncol!70}
+]
+  \node[agentbox] (rx) at (0, 0)
+    {\textbf{1. Ingest (Rx Lead)}\\Omnichannel intake:\\Web, WhatsApp Cloud,\\Reception Kiosk, Voice};
+  \node[corebox]  (triage) at (4.6, 0)
+    {\textbf{2. Semantic Triage}\\Extracts grade, stream,\\budget, transport needs;\\Computes $S_{\text{lead}} \in [0,1]$};
+  \node[actionbox] (sched) at (9.4, 1.4)
+    {\textbf{3a. Auto-Scheduling}\\Queries counselor calendar;\\Books on-campus slot;\\Issues QR Gate Pass};
+  \node[actionbox] (crm) at (9.4, -1.4)
+    {\textbf{3b. CRM Pipeline}\\Pushes enriched profile;\\Triggers WhatsApp pack;\\Schedules re-engagement};
+
+  \draw[arrow] (rx) -- (triage);
+  \draw[arrow] (triage.east) -- ++(0.4,0) |- (sched.west);
+  \draw[arrow] (triage.east) -- ++(0.4,0) |- (crm.west);
+\end{tikzpicture}
+\caption{Autonomous Admissions Agent: Lead Intake, Triage, and Operational Action Pipeline}
+\label{fig:autonomous-agent-pipeline}
+\end{figure}
+
+\subsection{Lead Intent Scoring \& Qualification Mechanics}
+
+Every inbound interaction is continuously scored through a composite heuristics
+vector combining entity extraction and conversation depth:
+\begin{equation}
+  S_{\text{lead}} = w_1 \cdot I_{\text{intent}} + w_2 \cdot E_{\text{depth}} + w_3 \cdot D_{\text{eligibility}}
+\end{equation}
+where $I_{\text{intent}}$ evaluates admission-specific keywords (e.g., fee structure,
+science stream eligibility, sibling quota), $E_{\text{depth}}$ measures session duration
+and query count, and $D_{\text{eligibility}}$ validates age criteria against CBSE norms.
+
+\subsection{Autonomous Execution Workflows}
+
+When $S_{\text{lead}} \ge 0.75$ (classified as a \textit{High-Intent Lead}), the
+agent autonomously executes the following operations without human friction:
 \begin{enumerate}
-  \item \textbf{Multilingual Support (Hindi \& Regional i18n).}\
-        \texttt{react-i18next} integration for instant bilingual toggling.
-  \item \textbf{Parent \& Student Portal.}\
-        Authenticated access to fee receipts, report cards, and live bus GPS.
-  \item \textbf{Web Push Notifications.}\
-        PWA service-worker push for emergency closure alerts and event reminders.
-  \item \textbf{Online Fee Payment Gateway.}\
-        PCI-DSS compliant Razorpay / PayU / BillDesk integration.
-  \item \textbf{Alumni Mentorship Network.}\
-        Directory enabling alumni to mentor graduating seniors for career guidance.
-  \item \textbf{Adaptive AI Personalisation.}\
-        Per-user learning profiles driving personalised content recommendations.
-  \item \textbf{Multi-Campus Expansion.}\
-        Leverage existing \texttt{AsyncLocalStorage} multi-tenancy to onboard
-        sister DPS branches under a unified platform.
+  \item \textbf{Calendar Booking Synchronization:}\ The agent interfaces with
+        Microsoft Graph / Google Calendar APIs to inspect real-time availability
+        of admissions counselors and proposes two confirmed physical tour slots.
+  \item \textbf{Instant WhatsApp QR Gate Pass:}\ Upon parent confirmation, the
+        agent invokes the WhatsApp Business Cloud API to dispatch an encrypted
+        visitor QR code, campus map coordinates, and parking instructions.
+  \item \textbf{Counselor Dossier Generation:}\ An administrative brief
+        summarising parent concerns, student academic inclinations, and
+        counselor talking points is automatically appended to the admissions desk CRM.
+  \item \textbf{Proactive Lifecycle Re-Engagement:}\ If admission registration
+        forms open weeks after an initial query, the agent triggers contextual
+        re-engagement messages to qualified candidate cohorts.
 \end{enumerate}
+
+\section{Bidirectional School ERP \& LMS Integration Gateway}
+
+Modern schools rely on legacy, enterprise School Management Software
+(e.g., CampusCare, Entab, Edunext, ERPNext) for attendance, fee bookkeeping, and
+CBSE grading.  Replacing these back-office systems is operationally infeasible;
+therefore, the platform roadmap specifies an \textbf{AI-Powered Semantic Middleware Gateway}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  scale=0.88, every node/.style={transform shape},
+  portalbox/.style = {rectangle, rounded corners=5pt, draw=linkblue!80,
+                      fill=linkblue!8, text width=3.8cm, minimum height=1.6cm,
+                      align=center, font=\scriptsize},
+  bridgebox/.style = {rectangle, rounded corners=6pt, draw=dpsgreen!80,
+                      fill=dpsgreen!10, text width=4.2cm, minimum height=2.8cm,
+                      align=center, font=\scriptsize\bfseries},
+  erpbox/.style    = {rectangle, rounded corners=5pt, draw=sectioncol!70,
+                      fill=codebg, text width=3.8cm, minimum height=1.6cm,
+                      align=center, font=\scriptsize},
+  arrow/.style     = {-{Stealth[scale=0.9]}, thick}
+]
+  \node[portalbox] (parent) at (0, 1.3)
+    {\textbf{Modern DPSI Web Portal}\\Single Pane of Glass\\Parent / Student Dashboard};
+  \node[portalbox] (ai) at (0, -1.3)
+    {\textbf{Conversational Assistant}\\Natural Language Queries\\``What is my pending fee?''};
+
+  \node[bridgebox] (bridge) at (5.2, 0)
+    {Semantic ERP Integration Gateway\\[3pt]
+     \small\texttt{tRPC Procedure Adapter}\\[4pt]
+     \footnotesize $\bullet$ OAuth2 / SAML 2.0 Auth Bridge\\
+     \footnotesize $\bullet$ Bi-directional Webhook Bus\\
+     \footnotesize $\bullet$ AES-256 Token Vault};
+
+  \node[erpbox] (feebus) at (10.4, 1.3)
+    {\textbf{Legacy School ERP}\\CampusCare / Entab\\Fee Ledgers, CBSE Marks};
+  \node[erpbox] (lms) at (10.4, -1.3)
+    {\textbf{Academic LMS}\\Google Classroom / Moodle\\Homework, Attendance, GPS Bus};
+
+  \draw[arrow, draw=linkblue] (parent.east) -- (bridge.west |- parent.east);
+  \draw[arrow, draw=linkblue] (ai.east)     -- (bridge.west |- ai.east);
+  \draw[arrow, draw=dpsgreen] (bridge.east |- feebus.west) -- (feebus.west);
+  \draw[arrow, draw=dpsgreen] (bridge.east |- lms.west)    -- (lms.west);
+\end{tikzpicture}
+\caption{Semantic API Integration Gateway Bridging DPSI Web Platform with Legacy School ERP \& LMS}
+\label{fig:erp-bridge-architecture}
+\end{figure}
+
+\subsection{Unified Parent \& Student Single Pane of Glass}
+
+Through the integration gateway, authenticated parents access live administrative
+data within the unified, high-speed React 19 interface without navigating disjointed
+legacy third-party portals:
+\begin{itemize}
+  \item \textbf{Real-Time Fee Settlement:}\ Secure retrieval of pending term dues
+        paired with instant UPI, NetBanking, and credit card reconciliation via
+        Bharat BillPay / Razorpay webhooks.
+  \item \textbf{Academic Progress Telemetry:}\ Instant compilation of CBSE term
+        grades, unit test trends, and downloadable digitally signed report cards.
+  \item \textbf{Live Transport Telemetry:}\ Integration with GPS vehicle telemetry
+        broadcasting real-time bus tracking and ETA alerts directly onto interactive
+        maps.
+\end{itemize}
+
+\subsection{Natural Language Function-Calling Database Queries}
+
+The conversational AI leverages LLM function calling to query back-office systems
+securely on behalf of authenticated parents:
+\begin{lstlisting}[language=JavaScript,
+  caption={Function Calling Schema for Secure ERP Telemetry Retrieval}]
+const getStudentAcademicSnapshot = trpc.procedure
+  .input(z.object({ studentAdmissionNo: z.string(), otpToken: z.string() }))
+  .query(async ({ input, ctx }) => {
+    // 1. Verify parent JWT session and OTP authorization
+    await verifyParentSession(ctx.session, input.studentAdmissionNo);
+    // 2. Query legacy ERP adapter via secure mTLS tunnel
+    const snapshot = await erpGateway.fetchSnapshot(input.studentAdmissionNo);
+    // 3. Return structured payload for natural language synthesis
+    return {
+      studentName: snapshot.name,
+      pendingFeeAmount: snapshot.dues.amount,
+      feeDueDate: snapshot.dues.date,
+      busRouteNo: snapshot.transport.routeId,
+      busStatus: snapshot.transport.currentStop
+    };
+  });
+\end{lstlisting}
+
+\section{CBSE NEP 2020 Pedagogical Faculty Copilot}
+
+To empower academic staff and reduce manual lesson formatting, the CMS roadmap
+incorporates an internal \textbf{Pedagogical Co-Pilot} aligned with the
+National Education Policy (NEP 2020) competency framework:
+\begin{enumerate}
+  \item \textbf{Competency-Based Question Paper Generator:}\ Produces calibrated
+        question banks featuring Higher Order Thinking Skills (HOTS), Case-Based
+        Inquiry problems, and Assertion-Reasoning formats strictly compliant with
+        annual CBSE board blueprints.
+  \item \textbf{Automated Differentiated Homework Worksheets:}\ Formulates tiered
+        practice problem sheets tailored to student mastery tiers (Foundational,
+        Intermediate, Advanced).
+  \item \textbf{Automated Multilingual Adaptation:}\ Transforms circulars and
+        syllabi into bilingual English and Hindi distributions with automated
+        audio screen-reader descriptions for inclusive accessibility.
+\end{enumerate}
+
+\section{Multi-Campus Federation via AsyncLocalStorage}
+
+Capitalizing on the multi-tenant architecture designed in Chapter~3, the
+platform will expand to support the wider \textbf{Delhi Public School Society}
+network under a single cloud infrastructure deployment:
+\begin{itemize}
+  \item \textbf{Zero-Code Onboarding:}\ Sibling campuses (e.g., DPS Rajnagar,
+        DPS Sahibabad, DPS Greater Noida) onboard via simple DNS tenant-slug
+        mapping without codebase duplication.
+  \item \textbf{Isolated MongoDB Shards:}\ Independent encryption keys and
+        segregated collections guarantee zero inter-campus data leakage while
+        sharing serverless compute clusters.
+  \item \textbf{Cost Optimization:}\ Consolidating institutional web operations
+        reduces overall society cloud expenditure by over \textbf{78\,\%}.
+\end{itemize}
+
+\section{Predictive Student Welfare \& Proactive Retention}
+
+By linking LMS homework submissions and ERP attendance logs with background
+heuristic workers, the system provides automated early-warning telemetry:
+\begin{itemize}
+  \item \textbf{Attendance Vulnerability Triggers:}\ If a student's attendance
+        drops below the mandatory CBSE 75\,\% threshold, automated counseling
+        check-ins are dispatched to parents.
+  \item \textbf{Compassionate Parent Outreach:}\ Automated compassionate inquiries
+        replace cold bureaucratic warning notices, substantially improving parent-school
+        trust and student retention.
+\end{itemize}
 
 % ============================================================================
 %  CHAPTER 15 — TECHNICAL GLOSSARY
