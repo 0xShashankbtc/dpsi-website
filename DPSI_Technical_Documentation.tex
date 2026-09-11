@@ -557,21 +557,21 @@ pipeline designed to reject malicious traffic at the earliest possible boundary:
 % This prevents monospace strings from overflowing the right page margin.
 \begin{tikzpicture}[
   node distance = 0.32cm,
-  step/.style  = {rectangle, rounded corners=4pt, draw=sectioncol!50,
-                  fill=codebg, minimum width=10.9cm, minimum height=0.85cm,
-                  align=left, inner sep=6pt},
-  pass/.style  = {step, draw=dpsgreen!80, fill=dpsgreen!7},
-  arrow/.style = {-{Stealth[scale=0.8]}, thick, draw=dpsgreen}
+  stagebox/.style  = {rectangle, rounded corners=4pt, draw=sectioncol!50,
+                      fill=codebg, minimum width=10.9cm, minimum height=0.85cm,
+                      align=left, inner sep=6pt},
+  pass/.style      = {stagebox, draw=dpsgreen!80, fill=dpsgreen!7},
+  arrow/.style     = {-{Stealth[scale=0.8]}, thick, draw=dpsgreen}
 ]
-  \node[step](s1){\parbox{10.5cm}{\scriptsize\textbf{Stage 1 — Edge TLS \& HSTS:}\ SSL/TLS verified at Vercel edge; HSTS enforced with 2-year preload directive.}};
-  \node[step,below=of s1](s2){\parbox{10.5cm}{\scriptsize\textbf{Stage 2 — Security Headers:}\ Hono injects \texttt{X-Content-Type-Options: nosniff} and \texttt{X-Frame-Options: SAMEORIGIN}.}};
-  \node[step,below=of s2](s3){\parbox{10.5cm}{\scriptsize\textbf{Stage 3 — CORS Validation:}\ Origin checked against school domain whitelist and Vercel preview URL allowlist.}};
+  \node[stagebox](s1){\parbox{10.5cm}{\scriptsize\textbf{Stage 1 — Edge TLS \& HSTS:}\ SSL/TLS verified at Vercel edge; HSTS enforced with 2-year preload directive.}};
+  \node[stagebox,below=of s1](s2){\parbox{10.5cm}{\scriptsize\textbf{Stage 2 — Security Headers:}\ Hono injects \texttt{X-Content-Type-Options: nosniff} and \texttt{X-Frame-Options: SAMEORIGIN}.}};
+  \node[stagebox,below=of s2](s3){\parbox{10.5cm}{\scriptsize\textbf{Stage 3 — CORS Validation:}\ Origin checked against school domain whitelist and Vercel preview URL allowlist.}};
   \node[pass, below=of s3](s4){\parbox{10.5cm}{\scriptsize\textbf{Stage 4 — Persistent Rate Limiting:}\ IP request count evaluated against sliding-window Redis collection (DoS prevention).}};
   \node[pass, below=of s4](s5){\parbox{10.5cm}{\scriptsize\textbf{Stage 5 — Auth Context \& Dev Shield:}\ JWT HS-256 signature verified; \texttt{x-admin-auth} header blocked in production.}};
   \node[pass, below=of s5](s6){\parbox{10.5cm}{\scriptsize\textbf{Stage 6 — Tenant Binding:}\ Request bound to sanitised tenant namespace via \texttt{AsyncLocalStorage.run()}.}};
-  \node[step,below=of s6](s7){\parbox{10.5cm}{\scriptsize\textbf{Stage 7 — tRPC Route \& Zod Validation:}\ Input schema parsed; malformed or injected payloads immediately rejected.}};
-  \node[step,below=of s7](s8){\parbox{10.5cm}{\scriptsize\textbf{Stage 8 — Database Execution:}\ Mongoose resolves tenant connection pool; returns fully typed document.}};
-  \node[step,below=of s8](s9){\parbox{10.5cm}{\scriptsize\textbf{Stage 9 — Edge Cache Ingestion:}\ Public responses tagged \texttt{s-maxage=60,} \texttt{stale-while-revalidate=300} at Vercel CDN.}};
+  \node[stagebox,below=of s6](s7){\parbox{10.5cm}{\scriptsize\textbf{Stage 7 — tRPC Route \& Zod Validation:}\ Input schema parsed; malformed or injected payloads immediately rejected.}};
+  \node[stagebox,below=of s7](s8){\parbox{10.5cm}{\scriptsize\textbf{Stage 8 — Database Execution:}\ Mongoose resolves tenant connection pool; returns fully typed document.}};
+  \node[stagebox,below=of s8](s9){\parbox{10.5cm}{\scriptsize\textbf{Stage 9 — Edge Cache Ingestion:}\ Public responses tagged \texttt{s-maxage=60,} \texttt{stale-while-revalidate=300} at Vercel CDN.}};
   \draw[arrow](s1)--(s2);\draw[arrow](s2)--(s3);\draw[arrow](s3)--(s4);
   \draw[arrow](s4)--(s5);\draw[arrow](s5)--(s6);\draw[arrow](s6)--(s7);
   \draw[arrow](s7)--(s8);\draw[arrow](s8)--(s9);
@@ -1382,16 +1382,16 @@ sub-second feedback cycles during development.
 \centering
 \begin{tikzpicture}[
   node distance = 0.55cm,
-  step/.style   = {rectangle, rounded corners=4pt, draw=sectioncol!55,
-                   fill=codebg, minimum width=11.0cm, minimum height=0.88cm,
-                   align=left, inner sep=6pt},
-  final/.style  = {step, draw=dpsgreen!80, fill=dpsgreen!8},
-  arrow/.style  = {-{Stealth[scale=0.85]}, thick, draw=dpsgreen}
+  pipebox/.style = {rectangle, rounded corners=4pt, draw=sectioncol!55,
+                    fill=codebg, minimum width=11.0cm, minimum height=0.88cm,
+                    align=left, inner sep=6pt},
+  final/.style   = {pipebox, draw=dpsgreen!80, fill=dpsgreen!8},
+  arrow/.style   = {-{Stealth[scale=0.85]}, thick, draw=dpsgreen}
 ]
-  \node[step] (s1){\parbox{10.4cm}{\scriptsize\textbf{Step 1 — Git Push:}\ Developer pushes reviewed, tested commits to \texttt{origin/main} on GitHub.}};
-  \node[step,  below=of s1](s2){\parbox{10.4cm}{\scriptsize\textbf{Step 2 — Automated Tests:}\ Vitest executes all 87 unit and security tests; deployment aborted on any failure.}};
-  \node[step,  below=of s2](s3){\parbox{10.4cm}{\scriptsize\textbf{Step 3 — Dual Bundling:}\ Vite packages the React client (3\,338 modules, \textasciitilde3.2\,MB); esbuild compiles the Node~20 serverless API bundle (\textasciitilde7\,MB).}};
-  \node[step,  below=of s3](s4){\parbox{10.4cm}{\scriptsize\textbf{Step 4 — PWA Workbox Generation:}\ Service worker \texttt{sw.js} generated; 109 static assets (4.25\,MB) added to precache manifest.}};
+  \node[pipebox] (s1){\parbox{10.4cm}{\scriptsize\textbf{Step 1 — Git Push:}\ Developer pushes reviewed, tested commits to \texttt{origin/main} on GitHub.}};
+  \node[pipebox,  below=of s1](s2){\parbox{10.4cm}{\scriptsize\textbf{Step 2 — Automated Tests:}\ Vitest executes all 87 unit and security tests; deployment aborted on any failure.}};
+  \node[pipebox,  below=of s2](s3){\parbox{10.4cm}{\scriptsize\textbf{Step 3 — Dual Bundling:}\ Vite packages the React client (3\,338 modules, \textasciitilde3.2\,MB); esbuild compiles the Node~20 serverless API bundle (\textasciitilde7\,MB).}};
+  \node[pipebox,  below=of s3](s4){\parbox{10.4cm}{\scriptsize\textbf{Step 4 — PWA Workbox Generation:}\ Service worker \texttt{sw.js} generated; 109 static assets (4.25\,MB) added to precache manifest.}};
   \node[final, below=of s4](s5){\parbox{10.4cm}{\scriptsize\textbf{Step 5 — Global Edge Deployment:}\ Artefacts pushed to 300+ Vercel edge PoPs worldwide; automated Let's Encrypt SSL renewal; instant rollback available.}};
   \draw[arrow](s1)--(s2);\draw[arrow](s2)--(s3);
   \draw[arrow](s3)--(s4);\draw[arrow](s4)--(s5);
