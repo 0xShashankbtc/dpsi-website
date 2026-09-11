@@ -336,16 +336,20 @@ export default function Navbar() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-18 sm:h-20 lg:h-22 gap-3 xl:gap-6">
-            <Link to="/" className="flex items-center gap-3 group shrink-0 mr-auto lg:mr-8 xl:mr-12">
+        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-18 lg:h-22 gap-2 sm:gap-3 xl:gap-6">
+            <Link to="/" className="flex items-center gap-2 group shrink min-w-0 mr-auto lg:mr-8 xl:mr-12">
               <motion.img
                 whileHover={{ scale: 1.04 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 src={logoUrl}
                 alt={schoolName}
-                style={{ height: `${Math.min(Math.max(logoHeight, 40), 84)}px` }}
-                className={`h-10 sm:h-14 lg:h-18 w-auto object-contain transition-transform duration-300 shrink-0 ${
+                style={
+                  windowWidth < 640
+                    ? { height: "32px", maxHeight: "34px" }
+                    : { height: `${Math.min(Math.max(logoHeight, 40), 84)}px` }
+                }
+                className={`h-8 sm:h-14 lg:h-18 w-auto max-w-[170px] xs:max-w-[200px] sm:max-w-none object-contain transition-transform duration-300 shrink-0 ${
                   logoShape === "circle"
                     ? "rounded-full"
                     : logoShape === "rounded"
