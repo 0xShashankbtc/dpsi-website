@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ArrowRight, Phone, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 import { trpc } from "@/providers/trpc";
 
 export default function CTASection() {
+  const navigate = useNavigate();
   const { data: settings } = trpc.cms.getSiteSettings.useQuery();
 
   const getSetting = (key: string, fallback: string) => {
@@ -56,24 +58,23 @@ export default function CTASection() {
               {subtitle}
             </p>
 
-            <div className="flex flex-wrap items-center gap-3.5">
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                <Button
-                  size="lg"
-                  className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-7 py-3 rounded-xl shadow-lg shadow-black/20 cursor-pointer flex items-center gap-2 text-sm transition-all"
-                  asChild
-                >
-                  <Link to={buttonLink}>
-                    {buttonText} <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </motion.div>
+            <div className="flex flex-wrap items-center gap-4 pt-1">
+              <LiquidMetalButton
+                label={buttonText || "Apply Online"}
+                onClick={() => navigate(buttonLink)}
+              />
+
+              <LiquidMetalButton
+                viewMode="icon"
+                title="Inquire with DPS Indirapuram"
+                onClick={() => navigate("/contact")}
+              />
 
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border border-white/25 bg-white/5 hover:bg-white/15 text-white px-7 py-3 rounded-xl font-semibold text-sm cursor-pointer backdrop-blur-sm transition-all"
+                  className="border border-white/25 bg-white/5 hover:bg-white/15 text-white px-6 py-2.5 rounded-full font-semibold text-sm cursor-pointer backdrop-blur-sm transition-all"
                   asChild
                 >
                   <Link to="/contact">Contact Office</Link>
