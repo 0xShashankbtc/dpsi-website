@@ -1417,6 +1417,8 @@ export default function AdminCMS() {
     subtitle: "",
     imageUrl: "",
     videoUrl: "",
+    mobileVideoUrl: "",
+    useSeparateMobileVideo: false,
     mediaType: "image" as "image" | "video",
     buttonText: "Apply Now",
     buttonLink: "/admissions",
@@ -3096,6 +3098,8 @@ export default function AdminCMS() {
                             subtitle: "",
                             imageUrl: "",
                             videoUrl: "",
+                            mobileVideoUrl: "",
+                            useSeparateMobileVideo: false,
                             mediaType: "image",
                             buttonText: "Apply Now",
                             buttonLink: "/admissions",
@@ -3128,13 +3132,24 @@ export default function AdminCMS() {
                           ) : (
                             <img src={s.imageUrl} alt={s.title} className="w-full h-full object-cover" />
                           )}
-                          <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          <div className="absolute top-2 left-2 flex items-center gap-1.5 flex-wrap">
                             <span className="px-2 py-0.5 bg-black/60 rounded text-[10px] text-white font-mono">
                               Order: {s.order}
                             </span>
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${s.mediaType === "video" || s.videoUrl ? "bg-purple-600" : "bg-sky-600"}`}>
                               {s.mediaType === "video" || s.videoUrl ? "Video" : "Image"}
                             </span>
+                            {(s.mediaType === "video" || s.videoUrl) && (
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-xs ${
+                                s.useSeparateMobileVideo && s.mobileVideoUrl
+                                  ? "bg-emerald-600"
+                                  : "bg-indigo-600"
+                              }`}>
+                                {s.useSeparateMobileVideo && s.mobileVideoUrl
+                                  ? "📱 Dedicated Mobile"
+                                  : "📱 Auto-Adapted (9:16)"}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <CardContent className="p-4 flex items-start justify-between">
@@ -3160,6 +3175,8 @@ export default function AdminCMS() {
                                   subtitle: s.subtitle || "",
                                   imageUrl: s.imageUrl || "",
                                   videoUrl: s.videoUrl || "",
+                                  mobileVideoUrl: s.mobileVideoUrl || "",
+                                  useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo),
                                   mediaType: (s.mediaType || (s.videoUrl ? "video" : "image")) as "image" | "video",
                                   buttonText: s.buttonText || "Apply Now",
                                   buttonLink: s.buttonLink || "/admissions",
@@ -5777,6 +5794,115 @@ export default function AdminCMS() {
                       </button>
                     </div>
                   )}
+
+                  {/* MOBILE VIEW VIDEO ADAPTATION & DEDICATED UPLOAD */}
+                  <div className="p-3.5 rounded-xl border border-purple-200 bg-purple-50/50 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <span>📱</span> Mobile View Video Configuration
+                        </span>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Auto-adapt your main video or upload a separate vertical (9:16) video for phones.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSliderForm((prev) => ({
+                            ...prev,
+                            useSeparateMobileVideo: !prev.useSeparateMobileVideo,
+                          }))
+                        }
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer border shrink-0 ${
+                          sliderForm.useSeparateMobileVideo
+                            ? "bg-purple-600 text-white border-purple-600 shadow-xs"
+                            : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        {sliderForm.useSeparateMobileVideo ? "Separate Video: ON" : "Auto-Resize: ON"}
+                      </button>
+                    </div>
+
+                    {!sliderForm.useSeparateMobileVideo ? (
+                      <div className="p-3 bg-white rounded-lg border border-purple-100 flex items-start gap-2.5 text-xs text-slate-600">
+                        <Sparkles className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-semibold text-purple-900 block">Automatic Mobile Adaptation Active</span>
+                          On phones and mobile viewports, the primary video automatically adapts to 9:16 portrait using AI gravity cropping and CDN optimization.
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 pt-1">
+                        <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 text-center hover:border-purple-600 transition-colors bg-white">
+                          <Upload className="w-6 h-6 text-purple-700 mx-auto mb-1.5" />
+                          <p className="text-xs font-semibold text-slate-800">Upload Mobile Vertical Video (9:16)</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">MP4, WebM, MOV portrait video optimized for smartphones</p>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            disabled={isUploading}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleMediaUpload(
+                                  file,
+                                  (mobileVideoUrl) => {
+                                    setSliderForm((prev) => ({
+                                      ...prev,
+                                      mobileVideoUrl,
+                                      useSeparateMobileVideo: true,
+                                    }));
+                                  },
+                                  { resourceType: "video", folder: "dpsi_mobile_videos" }
+                                );
+                              }
+                            }}
+                            className="mt-2 text-xs text-slate-500 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-purple-700 file:text-white hover:file:bg-purple-800 cursor-pointer disabled:opacity-50"
+                          />
+                        </div>
+
+                        <Input
+                          placeholder="Or paste direct mobile vertical video URL (https://...)"
+                          value={sliderForm.mobileVideoUrl}
+                          onChange={(e) =>
+                            setSliderForm({
+                              ...sliderForm,
+                              mobileVideoUrl: e.target.value,
+                              useSeparateMobileVideo: true,
+                            })
+                          }
+                          className="bg-white border-purple-200 text-slate-900 text-xs font-mono"
+                        />
+
+                        {sliderForm.mobileVideoUrl && (
+                          <div className="relative rounded-lg overflow-hidden h-48 w-32 mx-auto bg-slate-950 border border-purple-300 shadow-md">
+                            <video
+                              src={sliderForm.mobileVideoUrl}
+                              controls
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute top-1.5 left-1.5">
+                              <span className="px-1.5 py-0.5 rounded bg-purple-700 text-[8px] text-white font-bold">
+                                Mobile 9:16
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSliderForm({ ...sliderForm, mobileVideoUrl: "" })}
+                              className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 hover:bg-red-600 text-[9px] text-white font-semibold transition-colors cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">

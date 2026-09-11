@@ -145,6 +145,8 @@ export interface ISlider extends Document {
   subtitle?: string;
   imageUrl?: string;
   videoUrl?: string;
+  mobileVideoUrl?: string;
+  useSeparateMobileVideo?: boolean;
   mediaType: "image" | "video";
   buttonText?: string;
   buttonLink?: string;
@@ -159,6 +161,8 @@ const SliderSchema = new Schema<ISlider>(
     subtitle: { type: String, default: "" },
     imageUrl: { type: String, default: "" },
     videoUrl: { type: String, default: "" },
+    mobileVideoUrl: { type: String, default: "" },
+    useSeparateMobileVideo: { type: Boolean, default: false },
     mediaType: { type: String, enum: ["image", "video"], default: "image" },
     buttonText: { type: String },
     buttonLink: { type: String },

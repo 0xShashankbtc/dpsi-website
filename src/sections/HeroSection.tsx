@@ -17,15 +17,20 @@ import { Button } from "@/components/ui/button";
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 import { trpc } from "@/providers/trpc";
 
-export function optimizeMediaUrl(url?: string): string {
+export function optimizeMediaUrl(url?: string, isMobile: boolean = false): string {
   if (!url || typeof url !== "string") return "";
   const clean = url.trim();
   if (clean.includes("cloudinary.com") && clean.includes("/video/upload/")) {
-    if (clean.includes("/video/upload/q_auto:best")) return clean;
-    return clean.replace(
-      "/video/upload/",
-      "/video/upload/q_auto:best,vc_auto,w_1920,c_limit/"
-    );
+    const uploadIdx = clean.indexOf("/video/upload/");
+    const afterUpload = clean.substring(uploadIdx + "/video/upload/".length);
+    const parts = afterUpload.split("/");
+    const hasTransform = parts.length > 1 && !/^v\d+$/.test(parts[0]);
+    const cleanPath = hasTransform ? parts.slice(1).join("/") : afterUpload;
+
+    if (isMobile) {
+      return `${clean.substring(0, uploadIdx)}/video/upload/c_fill,ar_9:16,g_auto,w_720,vc_auto,q_auto:best/${cleanPath}`;
+    }
+    return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:best,vc_auto,w_1920,c_limit/${cleanPath}`;
   }
   if (clean.includes("cloudinary.com") && clean.includes("/image/upload/")) {
     if (clean.includes("/image/upload/q_auto:best")) return clean;
@@ -41,6 +46,8 @@ const DEFAULT_HERO_SLIDES = [
   {
     image: "/images/dps/slider_1.webp",
     videoUrl: "",
+    mobileVideoUrl: "",
+    useSeparateMobileVideo: false,
     mediaType: "image" as const,
     title: "Delhi Public School Indirapuram",
     subtitle: "Premier CBSE Day School in Ghaziabad • Nursery to Class XII",
@@ -53,6 +60,22 @@ const DEFAULT_HERO_SLIDES = [
 export default function HeroSection() {
   const { data: cmsSliders } = trpc.cms.listSliders.useQuery();
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile, { passive: true });
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
@@ -95,11 +118,14 @@ export default function HeroSection() {
           .filter((s: any) => !s.isDeleted && s.isActive !== false)
           .map((s: any) => {
             const rawVid = (s.videoUrl || "").trim();
+            const rawMobileVid = (s.mobileVideoUrl || "").trim();
             const rawImg = (s.imageUrl || "").trim();
-            const isVideo = s.mediaType === "video" || Boolean(rawVid);
+            const isVideo = s.mediaType === "video" || Boolean(rawVid) || Boolean(rawMobileVid);
             return {
               image: rawImg || "/images/dps/slider_1.webp",
-              videoUrl: optimizeMediaUrl(rawVid),
+              videoUrl: rawVid,
+              mobileVideoUrl: rawMobileVid,
+              useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo),
               mediaType: (isVideo ? "video" : "image") as "image" | "video",
               title: s.title,
               subtitle: s.subtitle || "",
@@ -119,8 +145,13 @@ export default function HeroSection() {
   const safeSlideIndex = activeSlides.length > 0 ? currentSlide % activeSlides.length : 0;
   const slide = activeSlides[safeSlideIndex] || DEFAULT_HERO_SLIDES[0];
 
-  const hasVideo = slide.mediaType === "video" && Boolean(slide.videoUrl);
-  const videoSource = hasVideo ? slide.videoUrl : "";
+  const hasDedicatedMobileVideo = Boolean(isMobile && slide.useSeparateMobileVideo && slide.mobileVideoUrl);
+  const effectiveRawVideo = hasDedicatedMobileVideo ? slide.mobileVideoUrl : slide.videoUrl;
+  const hasVideo = slide.mediaType === "video" && Boolean(effectiveRawVideo);
+
+  const videoSource = hasVideo
+    ? optimizeMediaUrl(effectiveRawVideo, isMobile)
+    : "";
 
   // Automatically load and start video playback when videoSource or slide changes
   useEffect(() => {
