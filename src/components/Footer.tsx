@@ -9,10 +9,13 @@ import {
   Instagram,
   ArrowUp,
 } from "lucide-react";
+import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { motion } from "framer-motion";
 import { trpc } from "@/providers/trpc";
+import { FlickeringGrid, useMediaQuery } from "@/components/ui/flickering-footer";
 
 export default function Footer() {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: dbQuickMenus } = trpc.cms.listMenus.useQuery({ location: "footer_quick" });
   const { data: dbResourceMenus } = trpc.cms.listMenus.useQuery({ location: "footer_resources" });
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
@@ -129,13 +132,19 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2.5">
                 {quickLinks.map((link) => (
-                  <li key={link.label}>
+                  <li
+                    key={link.label}
+                    className="group inline-flex w-full cursor-pointer items-center justify-start gap-1.5"
+                  >
                     <Link
                       to={link.href}
-                      className="text-sm hover:text-emerald-400 transition-colors"
+                      className="text-sm text-slate-300 group-hover:text-emerald-400 transition-colors"
                     >
                       {link.label}
                     </Link>
+                    <div className="flex size-4 items-center justify-center border border-slate-700 bg-slate-800/80 rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100 text-emerald-400">
+                      <ChevronRightIcon className="h-3.5 w-3.5" />
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -149,24 +158,30 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2.5">
                 {resources.map((link) => (
-                  <li key={link.label}>
+                  <li
+                    key={link.label}
+                    className="group inline-flex w-full cursor-pointer items-center justify-start gap-1.5"
+                  >
                     {link.external ? (
                       <a
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1"
+                        className="text-sm font-semibold text-amber-400 group-hover:text-amber-300 transition-colors flex items-center gap-1"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         to={link.href}
-                        className="text-sm hover:text-emerald-400 transition-colors"
+                        className="text-sm text-slate-300 group-hover:text-emerald-400 transition-colors"
                       >
                         {link.label}
                       </Link>
                     )}
+                    <div className="flex size-4 items-center justify-center border border-slate-700 bg-slate-800/80 rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100 text-emerald-400">
+                      <ChevronRightIcon className="h-3.5 w-3.5" />
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -194,6 +209,23 @@ export default function Footer() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Animated Flickering Grid Canvas Banner */}
+      <div className="w-full h-40 md:h-56 relative mt-4 overflow-hidden border-t border-slate-800/80">
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/90 z-10 pointer-events-none" />
+        <div className="absolute inset-0 mx-2 sm:mx-6">
+          <FlickeringGrid
+            text={isMobile ? "DPSI" : "DELHI PUBLIC SCHOOL INDIRAPURAM"}
+            fontSize={isMobile ? 48 : 72}
+            squareSize={2}
+            gridGap={isMobile ? 2 : 3}
+            color="#10B981"
+            maxOpacity={0.28}
+            flickerChance={0.12}
+            className="h-full w-full"
+          />
         </div>
       </div>
 

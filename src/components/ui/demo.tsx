@@ -1,5 +1,6 @@
-import { InteractiveHoverLinks } from "@/components/ui/interactive-hover-links";
+import { Component } from "@/components/ui/flickering-footer";
 
 export default function DemoOne() {
-  return <InteractiveHoverLinks />;
+  return <Component />;
 }
+
