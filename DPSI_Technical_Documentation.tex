@@ -253,24 +253,29 @@ Content Management System (CMS) with multi-tenant institutional isolation.
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  node distance = 0.9cm and 1.3cm,
+  scale=0.88, every node/.style={transform shape},
   box/.style    = {rectangle, rounded corners=6pt, draw=bordercol,
-                   fill=codebg, text width=4.0cm, minimum height=1.7cm,
+                   fill=codebg, text width=4.1cm, minimum height=1.7cm,
                    align=center, font=\small},
   accent/.style = {box, draw=dpsgreen, fill=dpsgreen!8, font=\small\bfseries},
-  line/.style   = {-{Stealth[scale=0.9]}, thick, draw=sectioncol!65}
+  line/.style   = {-{Stealth[scale=0.9]}, thick, draw=sectioncol!70}
 ]
-  \node[accent] (ux)  {Modern UI/UX \& PWA\\ \footnotesize React 19, Tailwind, 109 Precached Assets};
-  \node[accent, right=of ux]  (vr)  {VR 360$^\circ$ \& 3D\\ \footnotesize Three.js, WebGL, Spherical Raycasting};
-  \node[accent, right=of vr]  (ai)  {AI \& Voice Assistant\\ \footnotesize Gemini 2.0 RAG, ElevenLabs TTS};
-  \node[box,    below=1.1cm of ux]  (trpc){tRPC v11 API Layer\\ \footnotesize 12 Routers, 100+ Type-Safe Procedures};
-  \node[box,    below=1.1cm of vr]  (db)  {MongoDB Multi-Tenant\\ \footnotesize 31 Mongoose Schemas, SHA-256 Ledger};
-  \node[box,    below=1.1cm of ai]  (sec) {Security Rating A\\ \footnotesize OWASP Compliant, 87/87 Unit Tests};
+  % ── Top Row: Client Presentation & Feature Pillars ─────────────────────────
+  \node[accent] (ux) at (0, 2.4)   {\textbf{Modern UI/UX \& PWA}\\[2pt]\footnotesize React 19, Tailwind CSS,\\[1pt]\footnotesize 109 Precached Assets};
+  \node[accent] (vr) at (4.8, 2.4) {\textbf{VR 360$^\circ$ \& 3D}\\[2pt]\footnotesize Three.js, WebGL,\\[1pt]\footnotesize Spherical Raycasting};
+  \node[accent] (ai) at (9.6, 2.4) {\textbf{AI \& Voice Assistant}\\[2pt]\footnotesize Gemini 2.0 Flash RAG,\\[1pt]\footnotesize ElevenLabs Neural TTS};
+
+  % ── Bottom Row: Engineering Foundations & Data Tier ────────────────────────
+  \node[box] (trpc) at (0, 0)   {\textbf{tRPC v11 API Layer}\\[2pt]\footnotesize 12 Routers, 100+\\[1pt]\footnotesize Type-Safe Procedures};
+  \node[box] (db)   at (4.8, 0) {\textbf{MongoDB Multi-Tenant}\\[2pt]\footnotesize 31 Mongoose Schemas,\\[1pt]\footnotesize SHA-256 Audit Ledger};
+  \node[box] (sec)  at (9.6, 0) {\textbf{Security Rating A}\\[2pt]\footnotesize OWASP Compliant,\\[1pt]\footnotesize 87/87 Automated Tests};
+
+  % ── Clean Direct Connectors (No crossing or slicing through boxes) ────────
   \draw[line] (ux)   -- (trpc);
-  \draw[line] (vr)   -- (trpc);
-  \draw[line] (ai)   -- (trpc);
   \draw[line] (trpc) -- (db);
-  \draw[line] (trpc) -- (sec);
+  \draw[line] (vr)   -- (db);
+  \draw[line] (db)   -- (sec);
+  \draw[line] (ai)   -- (sec);
 \end{tikzpicture}
 \caption{High-Level Architectural Core Pillars of the DPSI Platform}
 \label{fig:core-pillars}
