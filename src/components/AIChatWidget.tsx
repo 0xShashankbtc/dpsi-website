@@ -737,7 +737,7 @@ export default function AIChatWidget() {
               </div>
 
               {/* MESSAGES SCROLL AREA */}
-              <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 relative z-10 custom-scrollbar overscroll-contain">
+              <div data-lenis-prevent className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 relative z-10 custom-scrollbar overscroll-contain">
                 {messages.map((msg, idx) => (
                   <motion.div
                     key={idx}

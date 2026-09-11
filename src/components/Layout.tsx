@@ -4,6 +4,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import FloatingSocials from "./FloatingSocials";
 import PopupModal from "./PopupModal";
+import SmoothScroll from "./SmoothScroll";
 
 const ScrollProgress = lazy(() => import("./ScrollProgress"));
 const AIChatWidget = lazy(() => import("./AIChatWidget"));
@@ -21,13 +22,17 @@ function ScrollToHash() {
       const scrollToElement = () => {
         const elem = document.getElementById(targetId);
         if (elem) {
-          const headerOffset = 90;
-          const elementPosition = elem.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-          window.scrollTo({
-            top: Math.max(0, offsetPosition),
-            behavior: "smooth",
-          });
+          if (window.__lenis) {
+            window.__lenis.scrollTo(elem, { offset: -90, duration: 1.2 });
+          } else {
+            const headerOffset = 90;
+            const elementPosition = elem.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({
+              top: Math.max(0, offsetPosition),
+              behavior: "smooth",
+            });
+          }
         }
       };
 
@@ -35,7 +40,11 @@ function ScrollToHash() {
       const timer = setTimeout(scrollToElement, 150);
       return () => clearTimeout(timer);
     } else {
-      window.scrollTo(0, 0);
+      if (window.__lenis) {
+        window.__lenis.scrollTo(0, { immediate: true });
+      } else {
+        window.scrollTo(0, 0);
+      }
     }
   }, [pathname, hash]);
 
@@ -45,6 +54,7 @@ function ScrollToHash() {
 export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col relative">
+      <SmoothScroll />
       <ScrollToHash />
       <Suspense fallback={null}>
         <ScrollProgress />

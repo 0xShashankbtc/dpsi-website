@@ -635,6 +635,7 @@ export default function Navbar() {
                 animate={{ opacity: 1, y: 0, height: "auto" }}
                 exit={{ opacity: 0, y: -10, height: 0 }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                data-lenis-prevent
                 className="lg:hidden fixed left-0 right-0 top-[72px] sm:top-[80px] max-h-[calc(100dvh-80px)] overflow-y-auto overscroll-contain bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl border-b border-slate-200/80 dark:border-slate-800/80 shadow-2xl z-50 custom-scrollbar"
               >
                 <div className="max-w-md mx-auto px-4 pt-3 pb-8 space-y-3">
@@ -825,7 +826,7 @@ export default function Navbar() {
               </div>
 
               {/* Interactive Links Container - Scrollable without visible scrollbar bar */}
-              <div className="overflow-y-auto max-h-[calc(85vh-100px)] px-6 sm:px-10 py-3 sm:py-5 no-scrollbar flex-1">
+              <div data-lenis-prevent className="overflow-y-auto max-h-[calc(85vh-100px)] px-6 sm:px-10 py-3 sm:py-5 no-scrollbar flex-1">
                 <InteractiveHoverLinks onLinkClick={() => setIsExploreOpen(false)} />
               </div>
             </motion.div>

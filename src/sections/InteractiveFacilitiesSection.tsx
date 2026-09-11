@@ -245,8 +245,14 @@ export default function InteractiveFacilitiesSection() {
       className="py-20 sm:py-24 bg-white dark:bg-slate-950 text-slate-900 dark:text-white relative overflow-hidden border-t border-slate-200 dark:border-slate-800"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
+        {/* Section Header with smooth entrance */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center max-w-3xl mx-auto mb-10"
+        >
           <div className="flex flex-wrap items-center justify-center gap-2 mb-3.5">
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -260,10 +266,16 @@ export default function InteractiveFacilitiesSection() {
           <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
             Explore our state-of-the-art facilities using the smooth interactive slider below.
           </p>
-        </div>
+        </motion.div>
 
         {/* Super Smooth Interactive Facilities Slider with Chevron Navigation */}
-        <div className="relative mb-10 group">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="relative mb-10 group"
+        >
           {/* Left Arrow Button */}
           <button
             type="button"
@@ -318,7 +330,7 @@ export default function InteractiveFacilitiesSection() {
               );
             })}
           </div>
-        </div>
+        </motion.div>
 
         {/* Interactive Showcase Card with Smooth Transitions */}
         <AnimatePresence mode="wait">

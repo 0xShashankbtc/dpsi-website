@@ -93,10 +93,10 @@ export default function VideoGallerySection() {
       <div className="w-full py-16 bg-white dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-3">
               Video Showcase
@@ -116,7 +116,13 @@ export default function VideoGallerySection() {
       <section className="relative py-16 sm:py-20 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Video Player Carousel Container */}
-          <div className="relative max-w-4xl mx-auto flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 28, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="relative max-w-4xl mx-auto flex items-center justify-center"
+          >
             {/* Left Arrow Button */}
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -210,7 +216,7 @@ export default function VideoGallerySection() {
             >
               <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </motion.button>
-          </div>
+          </motion.div>
 
           {/* Thumbnail Selector Strip */}
           <div className="mt-8 flex items-center justify-center gap-3 overflow-x-auto max-w-3xl mx-auto py-2">

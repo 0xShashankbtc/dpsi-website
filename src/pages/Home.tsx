@@ -16,13 +16,29 @@ export default function Home() {
       <AnnouncementsBar />
       <HeroSection />
       <QuickStats />
-      <InteractiveFacilitiesSection />
-      <NewsHighlights />
-      <PrincipalMessage />
-      <AchievementsSection />
-      <VideoGallerySection />
-      <TestimonialsSection />
-      <CTASection />
+
+      {/* Performance-optimized below-the-fold sections for instant initial paint & silky scroll */}
+      <div className="content-visibility-auto">
+        <InteractiveFacilitiesSection />
+      </div>
+      <div className="content-visibility-auto">
+        <NewsHighlights />
+      </div>
+      <div className="content-visibility-auto">
+        <PrincipalMessage />
+      </div>
+      <div className="content-visibility-auto">
+        <AchievementsSection />
+      </div>
+      <div className="content-visibility-auto">
+        <VideoGallerySection />
+      </div>
+      <div className="content-visibility-auto">
+        <TestimonialsSection />
+      </div>
+      <div className="content-visibility-auto">
+        <CTASection />
+      </div>
     </Layout>
   );
 }
