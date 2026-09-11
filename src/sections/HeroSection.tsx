@@ -23,7 +23,7 @@ export function optimizeMediaUrl(url?: string, isMobile: boolean = false): strin
     const cleanPath = hasTransform ? parts.slice(1).join("/") : afterUpload;
 
     if (isMobile) {
-      return `${clean.substring(0, uploadIdx)}/video/upload/c_fill,ar_9:16,g_auto,w_720,vc_auto,q_auto:best/${cleanPath}`;
+      return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:best,vc_auto,w_720,c_limit/${cleanPath}`;
     }
     return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:best,vc_auto,w_1920,c_limit/${cleanPath}`;
   }
@@ -124,6 +124,9 @@ export default function HeroSection() {
     if (video && hasVideo && videoSource) {
       video.muted = isMuted;
       video.defaultMuted = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "true");
+      video.setAttribute("webkit-playsinline", "true");
       try {
         video.load();
         const playPromise = video.play();
@@ -139,8 +142,21 @@ export default function HeroSection() {
       } catch {
         // Safe catch
       }
+
+      // iOS Safari gesture fallback
+      const handleUserGesture = () => {
+        if (videoRef.current && videoRef.current.paused) {
+          videoRef.current.play().catch(() => {});
+        }
+      };
+      window.addEventListener("touchstart", handleUserGesture, { once: true, passive: true });
+      window.addEventListener("click", handleUserGesture, { once: true, passive: true });
+      return () => {
+        window.removeEventListener("touchstart", handleUserGesture);
+        window.removeEventListener("click", handleUserGesture);
+      };
     }
-  }, [videoSource, safeSlideIndex, hasVideo]);
+  }, [videoSource, safeSlideIndex, hasVideo, isMuted]);
 
   // Mouse Parallax Physics for Super Smooth 3D Tilt
   const mouseX = useMotionValue(0);
@@ -332,33 +348,6 @@ export default function HeroSection() {
             </button>
           </div>
         )}
-
-        {/* Center: Scroll Down to Explore Indicator */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-          <button
-            type="button"
-            onClick={() => {
-              const target = document.getElementById("home-content");
-              if (target) {
-                if (window.__lenis) {
-                  window.__lenis.scrollTo(target, { offset: -70, duration: 1.1 });
-                } else {
-                  target.scrollIntoView({ behavior: "smooth" });
-                }
-              }
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/15 backdrop-blur-md text-white/70 hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95"
-            title="Scroll down to explore website"
-          >
-            <span className="text-[11px] tracking-wide">Scroll Down</span>
-            <motion.div
-              animate={{ y: [0, 3, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-            >
-              <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />
-            </motion.div>
-          </button>
-        </div>
 
         {/* Right: Slide Controls (If Multiple Slides) */}
         {activeSlides.length > 1 && (

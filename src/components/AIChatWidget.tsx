@@ -146,12 +146,21 @@ export default function AIChatWidget() {
     setIsSpeaking(false);
   };
 
+  // Cached voices ref for iOS Safari and Android Chrome asynchronous voice loading
+  const cachedVoicesRef = useRef<SpeechSynthesisVoice[]>([]);
+
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
+      const loadVoices = () => {
+        try {
+          const v = window.speechSynthesis.getVoices();
+          if (v && v.length > 0) {
+            cachedVoicesRef.current = v;
+          }
+        } catch {}
       };
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
     }
   }, []);
 
@@ -197,12 +206,13 @@ export default function AIChatWidget() {
         if (audioRef.current) audioRef.current.pause();
       }).catch(() => {});
 
-      // 3. Unlock WebKit SpeechSynthesis
+      // 3. Unlock WebKit SpeechSynthesis and warm up voices
       if ("speechSynthesis" in window) {
         window.speechSynthesis.resume();
-        const silent = new SpeechSynthesisUtterance(" ");
-        silent.volume = 0.01;
-        window.speechSynthesis.speak(silent);
+        const v = window.speechSynthesis.getVoices();
+        if (v && v.length > 0) {
+          cachedVoicesRef.current = v;
+        }
       }
     } catch {}
   };
@@ -270,14 +280,15 @@ export default function AIChatWidget() {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
     try {
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+      }
       window.speechSynthesis.resume();
     } catch {}
 
-    const hasHindi = /[\u0900-\u097F]/.test(cleanText);
     const utterance = new SpeechSynthesisUtterance(cleanText);
 
-    // Attach to window and ref to prevent Chrome garbage collection
+    // Attach to window and ref to prevent Chrome/Safari garbage collection
     activeUtteranceRef.current = utterance;
     (window as any).__dpsiActiveUtterance = utterance;
 
@@ -296,7 +307,13 @@ export default function AIChatWidget() {
       setIsSpeaking(false);
     };
 
-    const voices = window.speechSynthesis.getVoices();
+    let voices = cachedVoicesRef.current;
+    if (!voices || voices.length === 0) {
+      voices = window.speechSynthesis.getVoices() || [];
+      if (voices && voices.length > 0) {
+        cachedVoicesRef.current = voices;
+      }
+    }
 
     if (voices && voices.length > 0) {
       // Strictly exclude male voices and robotic/joke synthesizer engines
@@ -305,52 +322,35 @@ export default function AIChatWidget() {
 
       const femaleVoices = voices.filter((v) => !isMaleOrJunk(v.name));
 
-      if (hasHindi) {
-        const naturalHindi =
-          femaleVoices.find((v) => /hi[-_]IN/i.test(v.lang) && /natural|neural|online|swara|kalpana/i.test(v.name)) ||
-          femaleVoices.find((v) => /hi[-_]IN/i.test(v.lang) && /google/i.test(v.name)) ||
-          femaleVoices.find((v) => /hi[-_]IN/i.test(v.lang)) ||
-          femaleVoices.find((v) => v.lang.startsWith("hi")) ||
-          femaleVoices.find((v) => /en[-_]IN/i.test(v.lang) && /neerja|swara/i.test(v.name));
+      // 1. Prioritize Samantha (Apple's natural human female voice - exact same voice on Mac & iPhone)
+      const samanthaVoice =
+        femaleVoices.find((v) => /^samantha\b/i.test(v.name)) ||
+        femaleVoices.find((v) => /samantha/i.test(v.name));
 
-        if (naturalHindi) {
-          utterance.voice = naturalHindi;
-          utterance.lang = naturalHindi.lang;
-        } else {
-          utterance.lang = "hi-IN";
-        }
+      const selectedVoice =
+        samanthaVoice ||
+        // 2. Other enhanced natural human female voices
+        femaleVoices.find((v) => /ava|victoria|karen|moira|serena|zoe/i.test(v.name)) ||
+        femaleVoices.find((v) => /jenny|aria|neerja|sonia|zira/i.test(v.name)) ||
+        femaleVoices.find((v) => /google/i.test(v.name) && /female|uk english female|us english/i.test(v.name)) ||
+        femaleVoices.find((v) => /female/i.test(v.name)) ||
+        femaleVoices.find((v) => v.lang.startsWith("en")) ||
+        femaleVoices[0] ||
+        voices[0];
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice.lang || "en-US";
       } else {
-        // High-Quality Human Female Voices
-        const naturalFemaleVoice =
-          // 1. Apple Enhanced Human Female Voices (Samantha, Ava, Victoria, Karen, Moira, Serena)
-          femaleVoices.find((v) => /samantha/i.test(v.name)) ||
-          femaleVoices.find((v) => /ava|victoria|karen|moira|serena|zoe/i.test(v.name)) ||
-          // 2. Microsoft Natural Online Female Voices (Jenny, Aria, Neerja, Sonia)
-          femaleVoices.find((v) => /jenny|aria|neerja|sonia|zira/i.test(v.name)) ||
-          // 3. Google High-Quality Female Voices
-          femaleVoices.find((v) => /google/i.test(v.name) && /female|uk english female|india/i.test(v.name)) ||
-          // 4. Any voice with "female" or "woman" explicitly tagged
-          femaleVoices.find((v) => /female|woman/i.test(v.name)) ||
-          // 5. English / Regional Indian Female Voices
-          femaleVoices.find((v) => /en[-_]IN/i.test(v.lang)) ||
-          femaleVoices.find((v) => v.lang.startsWith("en")) ||
-          femaleVoices[0] ||
-          voices[0];
-
-        if (naturalFemaleVoice) {
-          utterance.voice = naturalFemaleVoice;
-          utterance.lang = naturalFemaleVoice.lang;
-        } else {
-          utterance.lang = "en-US";
-        }
+        utterance.lang = "en-US";
       }
     } else {
-      utterance.lang = hasHindi ? "hi-IN" : "en-US";
+      utterance.lang = "en-US";
     }
 
-    // Natural human female speaking rate and pitch
+    // Natural human female speaking rate and standard natural pitch (1.0 = exact same as computer, zero distortion on mobile)
     utterance.rate = 1.0;
-    utterance.pitch = 1.06; // Soft, warm, articulate female pitch
+    utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
     try {
