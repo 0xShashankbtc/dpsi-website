@@ -98,9 +98,17 @@ export default function PrincipalMessage() {
         {/* UPCOMING EVENTS */}
         {events && events.length > 0 && (
           <div className="mt-16 pt-12 border-t border-slate-200 dark:border-slate-800">
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight">
-              Upcoming Events
-            </h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Upcoming Events
+              </h3>
+              <Link
+                to="/news-events"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
+              >
+                View All Events <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {events.slice(0, 3).map((event: any, i: number) => (
                 <motion.div
@@ -110,27 +118,36 @@ export default function PrincipalMessage() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, duration: 0.4 }}
                   whileHover={{ y: -4 }}
-                  className="flat-card bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-2xl flex items-center gap-4 p-4 cursor-pointer group shadow-sm hover:shadow-md transition-all"
                 >
-                  <div className="w-16 h-16 sm:w-18 sm:h-18 bg-slate-900/95 dark:bg-slate-800 text-white rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-md border border-slate-700/40 group-hover:scale-105 transition-transform">
-                    <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight text-amber-400">
-                      {new Date(event.eventDate).getDate()}
-                    </span>
-                    <span className="text-[11px] font-extrabold uppercase mt-1 text-slate-300 tracking-wider">
-                      {new Date(event.eventDate).toLocaleString("default", { month: "short" })}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-snug group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
-                      {event.title}
-                    </h4>
-                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-1.5 font-medium">
-                      <CalendarDays className="w-3.5 h-3.5 text-slate-500" />
-                      {formatISTDate(event.eventDate)}
-                      <MapPin className="w-3.5 h-3.5 ml-1 text-slate-500" />
-                      {event.location}
+                  <Link
+                    to="/news-events"
+                    className="flat-card bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 hover:border-emerald-300 dark:hover:border-emerald-600/70 rounded-2xl flex items-center gap-4 p-4 cursor-pointer group shadow-xs hover:shadow-lg hover:shadow-emerald-950/5 transition-all block h-full"
+                  >
+                    <div className="w-16 h-16 sm:w-18 sm:h-18 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 text-white rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-md shadow-emerald-900/20 border border-emerald-500/30 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-emerald-900/30 transition-all">
+                      <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight text-white">
+                        {new Date(event.eventDate).getDate()}
+                      </span>
+                      <span className="text-[11px] font-extrabold uppercase mt-1 text-emerald-200 tracking-wider">
+                        {new Date(event.eventDate).toLocaleString("default", { month: "short" })}
+                      </span>
                     </div>
-                  </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                        {event.title}
+                      </h4>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400 mt-1.5 font-medium">
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDays className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>{formatISTDate(event.eventDate)}</span>
+                        </span>
+                        <span className="text-slate-300 dark:text-slate-600">•</span>
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span className="truncate max-w-[140px]">{event.location}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
