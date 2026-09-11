@@ -20,13 +20,14 @@ export default function SmoothScroll() {
     if (prefersReducedMotion) return;
 
     const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Silky Apple/Stripe-style inertia curve
+      duration: 0.95,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Snappy Apple/Stripe-style inertia curve
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.6,
+      wheelMultiplier: 1.05,
+      touchMultiplier: 1.0,
+      syncTouch: false,
       infinite: false,
     });
 

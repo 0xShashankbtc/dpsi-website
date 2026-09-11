@@ -4339,6 +4339,211 @@ export default function AdminCMS() {
                     </div>
                   </div>
 
+                  {/* SECONDARY SCHOOL LOGO & PARTNER EMBLEM PANEL */}
+                  <div className="bg-white border-2 border-indigo-500/30 rounded-xl overflow-hidden shadow-md">
+                    <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-slate-50 px-4 py-3 border-b border-indigo-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                          <Award className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Secondary School Logo & Partner Emblem</h3>
+                          <p className="text-[10px] text-slate-500">Square emblem displayed before Light/Dark toggle on right of Explore button</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                          (settingsEdits["show_international_logo"] !== undefined ? settingsEdits["show_international_logo"] : (siteSettings || []).find((s: any) => s.key === "show_international_logo")?.value || "true") !== "false"
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                            : "bg-slate-100 text-slate-600 border-slate-300"
+                        }`}>
+                          {(settingsEdits["show_international_logo"] !== undefined ? settingsEdits["show_international_logo"] : (siteSettings || []).find((s: any) => s.key === "show_international_logo")?.value || "true") !== "false" ? "Active in Navbar" : "Hidden"}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const updates = [
+                              { key: "international_logo_url", value: settingsEdits["international_logo_url"] !== undefined ? settingsEdits["international_logo_url"] : (siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp" },
+                              { key: "show_international_logo", value: settingsEdits["show_international_logo"] !== undefined ? settingsEdits["show_international_logo"] : (siteSettings || []).find((s: any) => s.key === "show_international_logo")?.value || "true" },
+                              { key: "secondary_logo_shape", value: settingsEdits["secondary_logo_shape"] !== undefined ? settingsEdits["secondary_logo_shape"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square" },
+                              { key: "secondary_logo_title", value: settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School" },
+                            ];
+                            updateSiteSettingsMutation.mutate({ updates });
+                            toast.success("Secondary logo settings saved successfully!");
+                          }}
+                          disabled={updateSiteSettingsMutation.isPending}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-7 px-3 shadow-xs cursor-pointer"
+                        >
+                          <Save className="w-3.5 h-3.5 mr-1" />
+                          {updateSiteSettingsMutation.isPending ? "Saving..." : "Save Secondary Logo"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-5">
+                      {/* Live Preview Box */}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-slate-600">Secondary Logo Live Preview</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Light Header Preview */}
+                          <div className="p-4 rounded-xl border border-slate-200 bg-white/95 flex items-center justify-between shadow-xs">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`aspect-square h-10 w-10 p-1 border border-slate-200 bg-white shadow-2xs flex items-center justify-center shrink-0 overflow-hidden ${
+                                  (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "circle"
+                                    ? "rounded-full"
+                                    : (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "rounded"
+                                    ? "rounded-xl"
+                                    : "rounded-lg"
+                                }`}
+                              >
+                                <img
+                                  src={settingsEdits["international_logo_url"] || (siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp"}
+                                  alt="Secondary Logo Preview Light"
+                                  className="w-full h-full object-contain aspect-square"
+                                />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-800">
+                                  {settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School"}
+                                </p>
+                                <p className="text-[10px] text-slate-400">Position: Right of Explore Campus button</p>
+                              </div>
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Light Navbar</span>
+                          </div>
+
+                          {/* Dark Header Preview */}
+                          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900 flex items-center justify-between shadow-xs">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`aspect-square h-10 w-10 p-1 border border-slate-800 bg-slate-900 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden ${
+                                  (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "circle"
+                                    ? "rounded-full"
+                                    : (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === "rounded"
+                                    ? "rounded-xl"
+                                    : "rounded-lg"
+                                }`}
+                              >
+                                <img
+                                  src={settingsEdits["international_logo_url"] || (siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp"}
+                                  alt="Secondary Logo Preview Dark"
+                                  className="w-full h-full object-contain aspect-square"
+                                />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-100">
+                                  {settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : (siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School"}
+                                </p>
+                                <p className="text-[10px] text-slate-400">Position: Right of Explore Campus button</p>
+                              </div>
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Dark Navbar</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Logo URL and Upload */}
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-slate-600">Secondary Logo Image File / URL</label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="/images/dps/international_logo.webp or https://res.cloudinary.com/..."
+                            value={settingsEdits["international_logo_url"] !== undefined ? settingsEdits["international_logo_url"] : ((siteSettings || []).find((s: any) => s.key === "international_logo_url")?.value || "/images/dps/international_logo.webp")}
+                            onChange={(e) => setSettingsEdits({ ...settingsEdits, international_logo_url: e.target.value })}
+                            className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-mono"
+                          />
+                          <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-xs transition-colors">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload Logo</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleMediaUpload(file, (url) => {
+                                    setSettingsEdits({ ...settingsEdits, international_logo_url: url });
+                                    toast.success("Secondary logo uploaded and updated!");
+                                  });
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Controls Grid: Shape, Visibility, Title */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                        {/* Shape Selector */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-600 block">Shape & Frame Style</label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {[
+                              { id: "square", label: "Square (Default)" },
+                              { id: "rounded", label: "Rounded" },
+                              { id: "circle", label: "Circle" },
+                            ].map((shape) => (
+                              <button
+                                key={shape.id}
+                                type="button"
+                                onClick={() => setSettingsEdits({ ...settingsEdits, secondary_logo_shape: shape.id })}
+                                className={`py-1.5 px-1 text-center rounded-lg text-[10px] border transition-all cursor-pointer ${
+                                  (settingsEdits["secondary_logo_shape"] || (siteSettings || []).find((s: any) => s.key === "secondary_logo_shape")?.value || "square") === shape.id
+                                    ? "bg-indigo-50 text-indigo-800 border-indigo-400 font-bold ring-1 ring-indigo-400"
+                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                }`}
+                              >
+                                {shape.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Visibility Toggle */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-600 block">Navbar Visibility</label>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSettingsEdits({ ...settingsEdits, show_international_logo: "true" })}
+                              className={`py-1.5 px-2 text-center rounded-lg text-[10px] border transition-all cursor-pointer ${
+                                (settingsEdits["show_international_logo"] !== undefined ? settingsEdits["show_international_logo"] : (siteSettings || []).find((s: any) => s.key === "show_international_logo")?.value || "true") !== "false"
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-400 font-bold ring-1 ring-emerald-400"
+                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                              }`}
+                            >
+                              Visible
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSettingsEdits({ ...settingsEdits, show_international_logo: "false" })}
+                              className={`py-1.5 px-2 text-center rounded-lg text-[10px] border transition-all cursor-pointer ${
+                                (settingsEdits["show_international_logo"] !== undefined ? settingsEdits["show_international_logo"] : (siteSettings || []).find((s: any) => s.key === "show_international_logo")?.value || "true") === "false"
+                                  ? "bg-rose-50 text-rose-800 border-rose-400 font-bold ring-1 ring-rose-400"
+                                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                              }`}
+                            >
+                              Hidden
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Title / Tooltip Text */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-600 block">Tooltip / Alt Text</label>
+                          <Input
+                            placeholder="Accreditation & Partner School"
+                            value={settingsEdits["secondary_logo_title"] !== undefined ? settingsEdits["secondary_logo_title"] : ((siteSettings || []).find((s: any) => s.key === "secondary_logo_title")?.value || "Accreditation & Partner School")}
+                            onChange={(e) => setSettingsEdits({ ...settingsEdits, secondary_logo_title: e.target.value })}
+                            className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* 360° VIRTUAL TOUR & VR SETTINGS PANEL */}
                   <div className="bg-white border-2 border-teal-500/30 rounded-xl overflow-hidden shadow-md">
                     <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-cyan-50 px-4 py-3 border-b border-teal-100 flex items-center justify-between">
@@ -4480,12 +4685,12 @@ export default function AdminCMS() {
                               { key: "explore_action_type", value: settingsEdits["explore_action_type"] !== undefined ? settingsEdits["explore_action_type"] : (siteSettings || []).find((s: any) => s.key === "explore_action_type")?.value || "modal" },
                               { key: "explore_button_mode", value: settingsEdits["explore_button_mode"] !== undefined ? settingsEdits["explore_button_mode"] : (siteSettings || []).find((s: any) => s.key === "explore_button_mode")?.value || "text" },
                               { key: "explore_button_enabled", value: settingsEdits["explore_button_enabled"] !== undefined ? settingsEdits["explore_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_button_enabled")?.value || "true" },
-                              { key: "explore_hero_enabled", value: settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "true" },
+                              { key: "explore_hero_enabled", value: settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "false" },
                               { key: "ai_bot_button_text", value: settingsEdits["ai_bot_button_text"] !== undefined ? settingsEdits["ai_bot_button_text"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_text")?.value || "Ask DPSI AI" },
                               { key: "ai_bot_button_style", value: settingsEdits["ai_bot_button_style"] !== undefined ? settingsEdits["ai_bot_button_style"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_style")?.value || "liquid_metal" },
                               { key: "ai_bot_button_mode", value: settingsEdits["ai_bot_button_mode"] !== undefined ? settingsEdits["ai_bot_button_mode"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_mode")?.value || "text" },
                               { key: "ai_bot_button_enabled", value: settingsEdits["ai_bot_button_enabled"] !== undefined ? settingsEdits["ai_bot_button_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_button_enabled")?.value || "true" },
-                              { key: "ai_bot_hero_enabled", value: settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "true" },
+                              { key: "ai_bot_hero_enabled", value: settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "false" },
                             ];
                             updateSiteSettingsMutation.mutate({ updates });
                             toast.success("Liquid Metal Button settings updated successfully!");
@@ -4638,7 +4843,7 @@ export default function AdminCMS() {
                                   type="button"
                                   onClick={() => setSettingsEdits({ ...settingsEdits, explore_hero_enabled: "true" })}
                                   className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
-                                    (settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "true") === "true"
+                                    (settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "false") === "true"
                                       ? "bg-emerald-600 text-white border-emerald-600"
                                       : "bg-white text-slate-600 border-slate-200"
                                   }`}
@@ -4649,7 +4854,7 @@ export default function AdminCMS() {
                                   type="button"
                                   onClick={() => setSettingsEdits({ ...settingsEdits, explore_hero_enabled: "false" })}
                                   className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
-                                    (settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "true") === "false"
+                                    (settingsEdits["explore_hero_enabled"] !== undefined ? settingsEdits["explore_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "explore_hero_enabled")?.value || "false") === "false"
                                       ? "bg-rose-600 text-white border-rose-600"
                                       : "bg-white text-slate-600 border-slate-200"
                                   }`}
@@ -4754,7 +4959,7 @@ export default function AdminCMS() {
                                   type="button"
                                   onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_hero_enabled: "true" })}
                                   className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
-                                    (settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "true") === "true"
+                                    (settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "false") === "true"
                                       ? "bg-emerald-600 text-white border-emerald-600"
                                       : "bg-white text-slate-600 border-slate-200"
                                   }`}
@@ -4765,7 +4970,7 @@ export default function AdminCMS() {
                                   type="button"
                                   onClick={() => setSettingsEdits({ ...settingsEdits, ai_bot_hero_enabled: "false" })}
                                   className={`px-2.5 py-1 text-xs rounded-md font-semibold border transition-all cursor-pointer ${
-                                    (settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "true") === "false"
+                                    (settingsEdits["ai_bot_hero_enabled"] !== undefined ? settingsEdits["ai_bot_hero_enabled"] : (siteSettings || []).find((s: any) => s.key === "ai_bot_hero_enabled")?.value || "false") === "false"
                                       ? "bg-rose-600 text-white border-rose-600"
                                       : "bg-white text-slate-600 border-slate-200"
                                   }`}

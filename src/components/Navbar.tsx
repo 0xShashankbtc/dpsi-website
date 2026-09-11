@@ -65,9 +65,10 @@ export default function Navbar() {
   const logoShape = getSetting("logo_shape", "default");
   const logoShowText = getSetting("logo_show_text", "false") === "true";
   const schoolName = getSetting("school_name", "Delhi Public School Indirapuram");
-  const schoolTagline = getSetting("school_tagline", "Excellence in Education");
   const internationalLogoUrl = getSetting("international_logo_url", "/images/dps/international_logo.webp");
   const showInternationalLogo = getSetting("show_international_logo", "true") !== "false";
+  const secondaryLogoShape = getSetting("secondary_logo_shape", "square");
+  const secondaryLogoTitle = getSetting("secondary_logo_title", "Accreditation & Partner School");
 
   // Construct dynamic hierarchical nav links from MongoDB
   const dynamicNavLinks = (() => {
@@ -510,7 +511,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.96 }}
                         transition={{ duration: 0.16, ease: "easeOut" }}
-                        className="absolute top-full right-0 mt-2 w-64 rounded-2xl border border-white/80 dark:border-slate-800 p-2 z-50 divide-y divide-slate-100/90 dark:divide-slate-800/70"
+                        className="absolute top-full right-0 mt-2 w-64 rounded-2xl border border-white/80 dark:border-slate-800 p-2 z-[100] divide-y divide-slate-100/90 dark:divide-slate-800/70 shadow-2xl"
                         style={{
                           backgroundColor: isDark ? "#0f172a" : "#ffffff",
                           boxShadow: isDark
@@ -578,11 +579,11 @@ export default function Navbar() {
               )}
             </nav>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 shrink-0 z-10">
+            <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 shrink-0 z-20">
 
               {/* Interactive Liquid Metal Explore Campus Trigger */}
               {exploreEnabled && (
-                <div className="hidden md:flex items-center shrink-0">
+                <div className="hidden md:flex items-center shrink-0 my-auto">
                   <LiquidMetalButton
                     label={exploreLabel}
                     viewMode={exploreMode}
@@ -593,23 +594,34 @@ export default function Navbar() {
                 </div>
               )}
 
+              {/* Square Secondary School Logo (located on right side of Explore Campus button) */}
               {showInternationalLogo && (
                 <div className="flex items-center pl-1.5 sm:pl-2.5 border-l border-slate-200 dark:border-slate-800 shrink-0">
-                  <motion.img
-                    whileHover={{ scale: 1.08 }}
+                  <motion.div
+                    whileHover={{ scale: 1.06 }}
                     transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                    src={internationalLogoUrl}
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (!target.src.includes("/images/dps/international_logo.webp")) {
-                        target.src = "/images/dps/international_logo.webp";
-                      }
-                    }}
-                    alt="British Council International Dimension in Schools 2020-23"
-                    className="h-7 w-7 sm:h-8 sm:w-8 lg:h-8.5 lg:w-8.5 object-contain rounded-md drop-shadow-xs shrink-0 cursor-pointer"
-                    title="British Council International Dimension in Schools 2020-23"
-                    loading="eager"
-                  />
+                    className={`aspect-square h-8 w-8 sm:h-9 sm:w-9 lg:h-9 lg:w-9 p-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs flex items-center justify-center shrink-0 cursor-pointer overflow-hidden ${
+                      secondaryLogoShape === "circle"
+                        ? "rounded-full"
+                        : secondaryLogoShape === "rounded"
+                        ? "rounded-xl"
+                        : "rounded-lg"
+                    }`}
+                    title={secondaryLogoTitle}
+                  >
+                    <img
+                      src={internationalLogoUrl}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes("/images/dps/international_logo.webp")) {
+                          target.src = "/images/dps/international_logo.webp";
+                        }
+                      }}
+                      alt={secondaryLogoTitle}
+                      className="w-full h-full object-contain aspect-square"
+                      loading="eager"
+                    />
+                  </motion.div>
                 </div>
               )}
 

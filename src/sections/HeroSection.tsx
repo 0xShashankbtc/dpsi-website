@@ -82,14 +82,14 @@ export default function HeroSection() {
     return item?.value?.trim() || fallback;
   };
 
-  // Dynamic Explore and AI Bot Button Settings from MongoDB
-  const exploreHeroEnabled = getSetting("explore_hero_enabled", "true") !== "false";
+  // Dynamic Explore and AI Bot Button Settings from MongoDB (default to false to keep hero clean)
+  const exploreHeroEnabled = getSetting("explore_hero_enabled", "false") === "true";
   const exploreText = getSetting("explore_button_text", "Explore Campus");
   const exploreMode = (getSetting("explore_button_mode", "text") as "text" | "icon");
   const exploreActionType = getSetting("explore_action_type", "modal");
   const exploreLink = getSetting("explore_button_link", "#interactive-facilities");
 
-  const aiBotHeroEnabled = getSetting("ai_bot_hero_enabled", "true") !== "false";
+  const aiBotHeroEnabled = getSetting("ai_bot_hero_enabled", "false") === "true";
   const aiBotText = getSetting("ai_bot_button_text", "Ask DPSI AI");
   const aiBotMode = (getSetting("ai_bot_button_mode", "text") as "text" | "icon");
 
@@ -244,7 +244,7 @@ export default function HeroSection() {
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative min-h-[78vh] sm:min-h-[86vh] lg:min-h-[92vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white select-none contain-paint"
+      className="relative w-full h-[100dvh] min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950 text-white select-none contain-paint"
       style={{ perspective: "1000px" }}
     >
       {/* GPU-ACCELERATED BACKGROUND MEDIA */}
@@ -309,15 +309,13 @@ export default function HeroSection() {
         </div>
       </motion.div>
 
-
-
-      {/* PROMINENT LIQUID METAL QUICK-ACTIONS DOCK (EXPLORE & AI BOT) */}
+      {/* PROMINENT LIQUID METAL QUICK-ACTIONS DOCK (EXPLORE & AI BOT) - HIDDEN BY DEFAULT AS REQUESTED */}
       {(exploreHeroEnabled || aiBotHeroEnabled) && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="absolute bottom-16 sm:bottom-18 md:bottom-20 inset-x-0 z-20 flex items-center justify-center flex-wrap gap-3 sm:gap-4 px-4 pointer-events-auto"
+          className="absolute bottom-18 sm:bottom-20 inset-x-0 z-20 flex items-center justify-center flex-wrap gap-3 sm:gap-4 px-4 pointer-events-auto"
         >
           {exploreHeroEnabled && (
             <LiquidMetalButton
@@ -376,6 +374,33 @@ export default function HeroSection() {
             </button>
           </div>
         )}
+
+        {/* Center: Scroll Down to Explore Indicator */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              const target = document.getElementById("home-content");
+              if (target) {
+                if (window.__lenis) {
+                  window.__lenis.scrollTo(target, { offset: -70, duration: 1.1 });
+                } else {
+                  target.scrollIntoView({ behavior: "smooth" });
+                }
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/15 backdrop-blur-md text-white/70 hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95"
+            title="Scroll down to explore website"
+          >
+            <span className="text-[11px] tracking-wide">Scroll Down</span>
+            <motion.div
+              animate={{ y: [0, 3, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            >
+              <ChevronDown className="w-3.5 h-3.5 text-emerald-400" />
+            </motion.div>
+          </button>
+        </div>
 
         {/* Right: Slide Controls (If Multiple Slides) */}
         {activeSlides.length > 1 && (

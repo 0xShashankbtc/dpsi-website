@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import HeroSection from "@/sections/HeroSection";
 import AnnouncementsBar from "@/sections/AnnouncementsBar";
@@ -10,34 +11,51 @@ import VideoGallerySection from "@/sections/VideoGallerySection";
 import TestimonialsSection from "@/sections/TestimonialsSection";
 import CTASection from "@/sections/CTASection";
 
+const sectionFadeUp = {
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-60px" },
+  transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const },
+};
+
 export default function Home() {
   return (
     <Layout>
-      <AnnouncementsBar />
+      {/* 1. Full-Screen Cinematic Hero Video on top of the screen */}
       <HeroSection />
-      <QuickStats />
 
-      {/* Performance-optimized below-the-fold sections for instant initial paint & silky scroll */}
-      <div className="content-visibility-auto">
-        <InteractiveFacilitiesSection />
-      </div>
-      <div className="content-visibility-auto">
-        <NewsHighlights />
-      </div>
-      <div className="content-visibility-auto">
-        <PrincipalMessage />
-      </div>
-      <div className="content-visibility-auto">
-        <AchievementsSection />
-      </div>
-      <div className="content-visibility-auto">
-        <VideoGallerySection />
-      </div>
-      <div className="content-visibility-auto">
-        <TestimonialsSection />
-      </div>
-      <div className="content-visibility-auto">
-        <CTASection />
+      {/* 2. Smoothly appearing sections as user scrolls down */}
+      <div id="home-content" className="relative z-10 bg-white dark:bg-slate-950 transition-colors">
+        <AnnouncementsBar />
+        <QuickStats />
+
+        <motion.div {...sectionFadeUp}>
+          <InteractiveFacilitiesSection />
+        </motion.div>
+
+        <motion.div {...sectionFadeUp}>
+          <NewsHighlights />
+        </motion.div>
+
+        <motion.div {...sectionFadeUp}>
+          <PrincipalMessage />
+        </motion.div>
+
+        <motion.div {...sectionFadeUp}>
+          <AchievementsSection />
+        </motion.div>
+
+        <motion.div {...sectionFadeUp}>
+          <VideoGallerySection />
+        </motion.div>
+
+        <motion.div {...sectionFadeUp}>
+          <TestimonialsSection />
+        </motion.div>
+
+        <motion.div {...sectionFadeUp}>
+          <CTASection />
+        </motion.div>
       </div>
     </Layout>
   );

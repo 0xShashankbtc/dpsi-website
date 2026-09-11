@@ -64,12 +64,6 @@ export default function CTASection() {
                 onClick={() => navigate(buttonLink)}
               />
 
-              <LiquidMetalButton
-                viewMode="icon"
-                title="Inquire with DPS Indirapuram"
-                onClick={() => navigate("/contact")}
-              />
-
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Button
                   size="lg"

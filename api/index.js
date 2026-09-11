@@ -180915,12 +180915,16 @@ var cmsRouter = createRouter({
           { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
           { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
           { key: "explore_button_enabled", value: "true", label: "Enable Explore Button", group: "buttons" },
-          { key: "explore_hero_enabled", value: "true", label: "Show Explore Button in Hero", group: "buttons" },
+          { key: "explore_hero_enabled", value: "false", label: "Show Explore Button in Hero", group: "buttons" },
           { key: "ai_bot_button_text", value: "Ask DPSI AI", label: "AI Bot Button Label", group: "buttons" },
           { key: "ai_bot_button_style", value: "liquid_metal", label: "AI Bot Button Style (liquid_metal/classic)", group: "buttons" },
           { key: "ai_bot_button_mode", value: "text", label: "AI Bot Button Mode (text/icon)", group: "buttons" },
           { key: "ai_bot_button_enabled", value: "true", label: "Enable AI Bot Floating Widget", group: "buttons" },
-          { key: "ai_bot_hero_enabled", value: "true", label: "Show AI Bot Button in Hero", group: "buttons" }
+          { key: "ai_bot_hero_enabled", value: "false", label: "Show AI Bot Button in Hero", group: "buttons" },
+          { key: "international_logo_url", value: "/images/dps/international_logo.webp", label: "Secondary School Logo URL", group: "branding" },
+          { key: "show_international_logo", value: "true", label: "Show Secondary School Logo", group: "branding" },
+          { key: "secondary_logo_shape", value: "square", label: "Secondary Logo Shape (square/rounded/circle)", group: "branding" },
+          { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" }
         ];
         await SiteSettings.insertMany(defaults).catch(() => {
         });
@@ -180933,12 +180937,16 @@ var cmsRouter = createRouter({
         { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },
         { key: "explore_button_mode", value: "text", label: "Explore Button Mode (text/icon)", group: "buttons" },
         { key: "explore_button_enabled", value: "true", label: "Enable Explore Button", group: "buttons" },
-        { key: "explore_hero_enabled", value: "true", label: "Show Explore Button in Hero", group: "buttons" },
+        { key: "explore_hero_enabled", value: "false", label: "Show Explore Button in Hero", group: "buttons" },
         { key: "ai_bot_button_text", value: "Ask DPSI AI", label: "AI Bot Button Label", group: "buttons" },
         { key: "ai_bot_button_style", value: "liquid_metal", label: "AI Bot Button Style (liquid_metal/classic)", group: "buttons" },
         { key: "ai_bot_button_mode", value: "text", label: "AI Bot Button Mode (text/icon)", group: "buttons" },
         { key: "ai_bot_button_enabled", value: "true", label: "Enable AI Bot Floating Widget", group: "buttons" },
-        { key: "ai_bot_hero_enabled", value: "true", label: "Show AI Bot Button in Hero", group: "buttons" }
+        { key: "ai_bot_hero_enabled", value: "false", label: "Show AI Bot Button in Hero", group: "buttons" },
+        { key: "international_logo_url", value: "/images/dps/international_logo.webp", label: "Secondary School Logo URL", group: "branding" },
+        { key: "show_international_logo", value: "true", label: "Show Secondary School Logo", group: "branding" },
+        { key: "secondary_logo_shape", value: "square", label: "Secondary Logo Shape (square/rounded/circle)", group: "branding" },
+        { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" }
       ].filter((d5) => !existingKeys.has(d5.key));
       if (missingDefaults.length > 0) {
         await SiteSettings.insertMany(missingDefaults).catch(() => {

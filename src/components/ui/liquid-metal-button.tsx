@@ -116,9 +116,30 @@ export function LiquidMetalButton({
       }
     };
 
-    loadShader();
+    let observer: IntersectionObserver | null = null;
+    if (typeof window !== "undefined" && "IntersectionObserver" in window && buttonRef.current) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            if (!shaderMount.current) {
+              loadShader();
+            } else {
+              shaderMount.current?.setSpeed?.(0.6);
+            }
+          } else {
+            // Off-screen: pause WebGL render loop to preserve 100% GPU/CPU for scrolling
+            shaderMount.current?.setSpeed?.(0);
+          }
+        },
+        { rootMargin: "120px" }
+      );
+      observer.observe(buttonRef.current);
+    } else {
+      loadShader();
+    }
 
     return () => {
+      observer?.disconnect();
       if (shaderMount.current?.destroy) {
         shaderMount.current.destroy();
         shaderMount.current = null;
