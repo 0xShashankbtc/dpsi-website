@@ -8,6 +8,7 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  ChevronRight,
   Sparkles,
   Compass,
 } from "lucide-react";
@@ -207,7 +208,7 @@ export default function Navbar() {
   return (
     <>
       <div className="bg-emerald-900 text-white text-xs py-2 overflow-hidden border-b border-emerald-700/50">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <div className="flex-1 overflow-hidden relative">
             <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-semibold text-emerald-200">
               {activeMarquees && activeMarquees.length > 0 ? (
@@ -303,9 +304,9 @@ export default function Navbar() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-18 sm:h-20 lg:h-22 gap-2 xl:gap-4">
-            <Link to="/" className="flex items-center gap-3 group shrink-0">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-18 sm:h-20 lg:h-22 gap-3 xl:gap-6">
+            <Link to="/" className="flex items-center gap-3 group shrink-0 mr-auto lg:mr-8 xl:mr-12">
               <motion.img
                 whileHover={{ scale: 1.04 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
@@ -390,25 +391,32 @@ export default function Navbar() {
                     <AnimatePresence>
                       {link.children && activeDropdown === link.label && (
                         <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          initial={{ opacity: 0, y: 8, scale: 0.96 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full left-0 mt-1.5 w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden py-1 z-50"
+                          exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                          transition={{ duration: 0.16, ease: "easeOut" }}
+                          className="absolute top-full left-0 mt-2 w-64 rounded-2xl border border-white/80 dark:border-slate-800 p-2 z-50 divide-y divide-slate-100/90 dark:divide-slate-800/70"
+                          style={{
+                            backgroundColor: isDark ? "#0f172a" : "#ffffff",
+                            boxShadow: isDark
+                              ? "0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)"
+                              : "0 20px 45px -10px rgba(0, 0, 0, 0.18), 0 6px 16px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.95), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                          }}
                         >
                           {link.children.map((child: any, idx: number) => (
                             <motion.div
                               key={child.label}
-                              initial={{ opacity: 0, x: -6 }}
+                              initial={{ opacity: 0, x: -4 }}
                               animate={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.15, delay: idx * 0.04 }}
+                              transition={{ duration: 0.12, delay: idx * 0.03 }}
                             >
                               <Link
                                 to={child.href}
-                                className="block px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
+                                className="group flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl transition-all"
                                 onClick={() => setActiveDropdown(null)}
                               >
-                                {child.label}
+                                <span>{child.label}</span>
+                                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-transform" />
                               </Link>
                             </motion.div>
                           ))}
@@ -468,11 +476,17 @@ export default function Navbar() {
                   <AnimatePresence>
                     {activeDropdown === "More" && (
                       <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        transition={{ duration: 0.18, ease: "easeOut" }}
-                        className="absolute top-full right-0 mt-1.5 w-60 bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden py-1.5 z-50 divide-y divide-slate-100 dark:divide-slate-800/60"
+                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                        transition={{ duration: 0.16, ease: "easeOut" }}
+                        className="absolute top-full right-0 mt-2 w-64 rounded-2xl border border-white/80 dark:border-slate-800 p-2 z-50 divide-y divide-slate-100/90 dark:divide-slate-800/70"
+                        style={{
+                          backgroundColor: isDark ? "#0f172a" : "#ffffff",
+                          boxShadow: isDark
+                            ? "0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)"
+                            : "0 20px 45px -10px rgba(0, 0, 0, 0.18), 0 6px 16px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.95), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                        }}
                       >
                         {overflowNavItems.map((item: any) => {
                           const isItemActive =
@@ -484,26 +498,39 @@ export default function Navbar() {
                             <div key={item.label} className="py-1">
                               <Link
                                 to={item.href}
-                                className={`flex items-center justify-between px-4 py-2 text-xs font-semibold rounded-lg mx-1 transition-colors ${
+                                className={`group flex items-center justify-between px-3.5 py-2.5 text-xs font-bold rounded-xl transition-all ${
                                   isItemActive
-                                    ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 font-bold"
-                                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 hover:text-emerald-700 dark:hover:text-emerald-400"
+                                    ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 shadow-xs border border-emerald-200/60 dark:border-emerald-800/60"
+                                    : "text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-emerald-700 dark:hover:text-emerald-300 hover:translate-x-0.5"
                                 }`}
                                 onClick={() => setActiveDropdown(null)}
                               >
-                                <span>{item.label}</span>
-                                {isItemActive && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <div className="flex items-center gap-2.5">
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                                      isItemActive
+                                        ? "bg-emerald-600 scale-125"
+                                        : "bg-slate-300 dark:bg-slate-600 group-hover:bg-emerald-500"
+                                    }`}
+                                  />
+                                  <span className="tracking-tight">{item.label}</span>
+                                </div>
+                                {isItemActive ? (
+                                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                                    Active
+                                  </span>
+                                ) : (
+                                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-transform" />
                                 )}
                               </Link>
 
                               {hasChildren && (
-                                <div className="pl-6 pr-2 py-0.5 space-y-0.5">
+                                <div className="pl-6 pr-2 py-1 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 ml-4 my-1">
                                   {item.children.map((child: any) => (
                                     <Link
                                       key={child.label}
                                       to={child.href}
-                                      className="block px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 rounded-md hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors"
+                                      className="block px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-lg hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors"
                                       onClick={() => setActiveDropdown(null)}
                                     >
                                       {child.label}
