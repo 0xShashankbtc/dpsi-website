@@ -242,8 +242,9 @@ export const cmsRouter = createRouter({
     )
     .mutation(async ({ input, ctx }) => {
       const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
-      if (isIpLocked(clientIp)) {
-        const minsLeft = Math.ceil(((ipLockouts.get(clientIp) || 0) - Date.now()) / 60000);
+      const rateLimit = checkLoginRateLimit(clientIp);
+      if (!rateLimit.allowed) {
+        const minsLeft = Math.ceil((rateLimit.remainingWaitMs || 0) / 60000);
         return {
           success: false,
           error: `Too many password attempts. Account temporarily locked for ${minsLeft} minute(s).`,

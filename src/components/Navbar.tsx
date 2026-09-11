@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/providers/trpc";
@@ -102,6 +102,50 @@ export default function Navbar() {
   })();
 
   const activeNavItems = dynamicNavLinks.length > 0 ? dynamicNavLinks : navLinks;
+
+  // Responsive breakpoint tracking to eliminate any possible navbar overlap
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1280
+  );
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Determine max visible top-level links before overflowing to "More" dropdown
+  const maxVisibleLinks = useMemo(() => {
+    if (windowWidth < 1200) return 4;   // 1024px - 1199px (compact laptop/iPad Pro)
+    if (windowWidth < 1380) return 5;   // 1200px - 1379px (standard 13" laptop)
+    if (windowWidth < 1536) return 7;   // 1380px - 1535px (large laptop/monitor)
+    return 8;                           // 1536px+ (2K / 4K wide monitor)
+  }, [windowWidth]);
+
+  const visibleNavItems = useMemo(
+    () => activeNavItems.slice(0, maxVisibleLinks),
+    [activeNavItems, maxVisibleLinks]
+  );
+
+  const overflowNavItems = useMemo(
+    () => activeNavItems.slice(maxVisibleLinks),
+    [activeNavItems, maxVisibleLinks]
+  );
+
+  const isMoreActive = useMemo(
+    () =>
+      overflowNavItems.some(
+        (item: any) =>
+          location.pathname === item.href ||
+          (item.href !== "/" && location.pathname.startsWith(item.href)) ||
+          item.children?.some(
+            (c: any) =>
+              location.pathname === c.href ||
+              (c.href !== "/" && location.pathname.startsWith(c.href))
+          )
+      ),
+    [overflowNavItems, location.pathname]
+  );
 
   useEffect(() => {
     let ticking = false;
@@ -292,8 +336,8 @@ export default function Navbar() {
               )}
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5 2xl:gap-2 shrink min-w-0" onMouseLeave={() => setHoveredLink(null)}>
-              {activeNavItems.map((link) => {
+            <nav className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-2 shrink min-w-0" onMouseLeave={() => setHoveredLink(null)}>
+              {visibleNavItems.map((link) => {
                 const isActive =
                   location.pathname === link.href ||
                   (link.href !== "/" && location.pathname.startsWith(link.href));
@@ -307,6 +351,7 @@ export default function Navbar() {
                     onMouseEnter={() => {
                       setHoveredLink(link.label);
                       if (hasChildren) setActiveDropdown(link.label);
+                      else setActiveDropdown(null);
                     }}
                     onMouseLeave={() => {
                       if (link.children) setActiveDropdown(null);
@@ -314,7 +359,7 @@ export default function Navbar() {
                   >
                     <Link
                       to={link.href}
-                      className={`relative z-10 px-2.5 xl:px-3.5 py-2 text-xs xl:text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap ${
+                      className={`relative z-10 px-2 xl:px-2.5 2xl:px-3 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap ${
                         isActive
                           ? "text-emerald-800 dark:text-emerald-300"
                           : "text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400"
@@ -351,7 +396,7 @@ export default function Navbar() {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute top-full left-0 mt-1.5 w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden py-1 z-50"
                         >
-                          {link.children.map((child, idx) => (
+                          {link.children.map((child: any, idx: number) => (
                             <motion.div
                               key={child.label}
                               initial={{ opacity: 0, x: -6 }}
@@ -373,16 +418,117 @@ export default function Navbar() {
                   </div>
                 );
               })}
+
+              {/* Seamless "More" Dropdown Menu for Overflow Links */}
+              {overflowNavItems.length > 0 && (
+                <div
+                  className="relative shrink-0"
+                  onMouseEnter={() => {
+                    setHoveredLink("More");
+                    setActiveDropdown("More");
+                  }}
+                  onMouseLeave={() => {
+                    setActiveDropdown(null);
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveDropdown(activeDropdown === "More" ? null : "More")
+                    }
+                    className={`relative z-10 px-2 xl:px-2.5 2xl:px-3 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer ${
+                      isMoreActive
+                        ? "text-emerald-800 dark:text-emerald-300 font-bold"
+                        : "text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400"
+                    }`}
+                  >
+                    {isMoreActive && (
+                      <motion.div
+                        layoutId="navActivePill"
+                        className="absolute inset-0 bg-emerald-100/90 dark:bg-emerald-950/60 border border-emerald-300/60 dark:border-emerald-700/50 rounded-lg -z-10 shadow-2xs"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    {!isMoreActive && hoveredLink === "More" && (
+                      <motion.div
+                        layoutId="navHoverPill"
+                        className="absolute inset-0 bg-slate-100/80 dark:bg-slate-800/60 rounded-lg -z-10"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+
+                    <span>More</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                        activeDropdown === "More" ? "rotate-180 text-emerald-600 dark:text-emerald-400" : "opacity-70"
+                      }`}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {activeDropdown === "More" && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.18, ease: "easeOut" }}
+                        className="absolute top-full right-0 mt-1.5 w-60 bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden py-1.5 z-50 divide-y divide-slate-100 dark:divide-slate-800/60"
+                      >
+                        {overflowNavItems.map((item: any) => {
+                          const isItemActive =
+                            location.pathname === item.href ||
+                            (item.href !== "/" && location.pathname.startsWith(item.href));
+                          const hasChildren = item.children && item.children.length > 0;
+
+                          return (
+                            <div key={item.label} className="py-1">
+                              <Link
+                                to={item.href}
+                                className={`flex items-center justify-between px-4 py-2 text-xs font-semibold rounded-lg mx-1 transition-colors ${
+                                  isItemActive
+                                    ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 font-bold"
+                                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 hover:text-emerald-700 dark:hover:text-emerald-400"
+                                }`}
+                                onClick={() => setActiveDropdown(null)}
+                              >
+                                <span>{item.label}</span>
+                                {isItemActive && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                )}
+                              </Link>
+
+                              {hasChildren && (
+                                <div className="pl-6 pr-2 py-0.5 space-y-0.5">
+                                  {item.children.map((child: any) => (
+                                    <Link
+                                      key={child.label}
+                                      to={child.href}
+                                      className="block px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 rounded-md hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors"
+                                      onClick={() => setActiveDropdown(null)}
+                                    >
+                                      {child.label}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </nav>
 
-            <div className="flex items-center gap-2 sm:gap-2.5 xl:gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-2.5 shrink-0 z-10">
 
               {/* Interactive Hover Links / Explore Campus Trigger */}
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setIsExploreOpen(true)}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer shrink-0"
+                className="hidden md:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer shrink-0"
                 title="Quick Interactive Explore"
               >
                 <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-spin-slow" />
@@ -391,7 +537,7 @@ export default function Navbar() {
               </motion.button>
 
               {showInternationalLogo && (
-                <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800 shrink-0">
+                <div className="flex items-center pl-1.5 sm:pl-2.5 border-l border-slate-200 dark:border-slate-800 shrink-0">
                   <motion.img
                     whileHover={{ scale: 1.08 }}
                     transition={{ type: "spring", stiffness: 350, damping: 25 }}
@@ -403,7 +549,7 @@ export default function Navbar() {
                       }
                     }}
                     alt="British Council International Dimension in Schools 2020-23"
-                    className="h-8 w-8 sm:h-9 sm:w-9 lg:h-10 lg:w-10 object-contain rounded-md drop-shadow-xs shrink-0 cursor-pointer"
+                    className="h-7 w-7 sm:h-8 sm:w-8 lg:h-8.5 lg:w-8.5 object-contain rounded-md drop-shadow-xs shrink-0 cursor-pointer"
                     title="British Council International Dimension in Schools 2020-23"
                     loading="eager"
                   />
@@ -414,7 +560,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.1, rotate: 15 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsDark(!isDark)}
-                className="p-2 sm:p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
+                className="p-1.5 sm:p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
                 aria-label="Toggle dark mode"
               >
                 {isDark ? (
@@ -428,6 +574,7 @@ export default function Navbar() {
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
                 className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
+                aria-label="Toggle navigation menu"
               >
                 {isMobileOpen ? (
                   <X className="w-5 h-5" />
@@ -466,6 +613,16 @@ export default function Navbar() {
                 <div className="max-w-md mx-auto px-4 pt-3 pb-8 space-y-3">
                   {/* Top Slideable Quick Action Bar */}
                   <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-1 px-1">
+                    <button
+                      onClick={() => {
+                        setIsMobileOpen(false);
+                        setIsExploreOpen(true);
+                      }}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/80 dark:border-emerald-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer"
+                    >
+                      <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>🧭 Explore</span>
+                    </button>
                     <a
                       href="https://dpsivr.vercel.app"
                       target="_blank"
