@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Sparkles,
   Compass,
+  Globe,
+  Zap,
 } from "lucide-react";
 import { InteractiveHoverLinks } from "@/components/ui/interactive-hover-links";
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
@@ -735,7 +737,7 @@ export default function Navbar() {
                       className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/80 dark:border-emerald-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform cursor-pointer"
                     >
                       <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>🧭 {exploreLabel}</span>
+                      <span>{exploreLabel}</span>
                     </button>
                   )}
                   <a
@@ -745,7 +747,8 @@ export default function Navbar() {
                     onClick={() => setIsMobileOpen(false)}
                     className="px-3.5 py-2 rounded-xl text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 border border-sky-200/80 dark:border-sky-800/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform"
                   >
-                    <span>🌐 360 View</span>
+                    <Globe className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                    <span>360 View</span>
                     <span className="text-[11px] opacity-70">↗</span>
                   </a>
                   <a
@@ -755,7 +758,8 @@ export default function Navbar() {
                     onClick={() => setIsMobileOpen(false)}
                     className="px-3.5 py-2 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300/70 dark:border-amber-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform"
                   >
-                    <span>⚡ SchoolsOS Login</span>
+                    <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>SchoolsOS Login</span>
                     <span className="text-[11px] opacity-70">↗</span>
                   </a>
                 </div>

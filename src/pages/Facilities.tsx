@@ -306,7 +306,7 @@ export default function Facilities() {
   return (
     <Layout>
       {/* 1. HERO SECTION WITH CINEMATIC GLOW & CAMPUS STATS */}
-      <section className="relative py-20 sm:py-28 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden border-b border-slate-800">
+      <section className="relative py-20 sm:py-28 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden border-b border-emerald-950/60">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
@@ -316,42 +316,42 @@ export default function Facilities() {
         <motion.div
           animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.25, 0.1] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/15 blur-3xl pointer-events-none rounded-full"
+          className="absolute -bottom-24 -left-24 w-96 h-96 bg-amber-500/15 blur-3xl pointer-events-none rounded-full"
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-widest mb-5 shadow-sm">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold uppercase tracking-wider mb-5 shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               DPS Indirapuram • Campus Infrastructure
             </span>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight text-white drop-shadow-md">
-              World-Class <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Facilities</span>
+              World-Class <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-amber-300 bg-clip-text text-transparent">Facilities</span>
             </h1>
 
-            <div className="w-24 h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 mx-auto rounded-full mb-6" />
+            <div className="w-24 h-1.5 bg-gradient-to-r from-emerald-400 to-amber-400 mx-auto rounded-full mb-6" />
 
             <p className="text-base sm:text-xl text-slate-300 font-normal leading-relaxed max-w-3xl mx-auto mb-10">
               Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities.
             </p>
 
             {/* Overview Metric Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4 border-t border-slate-800/80">
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-inner">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4 border-t border-emerald-900/40">
+              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
                 <p className="text-2xl sm:text-3xl font-black text-emerald-400">40+ Acres</p>
                 <p className="text-xs font-medium text-slate-400 mt-0.5">Lush Green Campus</p>
               </div>
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-inner">
-                <p className="text-2xl sm:text-3xl font-black text-cyan-400">12+ Studios</p>
+              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
+                <p className="text-2xl sm:text-3xl font-black text-amber-400">12+ Studios</p>
                 <p className="text-xs font-medium text-slate-400 mt-0.5">Labs & Arenas</p>
               </div>
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-inner">
-                <p className="text-2xl sm:text-3xl font-black text-amber-400">25m Heated</p>
+              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
+                <p className="text-2xl sm:text-3xl font-black text-emerald-300">25m Heated</p>
                 <p className="text-xs font-medium text-slate-400 mt-0.5">Olympic Pool</p>
               </div>
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-inner">
-                <p className="text-2xl sm:text-3xl font-black text-indigo-400">100% Safe</p>
+              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
+                <p className="text-2xl sm:text-3xl font-black text-amber-300">100% Safe</p>
                 <p className="text-xs font-medium text-slate-400 mt-0.5">AI Surveillance & GPS</p>
               </div>
             </div>
@@ -363,7 +363,7 @@ export default function Facilities() {
       <InteractiveFacilitiesSection />
 
       {/* 3. COMPREHENSIVE 12-FACILITY CAMPUS DIRECTORY */}
-      <section className="py-20 sm:py-28 bg-slate-900/40 relative border-t border-slate-800">
+      <section id="all-facilities" className="py-20 sm:py-28 bg-slate-50/60 dark:bg-slate-950 relative border-t border-slate-200 dark:border-slate-800/80 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -372,13 +372,13 @@ export default function Facilities() {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="text-center mb-12"
           >
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
               Explore Our Entire Campus
             </span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2 mb-4">
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-2 mb-4">
               All Campus Infrastructure & Studios
             </h2>
-            <p className="text-slate-400 text-sm sm:text-base font-normal max-w-2xl mx-auto">
+            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base font-normal max-w-2xl mx-auto">
               Browse through our comprehensive directory of specialised academic, scientific, athletic, and creative spaces.
             </p>
 
@@ -391,8 +391,8 @@ export default function Facilities() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     selectedCategory === cat
-                      ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
-                      : "bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
+                      ? "bg-emerald-800 text-white dark:bg-emerald-600 dark:text-white shadow-md shadow-emerald-900/20"
+                      : "bg-white text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
                   }`}
                 >
                   {cat}
@@ -415,7 +415,7 @@ export default function Facilities() {
                   whileHover={{ y: -6 }}
                   className="h-full"
                 >
-                  <Card className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/90 shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 group h-full flex flex-col justify-between">
+                  <Card className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-sm hover:shadow-xl hover:border-emerald-500/50 transition-all duration-300 group h-full flex flex-col justify-between">
                     {/* Visual Banner */}
                     <div className="relative aspect-[16/10] overflow-hidden bg-slate-950">
                       <img
@@ -428,7 +428,7 @@ export default function Facilities() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
                       
                       <div className="absolute top-4 left-4">
-                        <span className="px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-emerald-300 border border-emerald-500/20 text-xs font-bold shadow-md">
+                        <span className="px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-emerald-300 border border-emerald-500/30 text-xs font-bold shadow-md">
                           {f.category}
                         </span>
                       </div>
@@ -444,18 +444,18 @@ export default function Facilities() {
                     {/* Content Body */}
                     <CardContent className="p-6 flex-1 flex flex-col justify-between">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2">
                           {f.tagline}
                         </p>
-                        <p className="text-sm text-slate-300 leading-relaxed mb-5 font-normal">
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-5 font-normal">
                           {f.description}
                         </p>
 
                         {/* Feature Highlights */}
                         <div className="space-y-2 mb-6">
                           {f.highlights.map((h, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-300">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                               <span>{h}</span>
                             </div>
                           ))}
@@ -463,11 +463,11 @@ export default function Facilities() {
                       </div>
 
                       {/* Metrics Footer */}
-                      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-800 text-center">
+                      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
                         {f.metrics.map((m, idx) => (
-                          <div key={idx} className="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
-                            <p className="text-sm font-bold text-white tracking-tight">{m.value}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">{m.label}</p>
+                          <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/80 dark:border-slate-800">
+                            <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300 tracking-tight">{m.value}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{m.label}</p>
                           </div>
                         ))}
                       </div>
@@ -481,7 +481,7 @@ export default function Facilities() {
       </section>
 
       {/* 4. CAMPUS TOUR INVITATION & ADMISSIONS CTA */}
-      <section className="py-16 sm:py-20 bg-gradient-to-r from-emerald-950 via-slate-950 to-slate-900 border-t border-emerald-900/30 relative overflow-hidden text-white">
+      <section className="py-16 sm:py-20 bg-gradient-to-r from-emerald-950 via-slate-950 to-emerald-950 border-t border-emerald-800/40 relative overflow-hidden text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
             <div className="max-w-2xl">
@@ -498,7 +498,7 @@ export default function Facilities() {
 
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Button
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/20 text-sm"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm cursor-pointer"
                 asChild
               >
                 <Link to="/admissions" className="flex items-center gap-2">
@@ -509,11 +509,11 @@ export default function Facilities() {
               </Button>
               <Button
                 variant="outline"
-                className="border-slate-700 text-slate-200 hover:bg-slate-800 rounded-xl px-5 py-3 text-sm font-semibold"
+                className="border-slate-700 text-slate-200 hover:bg-slate-800/80 rounded-xl px-5 py-3 text-sm font-semibold cursor-pointer"
                 asChild
               >
                 <Link to="/contact">
-                  <Phone className="w-4 h-4 mr-2 text-emerald-400" /> Contact Admissions Office
+                  <Phone className="w-4 h-4 mr-2 text-amber-400" /> Contact Admissions Office
                 </Link>
               </Button>
             </div>
