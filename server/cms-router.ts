@@ -1584,10 +1584,202 @@ export const cmsRouter = createRouter({
         return [];
       }
     }),
+  verifyTc: publicMutation
+    .input(
+      z.object({
+        admissionNumber: z.string().trim().min(2, "Admission number is required").max(50),
+        dob: z.string().trim().min(4, "Date of birth is required").max(30),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      // 1. IP & Admission Number Dual Rate-Limiting
+      const clientIp = (ctx as any)?.req?.headers?.["x-forwarded-for"]?.split(",")?.[0]?.trim() || (ctx as any)?.req?.ip || "127.0.0.1";
+      
+      const cleanAdm = input.admissionNumber.trim().replace(/\s+/g, "");
+      const cleanDob = input.dob.trim().replace(/\s+/g, "");
+
+      const isIpAllowed = await checkPersistentRateLimit(`tc_verify_ip:${clientIp}`, 5, 60);
+      if (!isIpAllowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many verification attempts from this IP address. Please wait 1 minute before trying again.",
+        });
+      }
+
+      const isAdmAllowed = await checkPersistentRateLimit(`tc_verify_adm:${cleanAdm.toUpperCase()}`, 10, 300);
+      if (!isAdmAllowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many verification attempts for this student record. Please try again after 5 minutes.",
+        });
+      }
+
+      // 2. Normalize DOB (support DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, YYYY/MM/DD)
+      let normalizedDob = cleanDob;
+      const ddmmyyyyMatch = cleanDob.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+      if (ddmmyyyyMatch) {
+        const day = ddmmyyyyMatch[1].padStart(2, "0");
+        const month = ddmmyyyyMatch[2].padStart(2, "0");
+        const year = ddmmyyyyMatch[3];
+        normalizedDob = `${year}-${month}-${day}`;
+      } else {
+        const yyyymmddMatch = cleanDob.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+        if (yyyymmddMatch) {
+          const year = yyyymmddMatch[1];
+          const month = yyyymmddMatch[2].padStart(2, "0");
+          const day = yyyymmddMatch[3].padStart(2, "0");
+          normalizedDob = `${year}-${month}-${day}`;
+        }
+      }
+
+      const parsedDate = new Date(normalizedDob);
+      const isoDateOnly = !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split("T")[0] : "";
+
+      const { TransferCertificate } = await getTcModels();
+
+      // Normalize admission regex to allow flexible dash/space formatting (e.g. ADM-18492 or ADM18492)
+      const baseAlphanumeric = cleanAdm.replace(/[^a-zA-Z0-9]/g, "");
+      const admRegexPattern = `^${escapeRegex(cleanAdm).replace(/[-_\s]/g, "[-_\\s]?")}$`;
+
+      const candidateMatches = await TransferCertificate.find({
+        $or: [
+          { admissionNumber: { $regex: new RegExp(admRegexPattern, "i") } },
+          { admissionNumber: { $regex: new RegExp(`^${escapeRegex(baseAlphanumeric)}$`, "i") } },
+        ],
+        isDeleted: false,
+      });
+
+      // Strict validation: Must match BOTH admissionNumber AND dob together
+      const matched = candidateMatches.find((cert: any) => {
+        if (!cert.dob) return false;
+        const recordDob = String(cert.dob).trim().replace(/\s+/g, "");
+        const recordDate = new Date(recordDob);
+        const recordIso = !isNaN(recordDate.getTime()) ? recordDate.toISOString().split("T")[0] : "";
+
+        return (
+          recordDob === cleanDob ||
+          recordDob === normalizedDob ||
+          (recordIso && isoDateOnly && recordIso === isoDateOnly)
+        );
+      });
+
+      // Generic error on mismatch: does not leak whether admission number exists or not
+      if (!matched) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No Transfer Certificate found matching the provided Admission Number and Date of Birth. Please verify your details and try again.",
+        });
+      }
+
+      return {
+        success: true,
+        data: {
+          id: String(matched._id),
+          admissionNumber: matched.admissionNumber,
+          studentName: matched.studentName,
+          fatherName: matched.fatherName,
+          classLeaving: matched.classLeaving,
+          dateOfIssue: matched.dateOfIssue,
+          certificatePdfUrl: matched.certificatePdfUrl,
+          status: matched.status,
+        },
+      };
+    }),
+  uploadCacheImage: adminMutation
+    .input(
+      z.object({
+        fileName: z.string().min(1).max(255),
+        fileType: z.string().min(1).max(100),
+        base64Data: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Strict Whitelist for Cache Image Upload
+      const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+
+      const lowerName = input.fileName.toLowerCase();
+      const hasValidExt = ALLOWED_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+      const hasValidMime = ALLOWED_MIME_TYPES.includes(input.fileType.toLowerCase());
+
+      if (!hasValidExt || !hasValidMime) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Security Policy Violation: Only standard image formats (JPEG, PNG, WebP, GIF) are permitted for cache storage.",
+        });
+      }
+
+      const rawBase64 = input.base64Data.includes(",")
+        ? input.base64Data.split(",")[1]
+        : input.base64Data;
+      const buffer = Buffer.from(rawBase64, "base64");
+
+      // Strict 5MB size limit for cache assets
+      const MAX_SIZE = 5 * 1024 * 1024;
+      if (buffer.length > MAX_SIZE) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "File size exceeds the 5MB limit for cached modal assets.",
+        });
+      }
+
+      // Convert to WebP for optimal client memory
+      const webpResult = await convertImageToWebP(buffer, 1280, 85);
+
+      // Upload via Cloudinary or R2
+      let uploadedUrl = "";
+      const hasR2 = !!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
+      if (hasR2) {
+        try {
+          const { uploadToR2 } = await import("./lib/cloudflareR2");
+          const r2Res = await uploadToR2(Buffer.from(webpResult.buffer), `cache_${Date.now()}_${input.fileName.replace(/\.[^/.]+$/, ".webp")}`, "image/webp", "dpsi_cache");
+          uploadedUrl = r2Res.url;
+        } catch {}
+      }
+
+      if (!uploadedUrl) {
+        const { uploadToCloudinary } = await import("./lib/cloudinary");
+        const cloudRes = await uploadToCloudinary(webpResult.buffer, "dpsi_cache", "image");
+        uploadedUrl = cloudRes.secure_url;
+      }
+
+      // Automatically update SiteSettings cache pointer and invalidate cache timestamp
+      const { SiteSettings } = await getMainModels();
+      const newVersion = Date.now().toString();
+
+      await SiteSettings.findOneAndUpdate(
+        { key: "cached_popup_image" },
+        { value: uploadedUrl, label: "Cached Popup Image URL", group: "cache" },
+        { upsert: true, new: true }
+      );
+
+      await SiteSettings.findOneAndUpdate(
+        { key: "popup_cache_version" },
+        { value: newVersion, label: "Popup Cache Version", group: "cache" },
+        { upsert: true, new: true }
+      );
+
+      return {
+        success: true,
+        imageUrl: uploadedUrl,
+        cacheVersion: newVersion,
+      };
+    }),
+  invalidatePopupCache: adminMutation.mutation(async () => {
+    const { SiteSettings } = await getMainModels();
+    const newVersion = Date.now().toString();
+    await SiteSettings.findOneAndUpdate(
+      { key: "popup_cache_version" },
+      { value: newVersion, label: "Popup Cache Version", group: "cache" },
+      { upsert: true, new: true }
+    );
+    return { success: true, cacheVersion: newVersion };
+  }),
   createTc: adminMutation
     .input(
       z.object({
         admissionNumber: z.string(),
+        dob: z.string().optional(),
         studentName: z.string(),
         fatherName: z.string(),
         motherName: z.string().optional(),
@@ -1604,6 +1796,31 @@ export const cmsRouter = createRouter({
         ...input,
         dateOfIssue: new Date(input.dateOfIssue),
       });
+    }),
+  updateTc: adminMutation
+    .input(
+      z.object({
+        id: z.string(),
+        admissionNumber: z.string().optional(),
+        dob: z.string().optional(),
+        studentName: z.string().optional(),
+        fatherName: z.string().optional(),
+        motherName: z.string().optional(),
+        classLeaving: z.string().optional(),
+        dateOfIssue: z.string().optional(),
+        certificatePdfUrl: z.string().optional(),
+        status: z.enum(["Issued", "Pending", "Cancelled"]).optional(),
+        remarks: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { TransferCertificate } = await getTcModels();
+      const updateData: any = { ...input };
+      delete updateData.id;
+      if (input.dateOfIssue) {
+        updateData.dateOfIssue = new Date(input.dateOfIssue);
+      }
+      return TransferCertificate.findByIdAndUpdate(input.id, updateData, { new: true });
     }),
   deleteTc: adminMutation
     .input(z.object({ id: z.union([z.string(), z.any()]), permanent: z.boolean().default(true) }))

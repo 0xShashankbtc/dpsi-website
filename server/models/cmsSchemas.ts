@@ -368,6 +368,7 @@ const VideoGallerySchema = new Schema<IVideoGallery>(
 
 export interface ITransferCertificate extends Document {
   admissionNumber: string;
+  dob?: string;
   studentName: string;
   fatherName: string;
   motherName?: string;
@@ -382,6 +383,7 @@ export interface ITransferCertificate extends Document {
 const TransferCertificateSchema = new Schema<ITransferCertificate>(
   {
     admissionNumber: { type: String, required: true, index: true },
+    dob: { type: String, index: true },
     studentName: { type: String, required: true, index: true },
     fatherName: { type: String, required: true },
     motherName: { type: String },

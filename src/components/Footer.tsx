@@ -39,6 +39,10 @@ export default function Footer() {
     "footer_copyright",
     `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`
   );
+  const footerCredit = getSetting(
+    "footer_credit",
+    "Developed by : Shashank Jangid (Orange)"
+  );
 
   const quickLinks = dbQuickMenus
     ? dbQuickMenus.filter((m: any) => m.isActive && !m.isDeleted).map((m: any) => ({ label: m.title, href: m.url }))
@@ -234,6 +238,16 @@ export default function Footer() {
           <p className="text-xs text-slate-500">
             {copyright}
           </p>
+          {footerCredit && (
+            <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm">
+              <span>{footerCredit.replace(/\(Orange\)/gi, "").trim()}</span>
+              {footerCredit.toLowerCase().includes("orange") && (
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                  Orange
+                </span>
+              )}
+            </div>
+          )}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}

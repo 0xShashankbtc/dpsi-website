@@ -54,6 +54,8 @@ import {
   Target,
   Clock,
   TrendingUp,
+  Zap,
+  Bell,
 } from "lucide-react";
 
 import { trpc } from "@/providers/trpc";
@@ -875,6 +877,47 @@ export default function AdminCMS() {
     },
   });
 
+  const updateTc = trpc.cms.updateTc.useMutation({
+    onSuccess: () => {
+      toast.success("Transfer Certificate record updated!");
+      refetchTc();
+      refetchStats();
+      utils.cms.listTc.invalidate();
+      utils.cms.dashboardStats.invalidate();
+      setTcModal(false);
+      setEditingTcId(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update TC record");
+    },
+  });
+
+  const uploadCacheImageMutation = trpc.cms.uploadCacheImage.useMutation({
+    onSuccess: (res) => {
+      toast.success("Modal memory cache image updated and CDN synchronized!");
+      refetchSiteSettings();
+      utils.cms.getSiteSettings.invalidate();
+      utils.cms.listPopups.invalidate();
+      setIsUploadingCacheImg(false);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to upload cache image");
+      setIsUploadingCacheImg(false);
+    },
+  });
+
+  const invalidatePopupCacheMutation = trpc.cms.invalidatePopupCache.useMutation({
+    onSuccess: () => {
+      toast.success("Modal memory cache invalidated across all visitor browsers!");
+      refetchSiteSettings();
+      utils.cms.getSiteSettings.invalidate();
+      utils.cms.listPopups.invalidate();
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to invalidate cache");
+    },
+  });
+
   const updatePage = trpc.cms.updatePage.useMutation({
     onSuccess: () => {
       toast.success("Page updated!");
@@ -1523,12 +1566,17 @@ export default function AdminCMS() {
   const [videoForm, setVideoForm] = useState({ title: "", category: "Events", youtubeUrl: "", thumbnailUrl: "" });
 
   const [tcModal, setTcModal] = useState(false);
+  const [editingTcId, setEditingTcId] = useState<string | null>(null);
+  const [tcPreviewRecord, setTcPreviewRecord] = useState<any | null>(null);
+  const [popupLivePreview, setPopupLivePreview] = useState(false);
+  const [isUploadingCacheImg, setIsUploadingCacheImg] = useState(false);
   const [tcForm, setTcForm] = useState({
     admissionNumber: "",
     studentName: "",
     fatherName: "",
     motherName: "",
     classLeaving: "Class X",
+    dob: "2010-01-01",
     dateOfIssue: new Date().toISOString().split("T")[0],
     certificatePdfUrl: "",
     status: "Issued" as "Issued" | "Pending" | "Cancelled",
@@ -2545,7 +2593,7 @@ export default function AdminCMS() {
                     </div>
                   </div>
 
-                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                         <tr>
@@ -2553,6 +2601,7 @@ export default function AdminCMS() {
                           <th className="px-4 py-3">Student Name</th>
                           <th className="px-4 py-3">Father's Name</th>
                           <th className="px-4 py-3">Class Leaving</th>
+                          <th className="px-4 py-3">Date of Birth</th>
                           <th className="px-4 py-3">Date of Issue</th>
                           <th className="px-4 py-3">Status</th>
                           <th className="px-4 py-3">Document</th>
@@ -2566,6 +2615,7 @@ export default function AdminCMS() {
                             <td className="px-4 py-3 font-medium text-slate-900">{tc.studentName}</td>
                             <td className="px-4 py-3 text-slate-600">{tc.fatherName}</td>
                             <td className="px-4 py-3 text-slate-500">{tc.classLeaving}</td>
+                            <td className="px-4 py-3 font-mono text-emerald-600 font-medium text-[11px]">{tc.dob || "—"}</td>
                             <td className="px-4 py-3 text-slate-500">{safeFormatDate(tc.dateOfIssue)}</td>
                             <td className="px-4 py-3">
                               <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
@@ -2589,27 +2639,61 @@ export default function AdminCMS() {
                               )}
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-red-600 hover:bg-red-50 h-7 px-2 cursor-pointer"
-                                disabled={deleteTc.isPending}
-                                title="Delete TC"
-                                onClick={() => {
-                                  const tcId = String(tc._id || tc.id);
-                                  if (confirm(`Are you sure you want to delete TC for "${tc.studentName || tc.admissionNumber}"?`)) {
-                                    deleteTc.mutate({ id: tcId });
-                                  }
-                                }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-emerald-700 hover:bg-emerald-50 h-7 px-2 cursor-pointer"
+                                  title="Live Preview (Student Portal Verification View)"
+                                  onClick={() => setTcPreviewRecord(tc)}
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-slate-600 hover:bg-slate-100 h-7 px-2 cursor-pointer"
+                                  title="Edit TC Record"
+                                  onClick={() => {
+                                    setEditingTcId(String(tc._id || tc.id));
+                                    setTcForm({
+                                      admissionNumber: tc.admissionNumber || "",
+                                      studentName: tc.studentName || "",
+                                      fatherName: tc.fatherName || "",
+                                      motherName: tc.motherName || "",
+                                      classLeaving: tc.classLeaving || "Class X",
+                                      dob: tc.dob || "2010-01-01",
+                                      dateOfIssue: tc.dateOfIssue ? new Date(tc.dateOfIssue).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+                                      certificatePdfUrl: tc.certificatePdfUrl || "",
+                                      status: tc.status || "Issued",
+                                    });
+                                    setTcModal(true);
+                                  }}
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600 hover:bg-red-50 h-7 px-2 cursor-pointer"
+                                  disabled={deleteTc.isPending}
+                                  title="Delete TC"
+                                  onClick={() => {
+                                    const tcId = String(tc._id || tc.id);
+                                    if (confirm(`Are you sure you want to delete TC for "${tc.studentName || tc.admissionNumber}"?`)) {
+                                      deleteTc.mutate({ id: tcId });
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}
                         {(!tcList || tcList.length === 0) && (
                           <tr>
-                            <td colSpan={7} className="text-center py-8 text-slate-400">
+                            <td colSpan={9} className="text-center py-8 text-slate-400">
                               No TC records found. Click "Add TC" to create a new record.
                             </td>
                           </tr>
@@ -2617,35 +2701,266 @@ export default function AdminCMS() {
                       </tbody>
                     </table>
                   </div>
+                  {/* LIVE PREVIEW MODAL FOR TC RECORD */}
+                  {tcPreviewRecord && (
+                    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                      <div className="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                              Student Portal Live Preview
+                            </h3>
+                          </div>
+                          <button
+                            onClick={() => setTcPreviewRecord(null)}
+                            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>
+                            Exact view displayed to the student on <strong>/transfer-certificate</strong> upon valid two-factor match.
+                          </span>
+                        </div>
+
+                        {/* Verified Card Replica */}
+                        <div className="bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/30 border-2 border-emerald-500/30 rounded-2xl p-6 space-y-4 shadow-md">
+                          <div className="flex items-center justify-between pb-3 border-b border-emerald-100">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                              VERIFIED RECORD • OFFICIAL TRANSFER CERTIFICATE
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400">
+                              HASH: #{String(tcPreviewRecord._id || "dpsi").slice(-8).toUpperCase()}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                            <div className="p-3 rounded-lg bg-white/80 border border-slate-100 shadow-xs">
+                              <p className="text-[10px] text-slate-400 uppercase font-semibold">Student Name</p>
+                              <p className="font-bold text-slate-900 mt-0.5">{tcPreviewRecord.studentName}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-white/80 border border-slate-100 shadow-xs">
+                              <p className="text-[10px] text-slate-400 uppercase font-semibold">Admission No</p>
+                              <p className="font-mono font-bold text-emerald-700 mt-0.5">{tcPreviewRecord.admissionNumber}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-white/80 border border-slate-100 shadow-xs">
+                              <p className="text-[10px] text-slate-400 uppercase font-semibold">Class Leaving</p>
+                              <p className="font-semibold text-slate-800 mt-0.5">{tcPreviewRecord.classLeaving}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-white/80 border border-slate-100 shadow-xs">
+                              <p className="text-[10px] text-slate-400 uppercase font-semibold">Date of Birth</p>
+                              <p className="font-mono font-semibold text-slate-800 mt-0.5">{tcPreviewRecord.dob || "—"}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-white/80 border border-slate-100 shadow-xs">
+                              <p className="text-[10px] text-slate-400 uppercase font-semibold">Date of Issue</p>
+                              <p className="font-semibold text-slate-800 mt-0.5">{safeFormatDate(tcPreviewRecord.dateOfIssue)}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-white/80 border border-slate-100 shadow-xs">
+                              <p className="text-[10px] text-slate-400 uppercase font-semibold">Status</p>
+                              <p className="font-bold text-emerald-700 mt-0.5">{tcPreviewRecord.status || "Issued"}</p>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex items-center justify-between">
+                            <a
+                              href={tcPreviewRecord.certificatePdfUrl || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs shadow-md transition-all cursor-pointer"
+                            >
+                              <Download className="w-4 h-4" />
+                              <span>Download Official TC (PDF)</span>
+                            </a>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setTcPreviewRecord(null)}
+                              className="text-xs text-slate-600"
+                            >
+                              Close Preview
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
               {/* 5. POPUP */}
-              {activeTab === "popups" && (
+              {activeTab === "popups" && (() => {
+                const cachedPopupImg = (siteSettings || []).find((s: any) => s.key === "cached_popup_image")?.value;
+                const popupCacheVer = (siteSettings || []).find((s: any) => s.key === "popup_cache_version")?.value;
+                const activePopupNotice = popupsList?.find((p: any) => p.isActive && !p.isDeleted);
+
+                return (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-bold text-slate-900">Popup Notification</h2>
-                      <p className="text-xs text-slate-500">Customizable website modal alert with image & CTA</p>
+                      <h2 className="text-xl font-bold text-slate-900">Popup Notification & Cache Accelerator</h2>
+                      <p className="text-xs text-slate-500">Customizable website modal alert with image, CTA, and client-side memory caching</p>
                     </div>
-                    <Button
-                      onClick={() => {
-                        setEditingPopup(null);
-                        setPopupForm({
-                          title: "",
-                          content: "",
-                          imageUrl: "",
-                          linkUrl: "",
-                          badgeText: "Official Notice",
-                          buttonText: "Learn More",
-                        });
-                        setPopupModal(true);
-                      }}
-                      size="sm"
-                      className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Popup
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPopupLivePreview(true)}
+                        disabled={!activePopupNotice}
+                        className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 text-xs h-8 cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Live Visitor Preview</span>
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setEditingPopup(null);
+                          setPopupForm({
+                            title: "",
+                            content: "",
+                            imageUrl: "",
+                            linkUrl: "",
+                            badgeText: "Official Notice",
+                            buttonText: "Learn More",
+                          });
+                          setPopupModal(true);
+                        }}
+                        size="sm"
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Popup
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* CACHED MODAL ASSET MANAGER */}
+                  <div className="bg-white border-2 border-emerald-500/30 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 px-5 py-3.5 border-b border-emerald-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                          <Zap className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                            Cached Modal Image Manager & CDN Invalidator
+                          </h3>
+                          <p className="text-[10px] text-slate-500">
+                            Pre-loads modal into visitor localStorage for zero-latency instant rendering
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => invalidatePopupCacheMutation.mutate()}
+                        disabled={invalidatePopupCacheMutation.isPending}
+                        className="text-amber-700 border-amber-300 hover:bg-amber-50 text-xs h-8 cursor-pointer flex items-center gap-1.5 shadow-xs"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${invalidatePopupCacheMutation.isPending ? "animate-spin" : ""}`} />
+                        <span>{invalidatePopupCacheMutation.isPending ? "Purging..." : "Purge & Invalidate Cache"}</span>
+                      </Button>
+                    </div>
+
+                    <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Current Cached Image Preview */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-700 uppercase">Current Memory Asset</span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800">
+                            Zero-Latency
+                          </span>
+                        </div>
+                        {cachedPopupImg ? (
+                          <div className="space-y-2">
+                            <div className="w-full h-28 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center">
+                              <img src={cachedPopupImg} alt="Cached Modal" className="w-full h-full object-cover" />
+                            </div>
+                            <p className="text-[10px] font-mono text-slate-500 truncate" title={cachedPopupImg}>
+                              {cachedPopupImg}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="w-full h-28 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-center p-3 text-[11px] text-slate-400">
+                            No dedicated memory image uploaded. Defaulting to popup notice image.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Upload / Replace Cache Image */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-700 uppercase">Upload Cached Image</span>
+                          <span className="text-[9px] font-mono text-slate-400">Max 5MB • JPG/PNG/WEBP</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 leading-relaxed">
+                          Uploads and optimizes image for instant caching. Whitelisted formats are converted to WebP with security sanitization.
+                        </p>
+                        <div>
+                          <label className="cursor-pointer inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-sm transition-all">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{isUploadingCacheImg || uploadCacheImageMutation.isPending ? "Processing & Caching..." : "Upload & Replace Cache Image"}</span>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="hidden"
+                              disabled={isUploadingCacheImg || uploadCacheImageMutation.isPending}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 5 * 1024 * 1024) {
+                                  toast.error("File exceeds 5MB limit. Please upload an image under 5MB.");
+                                  return;
+                                }
+                                const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+                                if (!validTypes.includes(file.type)) {
+                                  toast.error("Invalid file type. Only JPG, PNG, WEBP, and GIF are allowed.");
+                                  return;
+                                }
+                                setIsUploadingCacheImg(true);
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  uploadCacheImageMutation.mutate({
+                                    fileName: file.name,
+                                    fileData: reader.result as string,
+                                  });
+                                };
+                                reader.onerror = () => {
+                                  toast.error("Failed to read image file");
+                                  setIsUploadingCacheImg(false);
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Cache Telemetry & Invalidation Info */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+                        <span className="text-[11px] font-bold text-slate-700 uppercase">Cache Telemetry</span>
+                        <div className="space-y-1.5 text-[11px]">
+                          <div className="flex justify-between py-1 border-b border-slate-200">
+                            <span className="text-slate-500">Cache Version</span>
+                            <span className="font-mono font-bold text-slate-800">{popupCacheVer || "v1"}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-slate-200">
+                            <span className="text-slate-500">Active Notice</span>
+                            <span className="font-bold text-emerald-700">{activePopupNotice ? activePopupNotice.title : "None Active"}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-slate-200">
+                            <span className="text-slate-500">Render Latency</span>
+                            <span className="font-bold text-emerald-600">0ms (Local Storage)</span>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 pt-1">
+                          Invalidating cache updates the version stamp, forcing all active client browsers to refresh their local store.
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -2736,8 +3051,74 @@ export default function AdminCMS() {
                       </div>
                     )}
                   </div>
+
+                  {/* POPUP LIVE VISITOR PREVIEW MODAL */}
+                  {popupLivePreview && activePopupNotice && (
+                    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+                      <div className="relative max-w-lg w-full bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl text-slate-900 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="bg-slate-900 px-4 py-2 text-white flex items-center justify-between text-xs">
+                          <span className="font-semibold flex items-center gap-1.5 text-emerald-400">
+                            <Eye className="w-3.5 h-3.5" /> Live Visitor Experience Preview
+                          </span>
+                          <button
+                            onClick={() => setPopupLivePreview(false)}
+                            className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="relative">
+                          {(cachedPopupImg || activePopupNotice.imageUrl) && (
+                            <div className="w-full max-h-64 bg-slate-100 overflow-hidden border-b border-slate-100 flex items-center justify-center">
+                              <img
+                                src={cachedPopupImg || activePopupNotice.imageUrl}
+                                alt={activePopupNotice.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="p-6 space-y-3.5">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <Bell className="w-3 h-3 text-emerald-600" />
+                              {activePopupNotice.badgeText || "Official Notice"}
+                            </span>
+                            <h3 className="text-lg font-bold text-slate-900 leading-snug">{activePopupNotice.title}</h3>
+                            {activePopupNotice.content && (
+                              <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{activePopupNotice.content}</p>
+                            )}
+                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPopupLivePreview(false)}
+                                className="border-slate-200 text-slate-600 text-xs h-8"
+                              >
+                                Dismiss
+                              </Button>
+                              {activePopupNotice.linkUrl && (
+                                <Button
+                                  size="sm"
+                                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold h-8 px-4 flex items-center gap-1 cursor-pointer"
+                                  onClick={() => {
+                                    if (activePopupNotice.linkUrl.startsWith("http")) {
+                                      window.open(activePopupNotice.linkUrl, "_blank");
+                                    } else {
+                                      window.location.href = activePopupNotice.linkUrl;
+                                    }
+                                  }}
+                                >
+                                  {activePopupNotice.buttonText || "Learn More"} <ExternalLink className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
-              )}
+                );
+              })()}
 
               {/* 6. MARQUEE */}
               {activeTab === "marquee" && (
@@ -5405,7 +5786,120 @@ export default function AdminCMS() {
                     </div>
                   </div>
 
-                  {["general", "contact", "social", "principal", "cta", "admissions"].map((group) => (
+                  {/* FOOTER BRANDING & DEVELOPER CREDIT LIVE CUSTOMIZER */}
+                  <div className="bg-white border-2 border-slate-800/80 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-slate-900 px-5 py-3.5 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center shadow-xs">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                            Footer Branding & Developer Credit Live Preview
+                          </h3>
+                          <p className="text-[10px] text-slate-400">
+                            Customizes the copyright banner and developer credit line across all pages
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const creditVal = settingsEdits["footer_credit"] !== undefined
+                            ? settingsEdits["footer_credit"]
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid (Orange)");
+                          const copyVal = settingsEdits["footer_copyright"] !== undefined
+                            ? settingsEdits["footer_copyright"]
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
+                          updateSiteSettingsMutation.mutate({
+                            updates: [
+                              { key: "footer_credit", value: creditVal },
+                              { key: "footer_copyright", value: copyVal },
+                            ],
+                          });
+                          toast.success("Footer branding updated!");
+                        }}
+                        disabled={updateSiteSettingsMutation.isPending}
+                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-8 px-4 cursor-pointer shadow-xs"
+                      >
+                        <Save className="w-3.5 h-3.5 mr-1" />
+                        <span>{updateSiteSettingsMutation.isPending ? "Saving..." : "Save Footer Credit"}</span>
+                      </Button>
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                      {/* Live Simulated Footer Bottom Bar */}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-700 uppercase flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5 text-orange-500" />
+                          <span>Live Footer Bottom Bar Simulator</span>
+                        </label>
+                        {(() => {
+                          const previewCredit = settingsEdits["footer_credit"] !== undefined
+                            ? settingsEdits["footer_credit"]
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid (Orange)");
+                          const previewCopy = settingsEdits["footer_copyright"] !== undefined
+                            ? settingsEdits["footer_copyright"]
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
+
+                          return (
+                            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 shadow-inner">
+                              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-xs text-slate-500">
+                                  {previewCopy}
+                                </p>
+                                {previewCredit && (
+                                  <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm">
+                                    <span>{previewCredit.replace(/\(Orange\)/gi, "").trim()}</span>
+                                    {previewCredit.toLowerCase().includes("orange") && (
+                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                                        Orange
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="p-2 rounded-full bg-emerald-700 text-white opacity-80 cursor-default">
+                                  <ArrowRight className="w-3.5 h-3.5 -rotate-90" />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Inputs */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-700">Developer Credit Text</label>
+                          <Input
+                            placeholder="Developed by : Shashank Jangid (Orange)"
+                            value={settingsEdits["footer_credit"] !== undefined
+                              ? settingsEdits["footer_credit"]
+                              : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid (Orange)")}
+                            onChange={(e) => setSettingsEdits({ ...settingsEdits, footer_credit: e.target.value })}
+                            className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                          />
+                          <p className="text-[10px] text-slate-400">
+                            Include <code className="text-orange-600 bg-orange-50 px-1 py-0.5 rounded font-mono">(Orange)</code> for stylized badge highlight
+                          </p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-700">Copyright Line</label>
+                          <Input
+                            placeholder={`Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`}
+                            value={settingsEdits["footer_copyright"] !== undefined
+                              ? settingsEdits["footer_copyright"]
+                              : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`)}
+                            onChange={(e) => setSettingsEdits({ ...settingsEdits, footer_copyright: e.target.value })}
+                            className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                          />
+                          <p className="text-[10px] text-slate-400">Standard legal copyright notice</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {["general", "contact", "social", "principal", "cta", "admissions", "footer"].map((group) => (
                     <div key={group} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
                       <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
                         <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">{group} Settings</h3>
@@ -6895,54 +7389,117 @@ export default function AdminCMS() {
           </div>
         )}
 
-        {/* MODAL: ADD TC RECORD */}
+        {/* MODAL: ADD / EDIT TC RECORD */}
         {tcModal && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white border border-slate-200 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-base font-bold text-slate-900">Add Transfer Certificate (TC)</h3>
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-emerald-600" />
+                  <h3 className="text-base font-bold text-slate-900">
+                    {editingTcId ? "Edit Transfer Certificate (TC)" : "Add Transfer Certificate (TC)"}
+                  </h3>
+                </div>
                 <button
-                  onClick={() => setTcModal(false)}
-                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                  onClick={() => {
+                    setTcModal(false);
+                    setEditingTcId(null);
+                  }}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Input
-                  placeholder="Admission No. (e.g. DPSI-1082)"
-                  value={tcForm.admissionNumber}
-                  onChange={(e) => setTcForm({ ...tcForm, admissionNumber: e.target.value })}
-                  className="bg-slate-50 border-slate-200 text-slate-900 font-mono text-xs"
-                />
-                <Input
-                  placeholder="Student Full Name"
-                  value={tcForm.studentName}
-                  onChange={(e) => setTcForm({ ...tcForm, studentName: e.target.value })}
-                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-                />
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">Admission No. *</label>
+                  <Input
+                    placeholder="DPSI-1082"
+                    value={tcForm.admissionNumber}
+                    onChange={(e) => setTcForm({ ...tcForm, admissionNumber: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-slate-900 font-mono text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">Student Full Name *</label>
+                  <Input
+                    placeholder="Student Name"
+                    value={tcForm.studentName}
+                    onChange={(e) => setTcForm({ ...tcForm, studentName: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                  />
+                </div>
               </div>
+
               <div className="grid grid-cols-2 gap-3">
-                <Input
-                  placeholder="Father's Name"
-                  value={tcForm.fatherName}
-                  onChange={(e) => setTcForm({ ...tcForm, fatherName: e.target.value })}
-                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-                />
-                <Input
-                  placeholder="Class Leaving (e.g. Class X)"
-                  value={tcForm.classLeaving}
-                  onChange={(e) => setTcForm({ ...tcForm, classLeaving: e.target.value })}
-                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-                />
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">Father's Name</label>
+                  <Input
+                    placeholder="Father's Name"
+                    value={tcForm.fatherName}
+                    onChange={(e) => setTcForm({ ...tcForm, fatherName: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">Mother's Name</label>
+                  <Input
+                    placeholder="Mother's Name"
+                    value={tcForm.motherName}
+                    onChange={(e) => setTcForm({ ...tcForm, motherName: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                  />
+                </div>
               </div>
-              <Input
-                type="date"
-                value={tcForm.dateOfIssue}
-                onChange={(e) => setTcForm({ ...tcForm, dateOfIssue: e.target.value })}
-                className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">Class Leaving</label>
+                  <Input
+                    placeholder="e.g. Class X"
+                    value={tcForm.classLeaving}
+                    onChange={(e) => setTcForm({ ...tcForm, classLeaving: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">Date of Birth (DOB) *</label>
+                  <Input
+                    type="date"
+                    value={tcForm.dob || ""}
+                    onChange={(e) => setTcForm({ ...tcForm, dob: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-mono"
+                    required
+                  />
+                  <p className="text-[9px] text-slate-500">2-Factor authentication required</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">Date of Issue</label>
+                  <Input
+                    type="date"
+                    value={tcForm.dateOfIssue}
+                    onChange={(e) => setTcForm({ ...tcForm, dateOfIssue: e.target.value })}
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-700">TC Status</label>
+                  <select
+                    value={tcForm.status}
+                    onChange={(e: any) => setTcForm({ ...tcForm, status: e.target.value })}
+                    className="w-full h-8 rounded-md border border-slate-200 bg-slate-50 px-2.5 text-xs text-slate-900"
+                  >
+                    <option value="Issued">Issued</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold text-slate-700">TC Certificate Document (PDF / Scan)</label>
                 
@@ -7018,16 +7575,37 @@ export default function AdminCMS() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <Button variant="outline" onClick={() => setTcModal(false)} className="text-slate-600 text-xs">Cancel</Button>
                 <Button
-                  disabled={!tcForm.admissionNumber || !tcForm.studentName}
-                  onClick={() => createTc.mutate({
-                    ...tcForm,
-                    certificatePdfUrl: tcForm.certificatePdfUrl || "https://dpsindirapuram.com/tc/sample.pdf",
-                  })}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm"
+                  variant="outline"
+                  onClick={() => {
+                    setTcModal(false);
+                    setEditingTcId(null);
+                  }}
+                  className="text-slate-600 text-xs"
                 >
-                  Save TC Record
+                  Cancel
+                </Button>
+                <Button
+                  disabled={!tcForm.admissionNumber || !tcForm.studentName || !tcForm.dob || createTc.isPending || updateTc.isPending}
+                  onClick={() => {
+                    const payload = {
+                      ...tcForm,
+                      certificatePdfUrl: tcForm.certificatePdfUrl || "https://dpsindirapuram.com/tc/sample.pdf",
+                    };
+                    if (editingTcId) {
+                      updateTc.mutate({
+                        id: editingTcId,
+                        ...payload,
+                      });
+                    } else {
+                      createTc.mutate(payload);
+                    }
+                  }}
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer"
+                >
+                  {editingTcId
+                    ? (updateTc.isPending ? "Updating..." : "Update TC Record")
+                    : (createTc.isPending ? "Saving..." : "Save TC Record")}
                 </Button>
               </div>
             </div>

@@ -116,21 +116,6 @@ export function LiquidMetalButton({
       }
     };
 
-    // Throttle / pause shader rendering during active window scroll to yield 100% GPU to compositor
-    let scrollStopTimer: any = null;
-    const handleScroll = () => {
-      if (shaderMount.current?.setSpeed) {
-        shaderMount.current.setSpeed(0);
-      }
-      clearTimeout(scrollStopTimer);
-      scrollStopTimer = setTimeout(() => {
-        if (shaderMount.current?.setSpeed) {
-          shaderMount.current.setSpeed(0.6);
-        }
-      }, 120);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
     let observer: IntersectionObserver | null = null;
     if (typeof window !== "undefined" && "IntersectionObserver" in window && buttonRef.current) {
       observer = new IntersectionObserver(
@@ -142,7 +127,7 @@ export function LiquidMetalButton({
               shaderMount.current?.setSpeed?.(0.6);
             }
           } else {
-            // Off-screen: pause WebGL render loop to preserve 100% GPU/CPU for scrolling
+            // Off-screen: pause WebGL render loop to preserve GPU when out of viewport
             shaderMount.current?.setSpeed?.(0);
           }
         },
@@ -154,8 +139,6 @@ export function LiquidMetalButton({
     }
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      clearTimeout(scrollStopTimer);
       observer?.disconnect();
       if (shaderMount.current?.destroy) {
         shaderMount.current.destroy();

@@ -8,20 +8,62 @@ export default function PopupModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasDismissed, setHasDismissed] = useState(false);
 
-  const { data: popups } = trpc.cms.listPopups.useQuery(undefined, {
+  const getInitialCachedPopup = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem("dpsi_cached_popup");
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+    return null;
+  };
+
+  const [cachedPopup, setCachedPopup] = useState<any>(getInitialCachedPopup);
+
+  const { data: popups, isSuccess } = trpc.cms.listPopups.useQuery(undefined, {
     staleTime: 60000,
   });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
-  const activePopup = popups?.find((p: any) => p.isActive && !p.isDeleted);
+  // Sync background query into cache
+  useEffect(() => {
+    if (!isSuccess) return;
+    const active = popups?.find((p: any) => p.isActive && !p.isDeleted);
+    const cachedVersion = siteSettings?.find((s: any) => s.key === "popup_cache_version")?.value;
+    const cachedImage = siteSettings?.find((s: any) => s.key === "cached_popup_image")?.value;
+
+    if (active) {
+      const updated = {
+        ...active,
+        imageUrl: cachedImage || active.imageUrl,
+        cacheVersion: cachedVersion,
+      };
+      setCachedPopup(updated);
+      try {
+        localStorage.setItem("dpsi_cached_popup", JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    } else {
+      setCachedPopup(null);
+      try {
+        localStorage.removeItem("dpsi_cached_popup");
+      } catch {
+        // ignore
+      }
+    }
+  }, [popups, isSuccess, siteSettings]);
+
+  const activePopup = cachedPopup || popups?.find((p: any) => p.isActive && !p.isDeleted);
 
   useEffect(() => {
     if (activePopup && !hasDismissed) {
-      const dismissedId = sessionStorage.getItem("dpsi_popup_dismissed");
-      if (dismissedId !== activePopup._id) {
-        // Show after a pleasant 1.2s delay
+      const dismissedKey = `dpsi_popup_dismissed_${activePopup._id}_${activePopup.cacheVersion || "v1"}`;
+      if (sessionStorage.getItem(dismissedKey) !== "true") {
         const timer = setTimeout(() => {
           setIsOpen(true);
-        }, 1200);
+        }, 1000);
         return () => clearTimeout(timer);
       }
     }
@@ -31,7 +73,8 @@ export default function PopupModal() {
     setIsOpen(false);
     setHasDismissed(true);
     if (activePopup) {
-      sessionStorage.setItem("dpsi_popup_dismissed", activePopup._id);
+      const dismissedKey = `dpsi_popup_dismissed_${activePopup._id}_${activePopup.cacheVersion || "v1"}`;
+      sessionStorage.setItem(dismissedKey, "true");
     }
   };
 

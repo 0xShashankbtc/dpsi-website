@@ -88,6 +88,7 @@ export async function seedDatabase(
       { key: "cta_title", value: "Ready to Shape Your Child's Bright Future?", label: "CTA Title", group: "cta" },
       { key: "cta_button_link", value: "/admissions", label: "CTA Button Link", group: "cta" },
       { key: "footer_copyright", value: "© 2026 Delhi Public School Indirapuram. All rights reserved.", label: "Footer Copyright", group: "general" },
+      { key: "footer_credit", value: "Developed by : Shashank Jangid (Orange)", label: "Footer / Credit Text", group: "general" },
       { key: "footer_tagline", value: "Delhi Public School Indirapuram, established in 2003, is a premier institution under the DPS Society, committed to holistic education and excellence.", label: "Footer Tagline", group: "general" },
       { key: "chat_welcome_message", value: "Hello! I am DPSI AI. I can assist you with Admissions, Exam Schedules, Vacations, Academic Streams, and Campus Facilities.", label: "AI Chat Welcome Message", group: "ai" },
       { key: "calendar_pdf_url", value: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", label: "Academic Calendar PDF URL", group: "ai" },
@@ -910,30 +911,51 @@ export async function seedDatabase(
     if (tcCount === 0) {
       await TransferCertificate.insertMany([
         {
-          tcNumber: "TC-2025-001",
           admissionNumber: "ADM-18492",
+          dob: "2010-05-14",
           studentName: "Aarav Sharma",
           fatherName: "Mr. Vikram Sharma",
           motherName: "Mrs. Pooja Sharma",
-          classLeft: "Class X",
-          dateOfBirth: new Date("2010-05-14"),
+          classLeaving: "Class X",
           dateOfIssue: new Date("2025-04-10"),
-          reasonForLeaving: "Parent Transfer",
-          status: "Verified",
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Parent Transfer",
+          isDeleted: false,
         },
         {
-          tcNumber: "TC-2025-002",
           admissionNumber: "ADM-19203",
+          dob: "2008-09-22",
           studentName: "Riya Verma",
           fatherName: "Mr. Alok Verma",
           motherName: "Mrs. Sneha Verma",
-          classLeft: "Class XII",
-          dateOfBirth: new Date("2008-09-22"),
+          classLeaving: "Class XII",
           dateOfIssue: new Date("2025-05-18"),
-          reasonForLeaving: "Course Completed",
-          status: "Verified",
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Course Completed",
+          isDeleted: false,
+        },
+        {
+          admissionNumber: "DPSI-1082",
+          dob: "2009-11-15",
+          studentName: "Kabir Mehra",
+          fatherName: "Mr. Rajesh Mehra",
+          motherName: "Mrs. Sangeeta Mehra",
+          classLeaving: "Class XI",
+          dateOfIssue: new Date("2025-06-01"),
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Higher Studies Relocation",
+          isDeleted: false,
         },
       ]);
+    } else {
+      // Ensure any existing records without dob get populated
+      await TransferCertificate.updateMany(
+        { dob: { $exists: false } },
+        { $set: { dob: "2010-01-01" } }
+      );
     }
 
     // 21. ADMIN USER (Bootstrap with initial environment variable password if configured)
