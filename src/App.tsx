@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router'
 import ErrorBoundary from './components/ErrorBoundary'
+import { idlePrefetchTopRoutes } from './lib/routePreloader'
 
 const Home = lazy(() => import('./pages/Home'))
 const About = lazy(() => import('./pages/About'))
@@ -52,6 +53,10 @@ function PageLoader() {
 }
 
 export default function App() {
+  useEffect(() => {
+    idlePrefetchTopRoutes()
+  }, [])
+
   return (
     <ErrorBoundary fallbackTitle="Application Interface Notice">
       <ScrollToTop />

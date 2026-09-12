@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { InteractiveHoverLinks } from "@/components/ui/interactive-hover-links";
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
+import { preloadRoute } from "@/lib/routePreloader";
 
 
 const navLinks = [
@@ -68,7 +69,6 @@ export default function Navbar() {
   const schoolTagline = getSetting("school_tagline", "Excellence in Education");
   const internationalLogoUrl = getSetting("international_logo_url", "/images/dps/international_logo.webp");
   const showInternationalLogo = getSetting("show_international_logo", "true") !== "false";
-  const secondaryLogoShape = getSetting("secondary_logo_shape", "square");
   const secondaryLogoTitle = getSetting("secondary_logo_title", "Accreditation & Partner School");
 
   // Construct dynamic hierarchical nav links from MongoDB
@@ -387,6 +387,7 @@ export default function Navbar() {
                     className="relative shrink-0"
                     onMouseEnter={() => {
                       setHoveredLink(link.label);
+                      preloadRoute(link.href);
                       if (hasChildren) setActiveDropdown(link.label);
                       else setActiveDropdown(null);
                     }}
@@ -448,6 +449,7 @@ export default function Navbar() {
                             >
                               <Link
                                 to={child.href}
+                                onMouseEnter={() => preloadRoute(child.href)}
                                 className="group flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl transition-all"
                                 onClick={() => setActiveDropdown(null)}
                               >
@@ -804,6 +806,8 @@ export default function Navbar() {
                         <Link
                           to={link.href}
                           onClick={() => setIsMobileOpen(false)}
+                          onMouseEnter={() => preloadRoute(link.href)}
+                          onTouchStart={() => preloadRoute(link.href)}
                           className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.99] touch-manipulation ${
                             isActive
                               ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 shadow-xs"
@@ -815,11 +819,13 @@ export default function Navbar() {
                         </Link>
                         {link.children && (
                           <div className="pl-4 pr-2 py-1 space-y-1">
-                            {link.children.map((child) => (
+                            {link.children.map((child: any) => (
                               <Link
                                 key={child.label}
                                 to={child.href}
                                 onClick={() => setIsMobileOpen(false)}
+                                onMouseEnter={() => preloadRoute(child.href)}
+                                onTouchStart={() => preloadRoute(child.href)}
                                 className="block px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors touch-manipulation"
                               >
                                 {child.label}

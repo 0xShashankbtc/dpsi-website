@@ -1,13 +1,13 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import FloatingSocials from "./FloatingSocials";
-import PopupModal from "./PopupModal";
 import SmoothScroll from "./SmoothScroll";
 
 const ScrollProgress = lazy(() => import("./ScrollProgress"));
 const AIChatWidget = lazy(() => import("./AIChatWidget"));
+const FloatingSocials = lazy(() => import("./FloatingSocials"));
+const PopupModal = lazy(() => import("./PopupModal"));
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -52,6 +52,22 @@ function ScrollToHash() {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const [isIdleReady, setIsIdleReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ("requestIdleCallback" in window) {
+      const handle = (window as any).requestIdleCallback(
+        () => setIsIdleReady(true),
+        { timeout: 1800 }
+      );
+      return () => (window as any).cancelIdleCallback?.(handle);
+    } else {
+      const timer = setTimeout(() => setIsIdleReady(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col relative">
       <SmoothScroll />
@@ -62,11 +78,13 @@ export default function Layout({ children }: LayoutProps) {
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
-      <FloatingSocials />
-      <Suspense fallback={null}>
-        <AIChatWidget />
-      </Suspense>
-      <PopupModal />
+      {isIdleReady && (
+        <Suspense fallback={null}>
+          <FloatingSocials />
+          <AIChatWidget />
+          <PopupModal />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -174,6 +174,8 @@ export default function VideoGallerySection() {
                       src={activeVideo.thumbnail}
                       alt={activeVideo.title}
                       className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-700 ease-out"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent flex flex-col justify-between p-4 sm:p-6">
                       {/* Top Title Overlay */}
@@ -235,7 +237,7 @@ export default function VideoGallerySection() {
                     : "border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100"
                 }`}
               >
-                <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover" />
+                <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <Play className="w-4 h-4 fill-white text-white" />
                 </div>

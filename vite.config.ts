@@ -89,6 +89,34 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 30
               }
             }
+          },
+          {
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*\.(?:png|jpg|jpeg|webp|avif|mp4|webm)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "cloudinary-media-cache",
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /\/api\/trpc\/cms\.(listSliders|getSiteSettings|listAnnouncements|listStats|listFacilities|listNews|listAchievements|listVideos|listTestimonials).*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "cms-api-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 5
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       }
@@ -126,12 +154,32 @@ export default defineConfig({
     sourcemap: "hidden", // Hidden sourcemaps: uploaded to Sentry, not served publicly
     rollupOptions: {
       output: {
-        manualChunks: {
-          spline: ["@splinetool/react-spline", "@splinetool/runtime"],
-          three: ["three", "@react-three/fiber", "@react-three/drei"],
-          charts: ["recharts"],
-          icons: ["lucide-react"],
-          vendor: ["react", "react-dom", "react-router", "framer-motion"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            // Keep common UI utilities in react-core so recharts doesn't swallow clsx
+            if (
+              id.includes("clsx") ||
+              id.includes("tailwind-merge") ||
+              id.includes("class-variance-authority") ||
+              id.includes("react/") ||
+              id.includes("react-dom/") ||
+              id.includes("react-router")
+            ) {
+              return "react-core";
+            }
+            if (id.includes("recharts") || id.includes("d3-")) {
+              return "charts";
+            }
+            if (id.includes("lucide-react")) {
+              return "icons";
+            }
+            if (id.includes("framer-motion")) {
+              return "framer-motion";
+            }
+            if (id.includes("@trpc") || id.includes("@tanstack/react-query")) {
+              return "trpc-vendor";
+            }
+          }
         },
       },
     },

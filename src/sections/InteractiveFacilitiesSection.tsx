@@ -340,7 +340,8 @@ export default function InteractiveFacilitiesSection() {
                 src={activeFacility.image}
                 alt={activeFacility.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                loading="eager"
+                loading="lazy"
+                decoding="async"
               />
               <div className="absolute top-4 left-4">
                 <span className="px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-xs font-bold shadow-md">
