@@ -786,89 +786,118 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
       cols: number,
       rows: number,
       squares: Float32Array,
-      dpr: number,
+      textMask: Uint8Array,
+      offsetX: number,
+      offsetY: number,
+      step: number,
+      squareSide: number,
     ) => {
       ctx.clearRect(0, 0, width, height);
 
-      // Create a separate canvas for the text mask
-      const maskCanvas = document.createElement("canvas");
-      maskCanvas.width = width;
-      maskCanvas.height = height;
-      const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
-      if (!maskCtx) return;
-
-      // Draw text on mask canvas with dynamic display-ratio auto-scaling
-      if (text) {
-        maskCtx.save();
-        maskCtx.scale(dpr, dpr);
-        maskCtx.fillStyle = "white";
-
-        // Auto-scale font size dynamically based on available canvas width
-        let effectiveFontSize = fontSize;
-        const fontFamily = `"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        maskCtx.font = `${fontWeight} ${effectiveFontSize}px ${fontFamily}`;
-        const textMetrics = maskCtx.measureText(text);
-        const maxTextWidth = (width / dpr) * 0.92; // 92% of available width to prevent any overflow
-        if (textMetrics.width > maxTextWidth && textMetrics.width > 0) {
-          effectiveFontSize = Math.max(16, Math.floor(effectiveFontSize * (maxTextWidth / textMetrics.width)));
-          maskCtx.font = `${fontWeight} ${effectiveFontSize}px ${fontFamily}`;
-        }
-
-        maskCtx.textAlign = "center";
-        maskCtx.textBaseline = "middle";
-        maskCtx.fillText(text, width / (2 * dpr), height / (2 * dpr));
-        maskCtx.restore();
-      }
-
-      // Draw flickering squares with optimized RGBA colors
       for (let i = 0; i < cols; i++) {
+        const colIdx = i * rows;
+        const x = offsetX + i * step;
+
         for (let j = 0; j < rows; j++) {
-          const x = i * (squareSize + gridGap) * dpr;
-          const y = j * (squareSize + gridGap) * dpr;
-          const squareWidth = squareSize * dpr;
-          const squareHeight = squareSize * dpr;
-
-          const maskData = maskCtx.getImageData(
-            x,
-            y,
-            squareWidth,
-            squareHeight,
-          ).data;
-          const hasText = maskData.some(
-            (value, index) => index % 4 === 0 && value > 0,
-          );
-
-          const opacity = squares[i * rows + j];
+          const idx = colIdx + j;
+          const hasText = textMask[idx] === 1;
+          const opacity = squares[idx];
           const finalOpacity = hasText
-            ? Math.min(1, opacity * 3 + 0.4)
+            ? Math.min(1, opacity * 2.2 + 0.45)
             : opacity;
 
+          const y = offsetY + j * step;
           ctx.fillStyle = colorWithOpacity(memoizedColor, finalOpacity);
-          ctx.fillRect(x, y, squareWidth, squareHeight);
+          ctx.fillRect(x, y, squareSide, squareSide);
         }
       }
     },
-    [memoizedColor, squareSize, gridGap, text, fontSize, fontWeight],
+    [memoizedColor],
   );
 
   const setupCanvas = useCallback(
     (canvas: HTMLCanvasElement, width: number, height: number) => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const canvasWidth = Math.floor(width * dpr);
+      const canvasHeight = Math.floor(height * dpr);
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
-      const cols = Math.ceil(width / (squareSize + gridGap));
-      const rows = Math.ceil(height / (squareSize + gridGap));
+
+      const step = (squareSize + gridGap) * dpr;
+      const squareSide = squareSize * dpr;
+      const cols = Math.floor(canvasWidth / step);
+      const rows = Math.floor(canvasHeight / step);
+
+      // Symmetrical centering offsets
+      const totalGridWidth = cols * step - gridGap * dpr;
+      const totalGridHeight = rows * step - gridGap * dpr;
+      const offsetX = Math.max(0, Math.floor((canvasWidth - totalGridWidth) / 2));
+      const offsetY = Math.max(0, Math.floor((canvasHeight - totalGridHeight) / 2));
 
       const squares = new Float32Array(cols * rows);
       for (let i = 0; i < squares.length; i++) {
         squares[i] = Math.random() * maxOpacity;
       }
 
-      return { cols, rows, squares, dpr };
+      // Pre-compute text mask ONCE on an offscreen canvas
+      const textMask = new Uint8Array(cols * rows);
+      if (text && cols > 0 && rows > 0) {
+        const maskCanvas = document.createElement("canvas");
+        maskCanvas.width = canvasWidth;
+        maskCanvas.height = canvasHeight;
+        const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
+        if (maskCtx) {
+          maskCtx.fillStyle = "black";
+          maskCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+          maskCtx.fillStyle = "white";
+          let effectiveFontSize = fontSize * dpr;
+          const fontFamily = `"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+          maskCtx.font = `${fontWeight} ${effectiveFontSize}px ${fontFamily}`;
+          const textMetrics = maskCtx.measureText(text);
+          const maxTextWidth = canvasWidth * 0.94;
+          if (textMetrics.width > maxTextWidth && textMetrics.width > 0) {
+            effectiveFontSize = Math.max(16 * dpr, Math.floor(effectiveFontSize * (maxTextWidth / textMetrics.width)));
+            maskCtx.font = `${fontWeight} ${effectiveFontSize}px ${fontFamily}`;
+          }
+
+          maskCtx.textAlign = "center";
+          maskCtx.textBaseline = "middle";
+          maskCtx.fillText(text, canvasWidth / 2, canvasHeight / 2);
+
+          // Fast single-pass pixel sampling from memory
+          const imgData = maskCtx.getImageData(0, 0, canvasWidth, canvasHeight).data;
+          for (let i = 0; i < cols; i++) {
+            const colIdx = i * rows;
+            for (let j = 0; j < rows; j++) {
+              const centerX = Math.floor(offsetX + i * step + squareSide / 2);
+              const centerY = Math.floor(offsetY + j * step + squareSide / 2);
+              if (centerX < canvasWidth && centerY < canvasHeight) {
+                const pixelIndex = (centerY * canvasWidth + centerX) * 4;
+                if (imgData[pixelIndex] > 40) {
+                  textMask[colIdx + j] = 1;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        cols,
+        rows,
+        squares,
+        textMask,
+        offsetX,
+        offsetY,
+        step,
+        squareSide,
+        dpr,
+      };
     },
-    [squareSize, gridGap, maxOpacity],
+    [squareSize, gridGap, maxOpacity, text, fontSize, fontWeight],
   );
 
   const updateSquares = useCallback(
@@ -904,9 +933,9 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
 
     let lastTime = 0;
     const animate = (time: number) => {
-      if (!isInView) return;
+      if (!isInView || !gridParams) return;
 
-      const deltaTime = (time - lastTime) / 1000;
+      const deltaTime = lastTime ? (time - lastTime) / 1000 : 0.016;
       lastTime = time;
 
       updateSquares(gridParams.squares, deltaTime);
@@ -917,7 +946,11 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
         gridParams.cols,
         gridParams.rows,
         gridParams.squares,
-        gridParams.dpr,
+        gridParams.textMask,
+        gridParams.offsetX,
+        gridParams.offsetY,
+        gridParams.step,
+        gridParams.squareSide,
       );
       animationFrameId = requestAnimationFrame(animate);
     };

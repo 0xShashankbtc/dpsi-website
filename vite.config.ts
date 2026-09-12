@@ -19,6 +19,7 @@ export default defineConfig({
         "favicon.png",
         "apple-touch-icon.png",
         "images/**/*",
+        "videos/**/*",
       ],
       manifest: {
         name: "DPS Indirapuram",
@@ -45,8 +46,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2,ttf}"],
-        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2,ttf,mp4}"],
+        maximumFileSizeToCacheInBytes: 35 * 1024 * 1024,
         clientsClaim: true,
         skipWaiting: true,
         navigateFallback: "/index.html",
@@ -88,6 +89,21 @@ export default defineConfig({
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30
               }
+            }
+          },
+          {
+            urlPattern: /\/videos\/.*\.mp4$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "dpsi-videos-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 90
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              rangeRequests: true
             }
           },
           {

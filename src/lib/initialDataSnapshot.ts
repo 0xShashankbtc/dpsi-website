@@ -364,6 +364,20 @@ export const DEFAULT_TESTIMONIALS = [
   },
 ];
 
+export const DEFAULT_VIDEOS = [
+  {
+    _id: "vid_campus_main",
+    id: "vid_campus_main",
+    title: "DPS Indirapuram Virtual Campus Tour & Infrastructure",
+    category: "Campus Tour",
+    videoUrl: "/videos/campus_hero.mp4",
+    thumbnailUrl: "/images/dps/slider_1.webp",
+    order: 1,
+    isPublished: true,
+    isDeleted: false,
+  },
+];
+
 /**
  * Injects baseline snapshots directly into TanStack QueryClient if no cached data exists,
  * guaranteeing instantaneous (0.00ms) first-paint render on first load without layout shifts.
@@ -392,4 +406,5 @@ export function seedInitialQueryData(queryClient: QueryClient): void {
   seedIfMissing([["news", "featured"], { type: "query" }], DEFAULT_FEATURED_NEWS);
   seedIfMissing([["achievements", "list"], { type: "query" }], DEFAULT_ACHIEVEMENTS);
   seedIfMissing([["testimonials", "featured"], { type: "query" }], DEFAULT_TESTIMONIALS);
+  seedIfMissing([["cms", "listVideos"], { type: "query" }], DEFAULT_VIDEOS);
 }

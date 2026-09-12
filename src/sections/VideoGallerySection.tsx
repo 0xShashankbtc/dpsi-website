@@ -24,13 +24,29 @@ function extractYoutubeInfo(url: string) {
 
 import { optimizeMediaUrl } from "./HeroSection";
 
+export const DEFAULT_CAMPUS_VIDEOS = [
+  {
+    id: "campus-tour-main",
+    title: "DPS Indirapuram Virtual Campus Tour & Infrastructure",
+    url: "/videos/campus_hero.mp4",
+    thumbnail: "/images/dps/slider_1.webp",
+    isDirectVideo: true,
+  },
+];
+
 export default function VideoGallerySection() {
   const { data: cmsVideos, isLoading } = trpc.cms.listVideos.useQuery();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const dynamicVideos = cmsVideos
-    ?.filter((v: any) => !v.isDeleted && v.isPublished !== false)
+    ?.filter((v: any) => {
+      if (v.isDeleted || v.isPublished === false) return false;
+      const url = (v.youtubeUrl || v.videoUrl || "").trim();
+      // Remove old dummy placeholder / rickroll video data completely
+      if (/dQw4w9WgXcQ|rickroll|placeholder|example/i.test(url)) return false;
+      return true;
+    })
     ?.map((v: any, i: number) => {
       const targetUrl = (v.youtubeUrl || v.videoUrl || "").trim();
       const yt = targetUrl ? extractYoutubeInfo(targetUrl) : null;
@@ -64,7 +80,7 @@ export default function VideoGallerySection() {
       };
     });
 
-  const videos = dynamicVideos || [];
+  const videos = (dynamicVideos && dynamicVideos.length > 0) ? dynamicVideos : DEFAULT_CAMPUS_VIDEOS;
 
   if (isLoading) {
     return (

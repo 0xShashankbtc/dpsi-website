@@ -222,12 +222,12 @@ export default function Footer() {
       {/* Animated Flickering Grid Canvas Banner */}
       <div className="w-full h-40 md:h-56 relative mt-4 overflow-hidden border-t border-slate-800/80">
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/90 z-10 pointer-events-none" />
-        <div className="absolute inset-0 mx-2 sm:mx-6">
+        <div className="absolute inset-0 mx-2 sm:mx-6 flex items-center justify-center">
           <FlickeringGrid
-            text="DELHI PUBLIC SCHOOL INDIRAPURAM"
-            fontSize={isMobile ? 40 : 68}
-            squareSize={2}
-            gridGap={isMobile ? 2 : 3}
+            text={isMobile ? "DPSI" : "DELHI PUBLIC SCHOOL INDIRAPURAM"}
+            fontSize={isMobile ? 76 : 68}
+            squareSize={isMobile ? 3 : 2}
+            gridGap={3}
             color="#10B981"
             maxOpacity={0.28}
             flickerChance={0.12}
@@ -237,29 +237,40 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">
-            {copyright}
-          </p>
-          {footerCredit && (
-            <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm">
-              <span>{footerCredit.replace(/\(Orange\)/gi, "").trim()}</span>
-              {footerCredit.toLowerCase().includes("orange") && (
-                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                  Orange
-                </span>
-              )}
-            </div>
-          )}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={scrollToTop}
-            className="p-2 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white transition-colors"
-            aria-label="Scroll to top"
-          >
-            <ArrowUp className="w-4 h-4" />
-          </motion.button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 pb-24 sm:pb-5 grid grid-cols-1 sm:grid-cols-3 items-center gap-4 text-center sm:text-left">
+          {/* Left: Copyright */}
+          <div className="flex justify-center sm:justify-start">
+            <p className="text-xs text-slate-500">
+              {copyright}
+            </p>
+          </div>
+
+          {/* Center: Subtle, Unnoticeable Developer Credit without any box on Orange */}
+          <div className="flex justify-center items-center">
+            {footerCredit && (
+              <div className="text-[11px] text-slate-500/70 font-normal tracking-wide flex items-center gap-1 select-none hover:text-slate-400 transition-colors">
+                <span>{footerCredit.replace(/\(Orange\)/gi, "").trim()}</span>
+                {footerCredit.toLowerCase().includes("orange") && (
+                  <span className="text-orange-400/90 font-medium">
+                    Orange
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Scroll to Top */}
+          <div className="flex justify-center sm:justify-end">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={scrollToTop}
+              className="p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              aria-label="Scroll to top"
+            >
+              <ArrowUp className="w-4 h-4" />
+            </motion.button>
+          </div>
         </div>
       </div>
     </footer>

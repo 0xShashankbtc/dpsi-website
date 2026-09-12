@@ -847,30 +847,25 @@ export async function seedDatabase(
       ]);
     }
 
-    // 20. VIDEO GALLERY
+    // 20. VIDEO GALLERY - Purge old placeholder videos & ensure real campus video
+    await VideoGallery.deleteMany({
+      $or: [
+        { youtubeUrl: { $regex: /dQw4w9WgXcQ|rickroll|placeholder|example/i } },
+        { videoUrl: { $regex: /dQw4w9WgXcQ|rickroll|placeholder|example/i } },
+      ],
+    });
+
     const videoCount = await VideoGallery.countDocuments({ isDeleted: false });
     if (videoCount === 0) {
       await VideoGallery.insertMany([
         {
-          title: "DPS Indirapuram Virtual Campus Tour",
+          title: "DPS Indirapuram Virtual Campus Tour & Infrastructure",
           category: "Campus Tour",
-          youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          videoUrl: "/videos/campus_hero.mp4",
           thumbnailUrl: "/images/dps/slider_1.webp",
           order: 1,
-        },
-        {
-          title: "AI & Humanoid Robotics Innovation Lab",
-          category: "Innovation",
-          youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          thumbnailUrl: "/images/facilities/ai_robotics_lab.webp",
-          order: 2,
-        },
-        {
-          title: "Annual Sports Day & Aquatic Championship Highlights",
-          category: "Sports",
-          youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          thumbnailUrl: "/images/facilities/swimming_pool.webp",
-          order: 3,
+          isPublished: true,
+          isDeleted: false,
         },
       ]);
     }
