@@ -217,8 +217,8 @@ export default function Footer() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/90 z-10 pointer-events-none" />
         <div className="absolute inset-0 mx-2 sm:mx-6">
           <FlickeringGrid
-            text={isMobile ? "DPSI" : "DELHI PUBLIC SCHOOL INDIRAPURAM"}
-            fontSize={isMobile ? 48 : 72}
+            text="DELHI PUBLIC SCHOOL INDIRAPURAM"
+            fontSize={isMobile ? 40 : 68}
             squareSize={2}
             gridGap={isMobile ? 2 : 3}
             color="#10B981"

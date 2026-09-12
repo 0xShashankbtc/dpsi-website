@@ -203,8 +203,6 @@ export default function Navbar() {
     return () => window.removeEventListener("dpsi:open-explore", handleOpenExplore);
   }, []);
 
-  const isAdmin = true;
-
   const { data: dbMarquees } = trpc.cms.listMarquees.useQuery();
 
   const phone = getSetting("contact_phone", "+91-0120-4660000, 4670000");
@@ -239,103 +237,91 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="bg-emerald-900 text-white text-xs pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 overflow-hidden border-b border-emerald-700/50">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          <div className="flex-1 overflow-hidden relative">
-            <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-semibold text-emerald-200">
-              {activeMarquees && activeMarquees.length > 0 ? (
-                activeMarquees.map((m: any, idx: number) => (
-                  <React.Fragment key={m._id || idx}>
-                    <span
-                      className="inline-flex items-center gap-2 px-2 py-0.5 rounded-md text-xs font-semibold"
-                      style={{
-                        color: m.textColor || "#ffffff",
-                        backgroundColor: m.bgColor || "transparent",
-                      }}
-                    >
+      <header className="sticky top-0 z-50 w-full transform-gpu">
+        {/* Attached & Connected Green Marquee Top Bar */}
+        <div className="bg-emerald-900 text-white text-xs pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 overflow-hidden border-b border-emerald-700/50">
+          <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+            <div className="flex-1 overflow-hidden relative">
+              <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-semibold text-emerald-200">
+                {activeMarquees && activeMarquees.length > 0 ? (
+                  activeMarquees.map((m: any, idx: number) => (
+                    <React.Fragment key={m._id || idx}>
                       <span
-                        className="w-2 h-2 rounded-full animate-ping shrink-0"
-                        style={{ backgroundColor: m.textColor || "#fbbf24" }}
-                      />
-                      {m.badgeText && (
-                        <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-black/25">
-                          {m.badgeText}
-                        </span>
-                      )}
-                      {m.linkUrl ? (
-                        <a href={m.linkUrl} className="hover:underline">
-                          {m.text}
-                        </a>
-                      ) : (
-                        <span>{m.text}</span>
-                      )}
+                        className="inline-flex items-center gap-2 px-2 py-0.5 rounded-md text-xs font-semibold"
+                        style={{
+                          color: m.textColor || "#ffffff",
+                          backgroundColor: m.bgColor || "transparent",
+                        }}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full animate-ping shrink-0"
+                          style={{ backgroundColor: m.textColor || "#fbbf24" }}
+                        />
+                        {m.badgeText && (
+                          <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-black/25">
+                            {m.badgeText}
+                          </span>
+                        )}
+                        {m.linkUrl ? (
+                          <a href={m.linkUrl} className="hover:underline">
+                            {m.text}
+                          </a>
+                        ) : (
+                          <span>{m.text}</span>
+                        )}
+                      </span>
+                      <span className="text-emerald-400/50">•</span>
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      {tagline.toUpperCase()}
                     </span>
-                    <span className="text-emerald-400/50">•</span>
-                  </React.Fragment>
-                ))
-              ) : (
-
-                <>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                    {tagline.toUpperCase()}
-                  </span>
-                  <span>•</span>
-                  <span>CBSE AFFILIATION NO: {affiliationNo} | SCHOOL CODE: {schoolCode}</span>
-                  <span>•</span>
-                  <span>CALL US: {phone} | EMAIL: {email.toUpperCase()}</span>
-                </>
-              )}
+                    <span>•</span>
+                    <span>CBSE AFFILIATION NO: {affiliationNo} | SCHOOL CODE: {schoolCode}</span>
+                    <span>•</span>
+                    <span>CALL US: {phone} | EMAIL: {email.toUpperCase()}</span>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="hidden lg:flex items-center gap-3 text-[11px] font-bold text-white shrink-0">
-            <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              href="https://dpsindp.schoolforschools.ai/login"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded shadow-md transition-all font-extrabold"
-            >
-              SchoolsOS Login
-            </motion.a>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <a
-                href="https://dpsivr.vercel.app"
+            <div className="hidden lg:flex items-center gap-3 text-[11px] font-bold text-white shrink-0">
+              <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href="https://dpsindp.schoolforschools.ai/login"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded transition-all block font-bold flex items-center gap-1 shadow-xs"
-                title="360 Virtual Tour"
+                className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded shadow-md transition-all font-extrabold"
               >
-                <span>360 View</span>
-              </a>
-            </motion.div>
-            {isAdmin && (
+                SchoolsOS Login
+              </motion.a>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link
-                  to="/admin"
-                  className="px-2 py-0.5 bg-black/40 hover:bg-black/60 text-emerald-300 hover:text-white rounded border border-emerald-500/30 transition-all block text-[10px] font-semibold"
-                  title="Open Admin Dashboard"
+                <a
+                  href="https://dpsivr.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded transition-all block font-bold flex items-center gap-1 shadow-xs"
+                  title="360 Virtual Tour"
                 >
-                  Admin CMS
-                </Link>
+                  <span>360 View</span>
+                </a>
               </motion.div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <motion.header
-        className={`sticky top-0 z-50 w-full transition-colors duration-200 transform-gpu ${
-          isScrolled
-            ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md border-b border-slate-200/60 dark:border-slate-800/60"
-            : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs"
-        }`}
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      >
+        {/* Main Navigation Bar */}
+        <div
+          className={`w-full transition-colors duration-200 transform-gpu ${
+            isScrolled
+              ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md border-b border-slate-200/60 dark:border-slate-800/60"
+              : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-slate-100 dark:border-slate-800/40"
+          }`}
+        >
         <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-18 lg:h-22 gap-2 sm:gap-3 xl:gap-6">
             <Link to="/" className="flex items-center gap-2 group shrink min-w-0 mr-auto lg:mr-8 xl:mr-12">
@@ -651,7 +637,8 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-      </motion.header>
+        </div>
+      </header>
 
       {/* Full-Screen / Viewport-Level Solid Opaque Mobile Navigation Drawer */}
       <AnimatePresence>
@@ -770,15 +757,6 @@ export default function Navbar() {
                     <span>⚡ SchoolsOS Login</span>
                     <span className="text-[11px] opacity-70">↗</span>
                   </a>
-                  {isAdmin && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setIsMobileOpen(false)}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/70 dark:border-emerald-700/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform"
-                    >
-                      <span>🔒 Admin CMS</span>
-                    </Link>
-                  )}
                 </div>
 
                 {/* Navigation Links with generous tap targets */}

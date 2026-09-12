@@ -71,7 +71,7 @@ export default function Layout({ children }: LayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative w-full max-w-full overflow-x-clip">
       <SmoothScroll />
       <ScrollToHash />
       <Suspense fallback={null}>

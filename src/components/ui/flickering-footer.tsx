@@ -797,12 +797,23 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
       const maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
       if (!maskCtx) return;
 
-      // Draw text on mask canvas
+      // Draw text on mask canvas with dynamic display-ratio auto-scaling
       if (text) {
         maskCtx.save();
         maskCtx.scale(dpr, dpr);
         maskCtx.fillStyle = "white";
-        maskCtx.font = `${fontWeight} ${fontSize}px "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+
+        // Auto-scale font size dynamically based on available canvas width
+        let effectiveFontSize = fontSize;
+        const fontFamily = `"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        maskCtx.font = `${fontWeight} ${effectiveFontSize}px ${fontFamily}`;
+        const textMetrics = maskCtx.measureText(text);
+        const maxTextWidth = (width / dpr) * 0.92; // 92% of available width to prevent any overflow
+        if (textMetrics.width > maxTextWidth && textMetrics.width > 0) {
+          effectiveFontSize = Math.max(16, Math.floor(effectiveFontSize * (maxTextWidth / textMetrics.width)));
+          maskCtx.font = `${fontWeight} ${effectiveFontSize}px ${fontFamily}`;
+        }
+
         maskCtx.textAlign = "center";
         maskCtx.textBaseline = "middle";
         maskCtx.fillText(text, width / (2 * dpr), height / (2 * dpr));

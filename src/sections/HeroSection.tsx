@@ -288,7 +288,7 @@ export default function HeroSection() {
               muted={isMuted}
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
               onPlay={() => setIsPlayingVideo(true)}
               onPause={() => setIsPlayingVideo(false)}
               onVolumeChange={() => {
