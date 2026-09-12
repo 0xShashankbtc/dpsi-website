@@ -719,6 +719,46 @@ const CoreValueSchema = new Schema<ICoreValue>(
   { timestamps: true }
 );
 
+// --- Board Results (Academics page: bar chart + pie chart data) ---
+export interface IBoardResult extends Document {
+  year: string;           // e.g. "2025-26"
+  passRate: number;       // e.g. 99.8
+  distinction: number;    // e.g. 65 (number of students with distinction)
+  order: number;
+  isActive: boolean;
+}
+
+const BoardResultSchema = new Schema<IBoardResult>(
+  {
+    year: { type: String, required: true },
+    passRate: { type: Number, required: true, min: 0, max: 100 },
+    distinction: { type: Number, required: true, min: 0 },
+    order: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+// --- Stream Distribution (Academics pie chart — Class XI streams) ---
+export interface IStreamDistribution extends Document {
+  name: string;     // e.g. "Science"
+  value: number;    // e.g. 40 (percentage)
+  color: string;    // e.g. "#047857"
+  order: number;
+  isActive: boolean;
+}
+
+const StreamDistributionSchema = new Schema<IStreamDistribution>(
+  {
+    name: { type: String, required: true },
+    value: { type: Number, required: true, min: 0, max: 100 },
+    color: { type: String, default: "#047857" },
+    order: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
 export interface IRateLimit extends Document {
   key: string;
   count: number;
@@ -778,10 +818,13 @@ export async function getMainModels(tenantId?: string) {
     TimelineItem: conn.models.TimelineItem || conn.model<ITimelineItem>("TimelineItem", TimelineItemSchema),
     CoreValue: conn.models.CoreValue || conn.model<ICoreValue>("CoreValue", CoreValueSchema),
     FeatureCard: conn.models.FeatureCard || conn.model<IFeatureCard>("FeatureCard", FeatureCardSchema),
+    BoardResult: conn.models.BoardResult || conn.model<IBoardResult>("BoardResult", BoardResultSchema),
+    StreamDistribution: conn.models.StreamDistribution || conn.model<IStreamDistribution>("StreamDistribution", StreamDistributionSchema),
     RateLimit: conn.models.RateLimit || conn.model<IRateLimit>("RateLimit", RateLimitSchema),
     AuditLog: conn.models.AuditLog || conn.model<IAuditLog>("AuditLog", AuditLogSchema),
     ContactMessage: conn.models.ContactMessage || conn.model<IContactMessage>("ContactMessage", ContactMessageSchema),
     AdmissionInquiry: conn.models.AdmissionInquiry || conn.model<IAdmissionInquiry>("AdmissionInquiry", AdmissionInquirySchema),
+
   };
 
   modelsCache.set(dbName, { conn, models });

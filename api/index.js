@@ -77018,6 +77018,8 @@ async function getMainModels(tenantId) {
     TimelineItem: conn.models.TimelineItem || conn.model("TimelineItem", TimelineItemSchema),
     CoreValue: conn.models.CoreValue || conn.model("CoreValue", CoreValueSchema),
     FeatureCard: conn.models.FeatureCard || conn.model("FeatureCard", FeatureCardSchema),
+    BoardResult: conn.models.BoardResult || conn.model("BoardResult", BoardResultSchema),
+    StreamDistribution: conn.models.StreamDistribution || conn.model("StreamDistribution", StreamDistributionSchema),
     RateLimit: conn.models.RateLimit || conn.model("RateLimit", RateLimitSchema),
     AuditLog: conn.models.AuditLog || conn.model("AuditLog", AuditLogSchema),
     ContactMessage: conn.models.ContactMessage || conn.model("ContactMessage", ContactMessageSchema),
@@ -77117,7 +77119,7 @@ async function getTcModels(tenantId) {
   modelsCache.set(dbName, { conn, models });
   return models;
 }
-var import_mongoose5, PageSchema, MenuSchema, PopupSchema, MarqueeSchema, ActivitySchema, SliderSchema, AttachmentSchema, MunRegistrationSchema, ContactMessageSchema, AdmissionInquirySchema, GalleryCategorySchema, GalleryImageSchema, VideoGallerySchema, TransferCertificateSchema, SiteSettingsSchema, AiConfigSchema, AchievementSchema, TestimonialSchema, LeadershipSchema, FacilitySchema, FeatureCardSchema, DepartmentSchema, AdmissionStepSchema, FaqSchema, QuickStatSchema, TimelineItemSchema, CoreValueSchema, RateLimitSchema, tenantContextStorage, modelsCache, AuditLogSchema;
+var import_mongoose5, PageSchema, MenuSchema, PopupSchema, MarqueeSchema, ActivitySchema, SliderSchema, AttachmentSchema, MunRegistrationSchema, ContactMessageSchema, AdmissionInquirySchema, GalleryCategorySchema, GalleryImageSchema, VideoGallerySchema, TransferCertificateSchema, SiteSettingsSchema, AiConfigSchema, AchievementSchema, TestimonialSchema, LeadershipSchema, FacilitySchema, FeatureCardSchema, DepartmentSchema, AdmissionStepSchema, FaqSchema, QuickStatSchema, TimelineItemSchema, CoreValueSchema, BoardResultSchema, StreamDistributionSchema, RateLimitSchema, tenantContextStorage, modelsCache, AuditLogSchema;
 var init_cmsSchemas = __esm({
   "server/models/cmsSchemas.ts"() {
     import_mongoose5 = __toESM(require_mongoose2(), 1);
@@ -77482,6 +77484,26 @@ var init_cmsSchemas = __esm({
         order: { type: Number, default: 0 },
         isActive: { type: Boolean, default: true },
         isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    BoardResultSchema = new import_mongoose5.Schema(
+      {
+        year: { type: String, required: true },
+        passRate: { type: Number, required: true, min: 0, max: 100 },
+        distinction: { type: Number, required: true, min: 0 },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true }
+      },
+      { timestamps: true }
+    );
+    StreamDistributionSchema = new import_mongoose5.Schema(
+      {
+        name: { type: String, required: true },
+        value: { type: Number, required: true, min: 0, max: 100 },
+        color: { type: String, default: "#047857" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true }
       },
       { timestamps: true }
     );
@@ -181295,7 +181317,12 @@ var cmsRouter = createRouter({
           { key: "international_logo_url", value: "/images/dps/international_logo.webp", label: "Secondary School Logo URL", group: "branding" },
           { key: "show_international_logo", value: "true", label: "Show Secondary School Logo", group: "branding" },
           { key: "secondary_logo_shape", value: "square", label: "Secondary Logo Shape (square/rounded/circle)", group: "branding" },
-          { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" }
+          { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" },
+          { key: "vision_text", value: "To be a world-class institution that nurtures young minds into responsible global citizens, equipped with the knowledge, skills, and values to lead and innovate in an ever-changing world.", label: "Our Vision (About Us Page)", group: "general" },
+          { key: "mission_text", value: "To provide a stimulating learning environment that fosters academic excellence, physical fitness, emotional well-being, and social responsibility through innovative pedagogy and state-of-the-art infrastructure.", label: "Our Mission (About Us Page)", group: "general" },
+          { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
+          { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
+          { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" }
         ];
         await SiteSettings.insertMany(defaults).catch(() => {
         });
@@ -181317,7 +181344,12 @@ var cmsRouter = createRouter({
         { key: "international_logo_url", value: "/images/dps/international_logo.webp", label: "Secondary School Logo URL", group: "branding" },
         { key: "show_international_logo", value: "true", label: "Show Secondary School Logo", group: "branding" },
         { key: "secondary_logo_shape", value: "square", label: "Secondary Logo Shape (square/rounded/circle)", group: "branding" },
-        { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" }
+        { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" },
+        { key: "vision_text", value: "To be a world-class institution that nurtures young minds into responsible global citizens, equipped with the knowledge, skills, and values to lead and innovate in an ever-changing world.", label: "Our Vision (About Us Page)", group: "general" },
+        { key: "mission_text", value: "To provide a stimulating learning environment that fosters academic excellence, physical fitness, emotional well-being, and social responsibility through innovative pedagogy and state-of-the-art infrastructure.", label: "Our Mission (About Us Page)", group: "general" },
+        { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
+        { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
+        { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" }
       ].filter((d5) => !existingKeys.has(d5.key));
       if (missingDefaults.length > 0) {
         await SiteSettings.insertMany(missingDefaults).catch(() => {
@@ -182139,6 +182171,88 @@ var cmsRouter = createRouter({
       verifiedAt: /* @__PURE__ */ new Date(),
       latestHash: logs[logs.length - 1]?.currentHash
     };
+  }),
+  // --- 36. BOARD RESULTS (Academics page bar chart — pass rates by year) ---
+  listBoardResults: publicQuery.query(async () => {
+    return withCache("cms:boardResults", 60, async () => {
+      const { BoardResult } = await getMainModels();
+      return BoardResult.find({ isActive: true }).sort({ order: 1, year: 1 }).lean();
+    });
+  }),
+  createBoardResult: adminMutation.input(external_exports.object({
+    year: external_exports.string().min(1),
+    passRate: external_exports.number().min(0).max(100),
+    distinction: external_exports.number().min(0),
+    order: external_exports.number().default(0)
+  })).mutation(async ({ input, ctx }) => {
+    const { BoardResult } = await getMainModels();
+    const created = await BoardResult.create({ ...input, isActive: true });
+    await writeAuditLog(ctx, { action: "CREATE", module: "BoardResults", documentId: String(created._id), details: `Created board result for year: ${input.year}` });
+    invalidateCache("cms:boardResults");
+    return created;
+  }),
+  updateBoardResult: adminMutation.input(external_exports.object({
+    id: external_exports.string(),
+    year: external_exports.string().min(1).optional(),
+    passRate: external_exports.number().min(0).max(100).optional(),
+    distinction: external_exports.number().min(0).optional(),
+    order: external_exports.number().optional(),
+    isActive: external_exports.boolean().optional()
+  })).mutation(async ({ input, ctx }) => {
+    const { BoardResult } = await getMainModels();
+    const { id, ...data2 } = input;
+    const updated = await BoardResult.findByIdAndUpdate(id, data2, { new: true });
+    await writeAuditLog(ctx, { action: "UPDATE", module: "BoardResults", documentId: id, details: `Updated board result ${id}` });
+    invalidateCache("cms:boardResults");
+    return updated;
+  }),
+  deleteBoardResult: adminMutation.input(external_exports.string()).mutation(async ({ input: id, ctx }) => {
+    const { BoardResult } = await getMainModels();
+    const deleted = await BoardResult.findByIdAndDelete(id);
+    await writeAuditLog(ctx, { action: "DELETE", module: "BoardResults", documentId: id, details: `Deleted board result ${deleted?.year || id}` });
+    invalidateCache("cms:boardResults");
+    return { success: true };
+  }),
+  // --- 37. STREAM DISTRIBUTION (Academics page pie chart — Class XI streams) ---
+  listStreamDistributions: publicQuery.query(async () => {
+    return withCache("cms:streamDistributions", 60, async () => {
+      const { StreamDistribution } = await getMainModels();
+      return StreamDistribution.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
+  }),
+  createStreamDistribution: adminMutation.input(external_exports.object({
+    name: external_exports.string().min(1),
+    value: external_exports.number().min(0).max(100),
+    color: external_exports.string().default("#047857"),
+    order: external_exports.number().default(0)
+  })).mutation(async ({ input, ctx }) => {
+    const { StreamDistribution } = await getMainModels();
+    const created = await StreamDistribution.create({ ...input, isActive: true });
+    await writeAuditLog(ctx, { action: "CREATE", module: "StreamDistribution", documentId: String(created._id), details: `Created stream: ${input.name}` });
+    invalidateCache("cms:streamDistributions");
+    return created;
+  }),
+  updateStreamDistribution: adminMutation.input(external_exports.object({
+    id: external_exports.string(),
+    name: external_exports.string().min(1).optional(),
+    value: external_exports.number().min(0).max(100).optional(),
+    color: external_exports.string().optional(),
+    order: external_exports.number().optional(),
+    isActive: external_exports.boolean().optional()
+  })).mutation(async ({ input, ctx }) => {
+    const { StreamDistribution } = await getMainModels();
+    const { id, ...data2 } = input;
+    const updated = await StreamDistribution.findByIdAndUpdate(id, data2, { new: true });
+    await writeAuditLog(ctx, { action: "UPDATE", module: "StreamDistribution", documentId: id, details: `Updated stream ${id}` });
+    invalidateCache("cms:streamDistributions");
+    return updated;
+  }),
+  deleteStreamDistribution: adminMutation.input(external_exports.string()).mutation(async ({ input: id, ctx }) => {
+    const { StreamDistribution } = await getMainModels();
+    const deleted = await StreamDistribution.findByIdAndDelete(id);
+    await writeAuditLog(ctx, { action: "DELETE", module: "StreamDistribution", documentId: id, details: `Deleted stream ${deleted?.name || id}` });
+    invalidateCache("cms:streamDistributions");
+    return { success: true };
   })
 });
 

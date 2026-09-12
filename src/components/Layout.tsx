@@ -84,6 +84,7 @@ export default function Layout({ children }: LayoutProps) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
         className="flex-1"
+        style={{ willChange: "opacity" }}
       >
         {children}
       </motion.main>

@@ -302,8 +302,12 @@ export default function HeroSection() {
             <img
               src={slide.image || "/images/dps/slider_1.webp"}
               alt={slide.title}
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-cover object-center will-change-transform"
               loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              width={1920}
+              height={1080}
             />
           )}
 

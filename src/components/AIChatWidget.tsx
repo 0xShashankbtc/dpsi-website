@@ -52,9 +52,7 @@ function getDynamicAction(query: string, text?: string, settings?: { calendarPdf
 export default function AIChatWidget() {
   const aiChatMutation = trpc.ai.chat.useMutation();
   const ttsMutation = trpc.ai.synthesizeSpeech.useMutation();
-  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
-    staleTime: 60000,
-  });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);

@@ -117,6 +117,21 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
+          },
+          {
+            // YouTube video thumbnails used in VideoGallerySection
+            urlPattern: /^https:\/\/img\.youtube\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "youtube-thumbnails",
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 7
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       }
@@ -176,7 +191,7 @@ export default defineConfig({
             if (id.includes("framer-motion")) {
               return "framer-motion";
             }
-            if (id.includes("@trpc") || id.includes("@tanstack/react-query")) {
+            if (id.includes("@trpc") || id.includes("@tanstack/react-query") || id.includes("superjson")) {
               return "trpc-vendor";
             }
           }

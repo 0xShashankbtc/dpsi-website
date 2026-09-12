@@ -28,6 +28,14 @@ export default function About() {
 
   const schoolName = getSetting("school_name", "Delhi Public School Indirapuram");
   const schoolTagline = getSetting("school_tagline", "Service Before Self • Nurturing Global Leaders");
+  const visionText = getSetting(
+    "vision_text",
+    "To be a world-class institution that nurtures young minds into responsible global citizens, equipped with the knowledge, skills, and values to lead and innovate in an ever-changing world."
+  );
+  const missionText = getSetting(
+    "mission_text",
+    "To provide a stimulating learning environment that fosters academic excellence, physical fitness, emotional well-being, and social responsibility through innovative pedagogy and state-of-the-art infrastructure."
+  );
 
   return (
     <Layout>
@@ -80,9 +88,7 @@ export default function About() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Our Vision</h2>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                To be a world-class institution that nurtures young minds into responsible global
-                citizens, equipped with the knowledge, skills, and values to lead and innovate
-                in an ever-changing world.
+                {visionText}
               </p>
             </motion.div>
 
@@ -97,14 +103,13 @@ export default function About() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Our Mission</h2>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                To provide a stimulating learning environment that fosters academic excellence,
-                physical fitness, emotional well-being, and social responsibility through
-                innovative pedagogy and state-of-the-art infrastructure.
+                {missionText}
               </p>
             </motion.div>
           </div>
         </div>
       </section>
+
 
       {/* CORE VALUES */}
       {coreValues && coreValues.length > 0 && (

@@ -1831,6 +1831,11 @@ export const cmsRouter = createRouter({
           { key: "show_international_logo", value: "true", label: "Show Secondary School Logo", group: "branding" },
           { key: "secondary_logo_shape", value: "square", label: "Secondary Logo Shape (square/rounded/circle)", group: "branding" },
           { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" },
+          { key: "vision_text", value: "To be a world-class institution that nurtures young minds into responsible global citizens, equipped with the knowledge, skills, and values to lead and innovate in an ever-changing world.", label: "Our Vision (About Us Page)", group: "general" },
+          { key: "mission_text", value: "To provide a stimulating learning environment that fosters academic excellence, physical fitness, emotional well-being, and social responsibility through innovative pedagogy and state-of-the-art infrastructure.", label: "Our Mission (About Us Page)", group: "general" },
+          { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
+          { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
+          { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" },
         ];
         await SiteSettings.insertMany(defaults).catch(() => {});
         return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
@@ -1854,6 +1859,11 @@ export const cmsRouter = createRouter({
         { key: "show_international_logo", value: "true", label: "Show Secondary School Logo", group: "branding" },
         { key: "secondary_logo_shape", value: "square", label: "Secondary Logo Shape (square/rounded/circle)", group: "branding" },
         { key: "secondary_logo_title", value: "Accreditation & Partner School", label: "Secondary Logo Title", group: "branding" },
+        { key: "vision_text", value: "To be a world-class institution that nurtures young minds into responsible global citizens, equipped with the knowledge, skills, and values to lead and innovate in an ever-changing world.", label: "Our Vision (About Us Page)", group: "general" },
+        { key: "mission_text", value: "To provide a stimulating learning environment that fosters academic excellence, physical fitness, emotional well-being, and social responsibility through innovative pedagogy and state-of-the-art infrastructure.", label: "Our Mission (About Us Page)", group: "general" },
+        { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
+        { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
+        { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" },
       ].filter((d) => !existingKeys.has(d.key));
 
       if (missingDefaults.length > 0) {
@@ -1862,6 +1872,7 @@ export const cmsRouter = createRouter({
       }
 
       return settings;
+
     });
   }),
   updateSiteSettings: adminMutation
@@ -2783,5 +2794,106 @@ export const cmsRouter = createRouter({
       latestHash: logs[logs.length - 1]?.currentHash,
     };
   }),
-});
 
+  // --- 36. BOARD RESULTS (Academics page bar chart — pass rates by year) ---
+  listBoardResults: publicQuery.query(async () => {
+    return withCache("cms:boardResults", 60, async () => {
+      const { BoardResult } = await getMainModels();
+      return BoardResult.find({ isActive: true }).sort({ order: 1, year: 1 }).lean();
+    });
+  }),
+
+  createBoardResult: adminMutation
+    .input(z.object({
+      year: z.string().min(1),
+      passRate: z.number().min(0).max(100),
+      distinction: z.number().min(0),
+      order: z.number().default(0),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { BoardResult } = await getMainModels();
+      const created = await BoardResult.create({ ...input, isActive: true });
+      await writeAuditLog(ctx, { action: "CREATE", module: "BoardResults", documentId: String(created._id), details: `Created board result for year: ${input.year}` });
+      invalidateCache("cms:boardResults");
+      return created;
+    }),
+
+  updateBoardResult: adminMutation
+    .input(z.object({
+      id: z.string(),
+      year: z.string().min(1).optional(),
+      passRate: z.number().min(0).max(100).optional(),
+      distinction: z.number().min(0).optional(),
+      order: z.number().optional(),
+      isActive: z.boolean().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { BoardResult } = await getMainModels();
+      const { id, ...data } = input;
+      const updated = await BoardResult.findByIdAndUpdate(id, data, { new: true });
+      await writeAuditLog(ctx, { action: "UPDATE", module: "BoardResults", documentId: id, details: `Updated board result ${id}` });
+      invalidateCache("cms:boardResults");
+      return updated;
+    }),
+
+  deleteBoardResult: adminMutation
+    .input(z.string())
+    .mutation(async ({ input: id, ctx }) => {
+      const { BoardResult } = await getMainModels();
+      const deleted = await BoardResult.findByIdAndDelete(id);
+      await writeAuditLog(ctx, { action: "DELETE", module: "BoardResults", documentId: id, details: `Deleted board result ${deleted?.year || id}` });
+      invalidateCache("cms:boardResults");
+      return { success: true };
+    }),
+
+  // --- 37. STREAM DISTRIBUTION (Academics page pie chart — Class XI streams) ---
+  listStreamDistributions: publicQuery.query(async () => {
+    return withCache("cms:streamDistributions", 60, async () => {
+      const { StreamDistribution } = await getMainModels();
+      return StreamDistribution.find({ isActive: true }).sort({ order: 1 }).lean();
+    });
+  }),
+
+  createStreamDistribution: adminMutation
+    .input(z.object({
+      name: z.string().min(1),
+      value: z.number().min(0).max(100),
+      color: z.string().default("#047857"),
+      order: z.number().default(0),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { StreamDistribution } = await getMainModels();
+      const created = await StreamDistribution.create({ ...input, isActive: true });
+      await writeAuditLog(ctx, { action: "CREATE", module: "StreamDistribution", documentId: String(created._id), details: `Created stream: ${input.name}` });
+      invalidateCache("cms:streamDistributions");
+      return created;
+    }),
+
+  updateStreamDistribution: adminMutation
+    .input(z.object({
+      id: z.string(),
+      name: z.string().min(1).optional(),
+      value: z.number().min(0).max(100).optional(),
+      color: z.string().optional(),
+      order: z.number().optional(),
+      isActive: z.boolean().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { StreamDistribution } = await getMainModels();
+      const { id, ...data } = input;
+      const updated = await StreamDistribution.findByIdAndUpdate(id, data, { new: true });
+      await writeAuditLog(ctx, { action: "UPDATE", module: "StreamDistribution", documentId: id, details: `Updated stream ${id}` });
+      invalidateCache("cms:streamDistributions");
+      return updated;
+    }),
+
+  deleteStreamDistribution: adminMutation
+    .input(z.string())
+    .mutation(async ({ input: id, ctx }) => {
+      const { StreamDistribution } = await getMainModels();
+      const deleted = await StreamDistribution.findByIdAndDelete(id);
+      await writeAuditLog(ctx, { action: "DELETE", module: "StreamDistribution", documentId: id, details: `Deleted stream ${deleted?.name || id}` });
+      invalidateCache("cms:streamDistributions");
+      return { success: true };
+    }),
+});

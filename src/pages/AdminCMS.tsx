@@ -51,6 +51,9 @@ import {
   Camera,
   Save,
   Sparkles,
+  Target,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 
 import { trpc } from "@/providers/trpc";
@@ -85,6 +88,9 @@ type TabType =
   | "attachments"
   | "tc"
   | "mun"
+  | "core_values"
+  | "timeline"
+  | "board_results"
   | "site_settings"
   | "ai_settings"
   | "audit_logs";
@@ -229,6 +235,18 @@ export default function AdminCMS() {
     enabled: isAuthenticated,
   });
   const { data: statsMetricsList, refetch: refetchStatsMetrics } = trpc.stats.adminList.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: coreValuesList, refetch: refetchCoreValues } = trpc.cms.listCoreValues.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: timelineList, refetch: refetchTimeline } = trpc.cms.listTimeline.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: boardResultsList, refetch: refetchBoardResults } = trpc.cms.listBoardResults.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: streamDistributionsList, refetch: refetchStreamDistributions } = trpc.cms.listStreamDistributions.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -1253,6 +1271,74 @@ export default function AdminCMS() {
     },
   });
 
+  // --- Core Values Mutations ---
+  const [coreValueModal, setCoreValueModal] = useState(false);
+  const [editingCoreValueId, setEditingCoreValueId] = useState<string | null>(null);
+  const [coreValueForm, setCoreValueForm] = useState({ title: "", description: "", icon: "Target", order: 0 });
+  const createCoreValue = trpc.cms.createCoreValue.useMutation({
+    onSuccess: () => { toast.success("Core value added!"); refetchCoreValues(); setCoreValueModal(false); setCoreValueForm({ title: "", description: "", icon: "Target", order: 0 }); },
+    onError: (err: any) => toast.error(err.message || "Failed to add core value"),
+  });
+  const updateCoreValue = trpc.cms.updateCoreValue.useMutation({
+    onSuccess: () => { toast.success("Core value updated!"); refetchCoreValues(); setCoreValueModal(false); setEditingCoreValueId(null); },
+    onError: (err: any) => toast.error(err.message || "Failed to update core value"),
+  });
+  const deleteCoreValue = trpc.cms.deleteCoreValue.useMutation({
+    onSuccess: () => { toast.success("Core value deleted"); refetchCoreValues(); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete core value"),
+  });
+
+  // --- Timeline Mutations ---
+  const [timelineModal, setTimelineModal] = useState(false);
+  const [editingTimelineId, setEditingTimelineId] = useState<string | null>(null);
+  const [timelineForm, setTimelineForm] = useState({ year: "", title: "", description: "", order: 0 });
+  const createTimelineItem = trpc.cms.createTimelineItem.useMutation({
+    onSuccess: () => { toast.success("Timeline item added!"); refetchTimeline(); setTimelineModal(false); setTimelineForm({ year: "", title: "", description: "", order: 0 }); },
+    onError: (err: any) => toast.error(err.message || "Failed to add timeline item"),
+  });
+  const updateTimelineItem = trpc.cms.updateTimelineItem.useMutation({
+    onSuccess: () => { toast.success("Timeline item updated!"); refetchTimeline(); setTimelineModal(false); setEditingTimelineId(null); },
+    onError: (err: any) => toast.error(err.message || "Failed to update timeline item"),
+  });
+  const deleteTimelineItem = trpc.cms.deleteTimelineItem.useMutation({
+    onSuccess: () => { toast.success("Timeline item deleted"); refetchTimeline(); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete timeline item"),
+  });
+
+  // --- Board Results Mutations ---
+  const [boardResultModal, setBoardResultModal] = useState(false);
+  const [editingBoardResultId, setEditingBoardResultId] = useState<string | null>(null);
+  const [boardResultForm, setBoardResultForm] = useState({ year: "2025-26", passRate: 99.9, distinction: 72, order: 0 });
+  const createBoardResult = trpc.cms.createBoardResult.useMutation({
+    onSuccess: () => { toast.success("Board result added!"); refetchBoardResults(); setBoardResultModal(false); setBoardResultForm({ year: "2025-26", passRate: 99.9, distinction: 72, order: 0 }); },
+    onError: (err: any) => toast.error(err.message || "Failed to add board result"),
+  });
+  const updateBoardResult = trpc.cms.updateBoardResult.useMutation({
+    onSuccess: () => { toast.success("Board result updated!"); refetchBoardResults(); setBoardResultModal(false); setEditingBoardResultId(null); },
+    onError: (err: any) => toast.error(err.message || "Failed to update board result"),
+  });
+  const deleteBoardResult = trpc.cms.deleteBoardResult.useMutation({
+    onSuccess: () => { toast.success("Board result deleted"); refetchBoardResults(); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete board result"),
+  });
+
+  // --- Stream Distribution Mutations ---
+  const [streamModal, setStreamModal] = useState(false);
+  const [editingStreamId, setEditingStreamId] = useState<string | null>(null);
+  const [streamForm, setStreamForm] = useState({ name: "", value: 33, color: "#047857", order: 0 });
+  const createStreamDistribution = trpc.cms.createStreamDistribution.useMutation({
+    onSuccess: () => { toast.success("Stream added!"); refetchStreamDistributions(); setStreamModal(false); setStreamForm({ name: "", value: 33, color: "#047857", order: 0 }); },
+    onError: (err: any) => toast.error(err.message || "Failed to add stream"),
+  });
+  const updateStreamDistribution = trpc.cms.updateStreamDistribution.useMutation({
+    onSuccess: () => { toast.success("Stream updated!"); refetchStreamDistributions(); setStreamModal(false); setEditingStreamId(null); },
+    onError: (err: any) => toast.error(err.message || "Failed to update stream"),
+  });
+  const deleteStreamDistribution = trpc.cms.deleteStreamDistribution.useMutation({
+    onSuccess: () => { toast.success("Stream deleted"); refetchStreamDistributions(); },
+    onError: (err: any) => toast.error(err.message || "Failed to delete stream"),
+  });
+
   // Modal Form States
   const [achievementModal, setAchievementModal] = useState(false);
   const [achievementForm, setAchievementForm] = useState({
@@ -1731,8 +1817,12 @@ export default function AdminCMS() {
     { id: "achievements", label: "Academic Toppers", icon: <Trophy className="w-4 h-4" />, count: achievementsList?.length ?? 0 },
     { id: "testimonials", label: "Testimonials", icon: <Heart className="w-4 h-4" />, count: testimonialsList?.length ?? 0 },
     { id: "leadership", label: "Leadership & Faculty", icon: <UserCheck className="w-4 h-4" />, count: leadershipList?.length ?? 0 },
+    { id: "core_values", label: "Core Values (About)", icon: <Target className="w-4 h-4" />, count: coreValuesList?.length ?? 0 },
+    { id: "timeline", label: "School Timeline", icon: <Clock className="w-4 h-4" />, count: timelineList?.length ?? 0 },
     { id: "facilities", label: "Campus Facilities", icon: <Building className="w-4 h-4" />, count: facilitiesList?.length ?? 0 },
+    { id: "feature_cards", label: "3D Feature Cards", icon: <Sparkles className="w-4 h-4" />, count: featureCardsList?.length ?? 0 },
     { id: "departments", label: "Departments", icon: <BookOpen className="w-4 h-4" />, count: departmentsList?.length ?? 0 },
+    { id: "board_results", label: "Board Results & Streams", icon: <TrendingUp className="w-4 h-4" />, count: (boardResultsList?.length ?? 0) + (streamDistributionsList?.length ?? 0) },
     { id: "admission_steps", label: "Admission Steps", icon: <FileText className="w-4 h-4" />, count: admissionStepsList?.length ?? 0 },
     { id: "faqs", label: "Admissions FAQs", icon: <HelpCircle className="w-4 h-4" />, count: faqsList?.length ?? 0 },
     { id: "stats_metrics", label: "Quick Stats & Counters", icon: <BarChart3 className="w-4 h-4" />, count: statsMetricsList?.length ?? 0 },
@@ -3608,6 +3698,174 @@ export default function AdminCMS() {
                 </motion.div>
               )}
 
+              {/* --- CORE VALUES (ABOUT US PAGE) --- */}
+              {activeTab === "core_values" && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">Core Values (About Us Page)</h2>
+                      <p className="text-xs text-slate-500">Manage school core values, principles, and pillars displayed on the About page</p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setEditingCoreValueId(null);
+                        setCoreValueForm({
+                          title: "",
+                          description: "",
+                          icon: "Target",
+                          order: (coreValuesList?.length || 0) + 1,
+                        });
+                        setCoreValueModal(true);
+                      }}
+                      size="sm"
+                      className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Core Value
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {coreValuesList?.map((val: any) => (
+                      <Card key={String(val._id || val.id)} className="bg-white border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px] uppercase">
+                              Icon: {val.icon || "Target"}
+                            </span>
+                            <span className="text-xs text-slate-400 font-mono">Order: #{val.order ?? 0}</span>
+                          </div>
+                          <h3 className="font-bold text-slate-900 text-base">{val.title}</h3>
+                          <p className="text-xs text-slate-600 leading-relaxed">{val.description}</p>
+                        </div>
+                        <div className="flex justify-end gap-1 pt-3 border-t border-slate-100 mt-3">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-slate-600 hover:bg-slate-100 h-7 px-2 cursor-pointer"
+                            onClick={() => {
+                              setEditingCoreValueId(val._id ? String(val._id) : val.id);
+                              setCoreValueForm({
+                                title: val.title || "",
+                                description: val.description || "",
+                                icon: val.icon || "Target",
+                                order: val.order ?? 0,
+                              });
+                              setCoreValueModal(true);
+                            }}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:bg-red-50 h-7 px-2 cursor-pointer"
+                            disabled={deleteCoreValue.isPending}
+                            title="Delete Core Value"
+                            onClick={() => {
+                              const vId = String(val._id || val.id);
+                              if (confirm(`Are you sure you want to delete core value "${val.title || 'this value'}"?`)) {
+                                deleteCoreValue.mutate(vId);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                    {(!coreValuesList || coreValuesList.length === 0) && (
+                      <div className="col-span-full text-center py-10 bg-white border border-dashed border-slate-300 rounded-lg text-slate-400 text-xs">
+                        No core values added yet. Click "Add Core Value" to create one.
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* --- SCHOOL TIMELINE (ABOUT US PAGE) --- */}
+              {activeTab === "timeline" && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">School Journey & Timeline (About Us)</h2>
+                      <p className="text-xs text-slate-500">Milestones, founding year, key achievements, and historical progress</p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setEditingTimelineId(null);
+                        setTimelineForm({
+                          year: "",
+                          title: "",
+                          description: "",
+                          order: (timelineList?.length || 0) + 1,
+                        });
+                        setTimelineModal(true);
+                      }}
+                      size="sm"
+                      className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Milestone
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {timelineList?.map((item: any) => (
+                      <Card key={String(item._id || item.id)} className="bg-white border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 font-extrabold rounded text-xs font-mono">
+                              {item.year}
+                            </span>
+                            <span className="text-xs text-slate-400 font-mono">Order: #{item.order ?? 0}</span>
+                          </div>
+                          <h3 className="font-bold text-slate-900 text-base">{item.title}</h3>
+                          <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                        </div>
+                        <div className="flex justify-end gap-1 pt-3 border-t border-slate-100 mt-3">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-slate-600 hover:bg-slate-100 h-7 px-2 cursor-pointer"
+                            onClick={() => {
+                              setEditingTimelineId(item._id ? String(item._id) : item.id);
+                              setTimelineForm({
+                                year: item.year || "",
+                                title: item.title || "",
+                                description: item.description || "",
+                                order: item.order ?? 0,
+                              });
+                              setTimelineModal(true);
+                            }}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:bg-red-50 h-7 px-2 cursor-pointer"
+                            disabled={deleteTimelineItem.isPending}
+                            title="Delete Milestone"
+                            onClick={() => {
+                              const tId = String(item._id || item.id);
+                              if (confirm(`Are you sure you want to delete timeline item "${item.title || item.year}"?`)) {
+                                deleteTimelineItem.mutate(tId);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                    {(!timelineList || timelineList.length === 0) && (
+                      <div className="col-span-full text-center py-10 bg-white border border-dashed border-slate-300 rounded-lg text-slate-400 text-xs">
+                        No timeline milestones added yet. Click "Add Milestone" to create one.
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
               {/* --- 13. CAMPUS FACILITIES --- */}
               {activeTab === "facilities" && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -3881,6 +4139,186 @@ export default function AdminCMS() {
                         </div>
                       </Card>
                     ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* --- BOARD RESULTS & STREAM DISTRIBUTION (ACADEMICS PAGE) --- */}
+              {activeTab === "board_results" && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                  {/* SECTION 1: BOARD RESULTS (BAR CHART) */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900">Academic Board Results (Bar Chart)</h2>
+                        <p className="text-xs text-slate-500">CBSE Pass Rates & Distinction percentages shown on Academics page</p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setEditingBoardResultId(null);
+                          setBoardResultForm({
+                            year: "",
+                            passRate: 99.9,
+                            distinction: 70,
+                            order: (boardResultsList?.length || 0) + 1,
+                          });
+                          setBoardResultModal(true);
+                        }}
+                        size="sm"
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Board Result
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                      {boardResultsList?.map((r: any) => (
+                        <Card key={String(r._id || r.id)} className="bg-white border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 font-extrabold rounded text-xs font-mono">
+                                Year: {r.year}
+                              </span>
+                              <span className="text-[11px] text-slate-400 font-mono">#{r.order ?? 0}</span>
+                            </div>
+                            <div className="space-y-1 pt-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-500">Pass Rate:</span>
+                                <span className="font-bold text-emerald-700">{r.passRate}%</span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-500">Distinction:</span>
+                                <span className="font-bold text-teal-700">{r.distinction}%</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-1 pt-3 border-t border-slate-100 mt-3">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-slate-600 hover:bg-slate-100 h-7 px-2 cursor-pointer"
+                              onClick={() => {
+                                setEditingBoardResultId(r._id ? String(r._id) : r.id);
+                                setBoardResultForm({
+                                  year: r.year || "",
+                                  passRate: r.passRate ?? 99,
+                                  distinction: r.distinction ?? 60,
+                                  order: r.order ?? 0,
+                                });
+                                setBoardResultModal(true);
+                              }}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:bg-red-50 h-7 px-2 cursor-pointer"
+                              disabled={deleteBoardResult.isPending}
+                              title="Delete Board Result"
+                              onClick={() => {
+                                const rId = String(r._id || r.id);
+                                if (confirm(`Are you sure you want to delete board results for year "${r.year}"?`)) {
+                                  deleteBoardResult.mutate(rId);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                      {(!boardResultsList || boardResultsList.length === 0) && (
+                        <div className="col-span-full text-center py-8 bg-white border border-dashed border-slate-300 rounded-lg text-slate-400 text-xs">
+                          No board results added yet. Fallback default 2022-2026 data is currently displayed on the website. Click "Add Board Result" to customize.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SECTION 2: STREAM DISTRIBUTION (PIE CHART) */}
+                  <div className="space-y-3 pt-4 border-t border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">Student Stream Distribution (Pie Chart)</h3>
+                        <p className="text-xs text-slate-500">Science, Commerce, Humanities percentage splits shown on Academics page</p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setEditingStreamId(null);
+                          setStreamForm({
+                            name: "",
+                            value: 33,
+                            color: "#047857",
+                            order: (streamDistributionsList?.length || 0) + 1,
+                          });
+                          setStreamModal(true);
+                        }}
+                        size="sm"
+                        className="bg-teal-700 hover:bg-teal-800 text-white text-xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Stream
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {streamDistributionsList?.map((s: any) => (
+                        <Card key={String(s._id || s.id)} className="bg-white border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 rounded-full border border-slate-300" style={{ backgroundColor: s.color }} />
+                                <h4 className="font-bold text-slate-900 text-sm">{s.name}</h4>
+                              </div>
+                              <span className="text-base font-extrabold text-slate-800">{s.value}%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+                              <span>Hex Color: <span className="font-mono text-[11px]">{s.color}</span></span>
+                              <span className="font-mono text-[11px]">Order: #{s.order ?? 0}</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-1 pt-3 border-t border-slate-100 mt-3">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-slate-600 hover:bg-slate-100 h-7 px-2 cursor-pointer"
+                              onClick={() => {
+                                setEditingStreamId(s._id ? String(s._id) : s.id);
+                                setStreamForm({
+                                  name: s.name || "",
+                                  value: s.value ?? 33,
+                                  color: s.color || "#047857",
+                                  order: s.order ?? 0,
+                                });
+                                setStreamModal(true);
+                              }}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:bg-red-50 h-7 px-2 cursor-pointer"
+                              disabled={deleteStreamDistribution.isPending}
+                              title="Delete Stream"
+                              onClick={() => {
+                                const sId = String(s._id || s.id);
+                                if (confirm(`Are you sure you want to delete stream "${s.name}"?`)) {
+                                  deleteStreamDistribution.mutate(sId);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                      {(!streamDistributionsList || streamDistributionsList.length === 0) && (
+                        <div className="col-span-full text-center py-8 bg-white border border-dashed border-slate-300 rounded-lg text-slate-400 text-xs">
+                          No stream distribution entries added yet. Fallback default data is currently displayed. Click "Add Stream" to customize.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -7868,6 +8306,243 @@ export default function AdminCMS() {
                   }}
                 >
                   {editingStatMetricId ? "Save Changes" : "Create Counter"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- CORE VALUE MODAL --- */}
+        {coreValueModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900">{editingCoreValueId ? "Edit Core Value" : "Add Core Value"}</h3>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setCoreValueModal(false)}><X className="w-4 h-4" /></Button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Value Title *</label>
+                  <Input value={coreValueForm.title} onChange={(e) => setCoreValueForm({ ...coreValueForm, title: e.target.value })} placeholder="e.g. Integrity & Ethics / Excellence" className="text-xs" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Description / Principle *</label>
+                  <Textarea rows={3} value={coreValueForm.description} onChange={(e) => setCoreValueForm({ ...coreValueForm, description: e.target.value })} placeholder="Detailed guiding principle for students and faculty..." className="text-xs" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Icon</label>
+                    <select
+                      value={coreValueForm.icon}
+                      onChange={(e) => setCoreValueForm({ ...coreValueForm, icon: e.target.value })}
+                      className="w-full h-9 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    >
+                      <option value="Target">Target (Goal & Purpose)</option>
+                      <option value="Award">Award (Achievement)</option>
+                      <option value="Heart">Heart (Compassion)</option>
+                      <option value="BookOpen">BookOpen (Knowledge)</option>
+                      <option value="ShieldCheck">ShieldCheck (Integrity)</option>
+                      <option value="Compass">Compass (Guidance)</option>
+                      <option value="Sparkles">Sparkles (Innovation)</option>
+                      <option value="Trophy">Trophy (Excellence)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Display Order</label>
+                    <Input type="number" value={coreValueForm.order} onChange={(e) => setCoreValueForm({ ...coreValueForm, order: parseInt(e.target.value) || 0 })} placeholder="1" className="text-xs" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setCoreValueModal(false)}>Cancel</Button>
+                <Button
+                  size="sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                  disabled={createCoreValue.isPending || updateCoreValue.isPending}
+                  onClick={() => {
+                    if (!coreValueForm.title || !coreValueForm.description) {
+                      toast.error("Please enter title and description");
+                      return;
+                    }
+                    if (editingCoreValueId) {
+                      updateCoreValue.mutate({ id: editingCoreValueId, ...coreValueForm });
+                    } else {
+                      createCoreValue.mutate(coreValueForm);
+                    }
+                  }}
+                >
+                  {editingCoreValueId ? "Save Changes" : "Create Core Value"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- TIMELINE MODAL --- */}
+        {timelineModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900">{editingTimelineId ? "Edit Milestone" : "Add Milestone"}</h3>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setTimelineModal(false)}><X className="w-4 h-4" /></Button>
+              </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Year / Era *</label>
+                    <Input value={timelineForm.year} onChange={(e) => setTimelineForm({ ...timelineForm, year: e.target.value })} placeholder="e.g. 2003 / 2015" className="text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Display Order</label>
+                    <Input type="number" value={timelineForm.order} onChange={(e) => setTimelineForm({ ...timelineForm, order: parseInt(e.target.value) || 0 })} placeholder="1" className="text-xs" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Milestone Title *</label>
+                  <Input value={timelineForm.title} onChange={(e) => setTimelineForm({ ...timelineForm, title: e.target.value })} placeholder="e.g. Inception & Foundation / Atal Tinkering Lab Setup" className="text-xs" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Description *</label>
+                  <Textarea rows={3} value={timelineForm.description} onChange={(e) => setTimelineForm({ ...timelineForm, description: e.target.value })} placeholder="Brief summary of what was accomplished in this milestone..." className="text-xs" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setTimelineModal(false)}>Cancel</Button>
+                <Button
+                  size="sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                  disabled={createTimelineItem.isPending || updateTimelineItem.isPending}
+                  onClick={() => {
+                    if (!timelineForm.year || !timelineForm.title || !timelineForm.description) {
+                      toast.error("Please enter year, title, and description");
+                      return;
+                    }
+                    if (editingTimelineId) {
+                      updateTimelineItem.mutate({ id: editingTimelineId, ...timelineForm });
+                    } else {
+                      createTimelineItem.mutate(timelineForm);
+                    }
+                  }}
+                >
+                  {editingTimelineId ? "Save Changes" : "Create Milestone"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- BOARD RESULT MODAL --- */}
+        {boardResultModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900">{editingBoardResultId ? "Edit Board Result" : "Add Board Result"}</h3>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setBoardResultModal(false)}><X className="w-4 h-4" /></Button>
+              </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Academic Year *</label>
+                    <Input value={boardResultForm.year} onChange={(e) => setBoardResultForm({ ...boardResultForm, year: e.target.value })} placeholder="e.g. 2025-26 or 2026" className="text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Display Order</label>
+                    <Input type="number" value={boardResultForm.order} onChange={(e) => setBoardResultForm({ ...boardResultForm, order: parseInt(e.target.value) || 0 })} placeholder="1" className="text-xs" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Pass Rate (%) *</label>
+                    <Input type="number" step="0.1" max="100" min="0" value={boardResultForm.passRate} onChange={(e) => setBoardResultForm({ ...boardResultForm, passRate: parseFloat(e.target.value) || 0 })} placeholder="99.9" className="text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Distinction (%) *</label>
+                    <Input type="number" step="0.1" max="100" min="0" value={boardResultForm.distinction} onChange={(e) => setBoardResultForm({ ...boardResultForm, distinction: parseFloat(e.target.value) || 0 })} placeholder="72" className="text-xs" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setBoardResultModal(false)}>Cancel</Button>
+                <Button
+                  size="sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                  disabled={createBoardResult.isPending || updateBoardResult.isPending}
+                  onClick={() => {
+                    if (!boardResultForm.year) {
+                      toast.error("Please enter academic year");
+                      return;
+                    }
+                    if (editingBoardResultId) {
+                      updateBoardResult.mutate({ id: editingBoardResultId, ...boardResultForm });
+                    } else {
+                      createBoardResult.mutate(boardResultForm);
+                    }
+                  }}
+                >
+                  {editingBoardResultId ? "Save Changes" : "Create Board Result"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- STREAM DISTRIBUTION MODAL --- */}
+        {streamModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900">{editingStreamId ? "Edit Stream" : "Add Stream"}</h3>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setStreamModal(false)}><X className="w-4 h-4" /></Button>
+              </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Stream Name *</label>
+                    <Input value={streamForm.name} onChange={(e) => setStreamForm({ ...streamForm, name: e.target.value })} placeholder="e.g. Science / Commerce" className="text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Percentage Split (%) *</label>
+                    <Input type="number" step="1" max="100" min="0" value={streamForm.value} onChange={(e) => setStreamForm({ ...streamForm, value: parseFloat(e.target.value) || 0 })} placeholder="40" className="text-xs" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Hex Color Code</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={streamForm.color}
+                        onChange={(e) => setStreamForm({ ...streamForm, color: e.target.value })}
+                        className="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0"
+                      />
+                      <Input value={streamForm.color} onChange={(e) => setStreamForm({ ...streamForm, color: e.target.value })} placeholder="#047857" className="text-xs font-mono" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Display Order</label>
+                    <Input type="number" value={streamForm.order} onChange={(e) => setStreamForm({ ...streamForm, order: parseInt(e.target.value) || 0 })} placeholder="1" className="text-xs" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setStreamModal(false)}>Cancel</Button>
+                <Button
+                  size="sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                  disabled={createStreamDistribution.isPending || updateStreamDistribution.isPending}
+                  onClick={() => {
+                    if (!streamForm.name) {
+                      toast.error("Please enter stream name");
+                      return;
+                    }
+                    if (editingStreamId) {
+                      updateStreamDistribution.mutate({ id: editingStreamId, ...streamForm });
+                    } else {
+                      createStreamDistribution.mutate(streamForm);
+                    }
+                  }}
+                >
+                  {editingStreamId ? "Save Changes" : "Create Stream"}
                 </Button>
               </div>
             </div>
