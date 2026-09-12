@@ -9,7 +9,7 @@ export const eventsRouter = createRouter({
     return withCache("events:list", 120, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 }).lean();
         return acts.map((a: any) => ({
           id: a._id.toString(),
           _id: a._id.toString(),
@@ -31,7 +31,7 @@ export const eventsRouter = createRouter({
     return withCache("events:all", 120, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 }).lean();
         return acts.map((a: any) => ({
           id: a._id.toString(),
           _id: a._id.toString(),

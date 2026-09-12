@@ -9,7 +9,7 @@ export const statsRouter = createRouter({
     return withCache("stats:list", 300, async () => {
       try {
         const { QuickStat } = await getMainModels();
-        const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });
+        const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 }).lean();
         return docs.map((d: any) => ({
           id: d._id.toString(),
           _id: d._id.toString(),
@@ -28,7 +28,7 @@ export const statsRouter = createRouter({
   adminList: adminQuery.query(async () => {
     try {
       const { QuickStat } = await getMainModels();
-      const docs = await QuickStat.find({ isDeleted: { $ne: true } }).sort({ order: 1 });
+      const docs = await QuickStat.find({ isDeleted: { $ne: true } }).sort({ order: 1 }).lean();
       return docs.map((d: any) => ({
         id: d._id.toString(),
         _id: d._id.toString(),

@@ -13,7 +13,7 @@ export const galleryRouter = createRouter({
     return withCache("gallery:list", 120, async () => {
       try {
         const { GalleryImage } = await getGalleryModels(ctx.tenantId);
-        const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 });
+        const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
         return images.map((img: any, idx: number) => ({
           id: img._id?.toString() || idx + 1,
           title: img.title,
@@ -38,7 +38,7 @@ export const galleryRouter = createRouter({
           if (safeCat.toLowerCase() !== "all") {
             query.category = { $regex: new RegExp(`^${safeCat}$`, "i") };
           }
-          const images = await GalleryImage.find(query).sort({ createdAt: -1 });
+          const images = await GalleryImage.find(query).sort({ createdAt: -1 }).lean();
           return images.map((img: any, idx: number) => ({
             id: img._id?.toString() || idx + 1,
             title: img.title,
@@ -56,8 +56,8 @@ export const galleryRouter = createRouter({
     return withCache("gallery:featured", 120, async () => {
       try {
         const { GalleryImage } = await getGalleryModels(ctx.tenantId);
-        const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8);
-        const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8);
+        const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8).lean();
+        const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8).lean();
         return docs.map((img: any, idx: number) => ({
           id: img._id?.toString() || idx + 1,
           title: img.title,

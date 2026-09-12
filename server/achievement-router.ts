@@ -9,7 +9,7 @@ export const achievementRouter = createRouter({
     return withCache("achievements:list", 120, async () => {
       try {
         const { Achievement } = await getMainModels();
-        const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
         return docs.map((d: any) => ({
           id: d._id.toString(),
           _id: d._id.toString(),
@@ -37,7 +37,7 @@ export const achievementRouter = createRouter({
     return withCache("achievements:featured", 120, async () => {
       try {
         const { Achievement } = await getMainModels();
-        const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 }).lean();
         return docs.map((d: any) => ({
           id: d._id.toString(),
           _id: d._id.toString(),

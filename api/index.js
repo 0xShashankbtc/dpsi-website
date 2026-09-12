@@ -77028,20 +77028,6 @@ async function getMainModels(tenantId) {
   modelsCache.set(dbName, { conn, models });
   return models;
 }
-async function ensureCriticalIndexes(tenantId) {
-  try {
-    const { RateLimit, ContactMessage, AdmissionInquiry } = await getMainModels(tenantId);
-    await Promise.allSettled([
-      RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
-      RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
-      ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
-      AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
-      AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true })
-    ]);
-  } catch (err) {
-    console.warn("[MongoDB] Background index initialization notice:", err?.message);
-  }
-}
 async function createImmutableAuditLog(data2, tenantId) {
   try {
     const targetTenant = tenantId || getActiveTenantId();
@@ -77118,6 +77104,54 @@ async function getTcModels(tenantId) {
   };
   modelsCache.set(dbName, { conn, models });
   return models;
+}
+async function ensureCriticalIndexes(tenantId) {
+  try {
+    const main = await getMainModels(tenantId);
+    const gallery = await getGalleryModels(tenantId);
+    const tc2 = await getTcModels(tenantId);
+    await Promise.allSettled([
+      // Main DB compound indexes
+      main.RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
+      main.RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
+      main.ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true }),
+      main.Page.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
+      main.Page.collection.createIndex({ slug: 1, isDeleted: 1 }, { background: true }),
+      main.Menu.collection.createIndex({ location: 1, isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.Popup.collection.createIndex({ isDeleted: 1, isActive: 1, showOnLoad: 1 }, { background: true }),
+      main.Marquee.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.Activity.collection.createIndex({ isDeleted: 1, eventDate: -1 }, { background: true }),
+      main.Slider.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.Attachment.collection.createIndex({ isDeleted: 1, category: 1, createdAt: -1 }, { background: true }),
+      main.SiteSettings.collection.createIndex({ group: 1, key: 1 }, { background: true }),
+      main.Achievement.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1, featured: 1 }, { background: true }),
+      main.Testimonial.collection.createIndex({ isDeleted: 1, isActive: 1, featured: 1, order: 1 }, { background: true }),
+      main.Leadership.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.Facility.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.Department.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.AdmissionStep.collection.createIndex({ isActive: 1, stepNumber: 1 }, { background: true }),
+      main.Faq.collection.createIndex({ category: 1, isActive: 1, order: 1 }, { background: true }),
+      main.QuickStat.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.TimelineItem.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.CoreValue.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.FeatureCard.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.BoardResult.collection.createIndex({ isActive: 1, order: 1, year: 1 }, { background: true }),
+      main.StreamDistribution.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.AuditLog.collection.createIndex({ sequenceNumber: -1 }, { background: true }),
+      main.AuditLog.collection.createIndex({ timestamp: -1 }, { background: true }),
+      // Gallery DB indexes
+      gallery.GalleryCategory.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      gallery.GalleryImage.collection.createIndex({ isDeleted: 1, category: 1, createdAt: -1 }, { background: true }),
+      gallery.VideoGallery.collection.createIndex({ isDeleted: 1, isPublished: 1, order: 1 }, { background: true }),
+      // TC DB indexes
+      tc2.TransferCertificate.collection.createIndex({ admissionNumber: 1, isDeleted: 1 }, { background: true }),
+      tc2.TransferCertificate.collection.createIndex({ studentName: 1, isDeleted: 1 }, { background: true })
+    ]);
+  } catch (err) {
+    console.warn("[MongoDB] Background index initialization notice:", err?.message);
+  }
 }
 var import_mongoose5, PageSchema, MenuSchema, PopupSchema, MarqueeSchema, ActivitySchema, SliderSchema, AttachmentSchema, MunRegistrationSchema, ContactMessageSchema, AdmissionInquirySchema, GalleryCategorySchema, GalleryImageSchema, VideoGallerySchema, TransferCertificateSchema, SiteSettingsSchema, AiConfigSchema, AchievementSchema, TestimonialSchema, LeadershipSchema, FacilitySchema, FeatureCardSchema, DepartmentSchema, AdmissionStepSchema, FaqSchema, QuickStatSchema, TimelineItemSchema, CoreValueSchema, BoardResultSchema, StreamDistributionSchema, RateLimitSchema, tenantContextStorage, modelsCache, AuditLogSchema;
 var init_cmsSchemas = __esm({
@@ -177286,7 +177320,7 @@ var newsRouter = createRouter({
     return withCache("news:list", 300, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).lean();
         return acts.map((a5, idx) => ({
           id: a5._id?.toString() || idx + 1,
           title: a5.title,
@@ -177308,7 +177342,7 @@ var newsRouter = createRouter({
     return withCache("news:featured", 300, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3).lean();
         return acts.map((a5, idx) => ({
           id: a5._id?.toString() || idx + 1,
           title: a5.title,
@@ -177339,10 +177373,10 @@ var newsRouter = createRouter({
             isDeleted: false,
             isPublished: true,
             title: { $regex: new RegExp(`^${regexPattern}$`, "i") }
-          });
+          }).lean();
         }
         if (!matched) {
-          const recentActs = await Activity.find({ isDeleted: false, isPublished: true }).sort({ createdAt: -1 }).limit(50);
+          const recentActs = await Activity.find({ isDeleted: false, isPublished: true }).sort({ createdAt: -1 }).limit(50).lean();
           matched = recentActs.find((a5) => {
             const s = a5.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
             return s === safeSlug;
@@ -177371,7 +177405,7 @@ var newsRouter = createRouter({
   adminList: adminQuery.query(async () => {
     try {
       const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: false }).sort({ eventDate: -1, createdAt: -1 });
+      const acts = await Activity.find({ isDeleted: false }).sort({ eventDate: -1, createdAt: -1 }).lean();
       return acts.map((a5) => ({
         id: a5._id?.toString(),
         title: a5.title,
@@ -177489,7 +177523,7 @@ var eventsRouter = createRouter({
     return withCache("events:list", 120, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 }).lean();
         return acts.map((a5) => ({
           id: a5._id.toString(),
           _id: a5._id.toString(),
@@ -177510,7 +177544,7 @@ var eventsRouter = createRouter({
     return withCache("events:all", 120, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 }).lean();
         return acts.map((a5) => ({
           id: a5._id.toString(),
           _id: a5._id.toString(),
@@ -177628,7 +177662,7 @@ var galleryRouter = createRouter({
     return withCache("gallery:list", 120, async () => {
       try {
         const { GalleryImage } = await getGalleryModels(ctx.tenantId);
-        const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 });
+        const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
         return images.map((img, idx) => ({
           id: img._id?.toString() || idx + 1,
           title: img.title,
@@ -177650,7 +177684,7 @@ var galleryRouter = createRouter({
         if (safeCat.toLowerCase() !== "all") {
           query.category = { $regex: new RegExp(`^${safeCat}$`, "i") };
         }
-        const images = await GalleryImage.find(query).sort({ createdAt: -1 });
+        const images = await GalleryImage.find(query).sort({ createdAt: -1 }).lean();
         return images.map((img, idx) => ({
           id: img._id?.toString() || idx + 1,
           title: img.title,
@@ -177667,8 +177701,8 @@ var galleryRouter = createRouter({
     return withCache("gallery:featured", 120, async () => {
       try {
         const { GalleryImage } = await getGalleryModels(ctx.tenantId);
-        const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8);
-        const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8);
+        const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8).lean();
+        const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8).lean();
         return docs.map((img, idx) => ({
           id: img._id?.toString() || idx + 1,
           title: img.title,
@@ -177834,7 +177868,7 @@ var testimonialRouter = createRouter({
     return withCache("testimonials:list", 120, async () => {
       try {
         const { Testimonial } = await getMainModels();
-        const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
         return docs.map((d5) => ({
           id: d5._id.toString(),
           _id: d5._id.toString(),
@@ -177857,7 +177891,7 @@ var testimonialRouter = createRouter({
     return withCache("testimonials:featured", 120, async () => {
       try {
         const { Testimonial } = await getMainModels();
-        const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 }).lean();
         return docs.map((d5) => ({
           id: d5._id.toString(),
           _id: d5._id.toString(),
@@ -177958,7 +177992,7 @@ var achievementRouter = createRouter({
     return withCache("achievements:list", 120, async () => {
       try {
         const { Achievement } = await getMainModels();
-        const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
         return docs.map((d5) => ({
           id: d5._id.toString(),
           _id: d5._id.toString(),
@@ -177985,7 +178019,7 @@ var achievementRouter = createRouter({
     return withCache("achievements:featured", 120, async () => {
       try {
         const { Achievement } = await getMainModels();
-        const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 }).lean();
         return docs.map((d5) => ({
           id: d5._id.toString(),
           _id: d5._id.toString(),
@@ -178096,7 +178130,7 @@ var announcementRouter = createRouter({
     return withCache("announcements:list", 300, async () => {
       try {
         const { Marquee } = await getMainModels();
-        const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
+        const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 }).lean();
         return marquees.map((m3, idx) => ({
           id: m3._id?.toString() || idx + 1,
           title: m3.text,
@@ -178112,7 +178146,7 @@ var announcementRouter = createRouter({
   adminList: adminQuery.query(async () => {
     try {
       const { Marquee } = await getMainModels();
-      const marquees = await Marquee.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+      const marquees = await Marquee.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
       return marquees.map((m3, idx) => ({
         id: m3._id?.toString() || idx + 1,
         title: m3.text,
@@ -178217,7 +178251,7 @@ var statsRouter = createRouter({
     return withCache("stats:list", 300, async () => {
       try {
         const { QuickStat } = await getMainModels();
-        const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });
+        const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 }).lean();
         return docs.map((d5) => ({
           id: d5._id.toString(),
           _id: d5._id.toString(),
@@ -178235,7 +178269,7 @@ var statsRouter = createRouter({
   adminList: adminQuery.query(async () => {
     try {
       const { QuickStat } = await getMainModels();
-      const docs = await QuickStat.find({ isDeleted: { $ne: true } }).sort({ order: 1 });
+      const docs = await QuickStat.find({ isDeleted: { $ne: true } }).sort({ order: 1 }).lean();
       return docs.map((d5) => ({
         id: d5._id.toString(),
         _id: d5._id.toString(),
@@ -180262,59 +180296,67 @@ var cmsRouter = createRouter({
   }),
   // --- 2. DASHBOARD STATS ---
   dashboardStats: publicQuery.query(async () => {
-    const { Page, Activity, Popup, Slider, Attachment, MunRegistration } = await getMainModels();
-    const { GalleryImage, VideoGallery } = await getGalleryModels();
-    const { TransferCertificate } = await getTcModels();
-    const [
-      totalPages,
-      totalActivities,
-      totalPopups,
-      totalSliders,
-      totalAttachments,
-      totalMun,
-      totalImages,
-      totalVideos,
-      totalTc
-    ] = await Promise.all([
-      Page.countDocuments({ isDeleted: false }),
-      Activity.countDocuments({ isDeleted: false }),
-      Popup.countDocuments({ isDeleted: false }),
-      Slider.countDocuments({ isDeleted: false }),
-      Attachment.countDocuments({ isDeleted: false }),
-      MunRegistration.countDocuments({ isDeleted: false }),
-      GalleryImage.countDocuments({ isDeleted: false }),
-      VideoGallery.countDocuments({ isDeleted: false }),
-      TransferCertificate.countDocuments({ isDeleted: false })
-    ]);
-    return {
-      pages: totalPages,
-      activities: totalActivities,
-      popups: totalPopups,
-      sliders: totalSliders,
-      attachments: totalAttachments,
-      munRegistrations: totalMun,
-      galleryImages: totalImages,
-      videos: totalVideos,
-      transferCertificates: totalTc
-    };
+    return withCache("cms:dashboardStats", 60, async () => {
+      const { Page, Activity, Popup, Slider, Attachment, MunRegistration } = await getMainModels();
+      const { GalleryImage, VideoGallery } = await getGalleryModels();
+      const { TransferCertificate } = await getTcModels();
+      const [
+        totalPages,
+        totalActivities,
+        totalPopups,
+        totalSliders,
+        totalAttachments,
+        totalMun,
+        totalImages,
+        totalVideos,
+        totalTc
+      ] = await Promise.all([
+        Page.countDocuments({ isDeleted: false }),
+        Activity.countDocuments({ isDeleted: false }),
+        Popup.countDocuments({ isDeleted: false }),
+        Slider.countDocuments({ isDeleted: false }),
+        Attachment.countDocuments({ isDeleted: false }),
+        MunRegistration.countDocuments({ isDeleted: false }),
+        GalleryImage.countDocuments({ isDeleted: false }),
+        VideoGallery.countDocuments({ isDeleted: false }),
+        TransferCertificate.countDocuments({ isDeleted: false })
+      ]);
+      return {
+        pages: totalPages,
+        activities: totalActivities,
+        popups: totalPopups,
+        sliders: totalSliders,
+        attachments: totalAttachments,
+        munRegistrations: totalMun,
+        galleryImages: totalImages,
+        videos: totalVideos,
+        transferCertificates: totalTc
+      };
+    });
   }),
   // --- 3. MANAGE PAGES ---
   listPages: publicQuery.input(external_exports.object({ showTrash: external_exports.boolean().default(false) }).optional()).query(async ({ input }) => {
-    const { Page } = await getMainModels();
-    if (input?.showTrash) {
-      return Page.find({ isDeleted: true }).sort({ createdAt: -1 });
-    }
-    return Page.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    const showTrash = !!input?.showTrash;
+    const cacheKey = showTrash ? "cms:pages:trash" : "cms:pages:published";
+    return withCache(cacheKey, 300, async () => {
+      const { Page } = await getMainModels();
+      if (showTrash) {
+        return Page.find({ isDeleted: true }).sort({ createdAt: -1 }).lean();
+      }
+      return Page.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
+    });
   }),
   getPageBySlug: publicQuery.input(external_exports.object({ slug: external_exports.string() })).query(async ({ input }) => {
-    const { Page } = await getMainModels();
     const cleanSlug = input.slug.replace(/^\/+/, "").trim();
     const safeSlug = escapeRegex3(cleanSlug);
-    const page = await Page.findOne({
-      slug: { $regex: new RegExp(`^${safeSlug}$`, "i") },
-      isDeleted: { $ne: true }
+    return withCache(`cms:page:${cleanSlug.toLowerCase()}`, 300, async () => {
+      const { Page } = await getMainModels();
+      const page = await Page.findOne({
+        slug: { $regex: new RegExp(`^${safeSlug}$`, "i") },
+        isDeleted: { $ne: true }
+      }).lean();
+      return page || null;
     });
-    return page || null;
   }),
   createPage: adminMutation.input(
     external_exports.object({
@@ -180367,6 +180409,9 @@ var cmsRouter = createRouter({
       },
       ctx.tenantId
     );
+    invalidateCache("cms:pages");
+    invalidateCache("cms:page:");
+    invalidateCache("cms:dashboardStats");
     return pageDoc;
   }),
   updatePage: adminMutation.input(
@@ -180401,6 +180446,8 @@ var cmsRouter = createRouter({
         ctx.tenantId
       );
     }
+    invalidateCache("cms:pages");
+    invalidateCache("cms:page:");
     return updated;
   }),
   deletePage: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -180439,6 +180486,9 @@ var cmsRouter = createRouter({
       documentId: pageId,
       details: `Deleted dynamic page: ${deleted?.title || pageId}`
     });
+    invalidateCache("cms:pages");
+    invalidateCache("cms:page:");
+    invalidateCache("cms:dashboardStats");
     return deleted || { success: true, id: pageId };
   }),
   // --- 4. MANAGE MENUS ---
@@ -180891,7 +180941,7 @@ var cmsRouter = createRouter({
   listAttachments: publicQuery.query(async () => {
     return withCache("cms:attachments", 300, async () => {
       const { Attachment } = await getMainModels();
-      return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+      return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
     });
   }),
   createAttachment: adminMutation.input(
@@ -180967,7 +181017,7 @@ var cmsRouter = createRouter({
       if (input?.category && input.category !== "All") {
         filter.category = input.category;
       }
-      return GalleryImage.find(filter).sort({ createdAt: -1 });
+      return GalleryImage.find(filter).sort({ createdAt: -1 }).lean();
     });
   }),
   createGalleryImage: adminMutation.input(
@@ -181021,7 +181071,7 @@ var cmsRouter = createRouter({
   listVideos: publicQuery.query(async () => {
     return withCache("cms:videos", 300, async () => {
       const { VideoGallery } = await getGalleryModels();
-      return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+      return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
     });
   }),
   createVideo: adminMutation.input(
@@ -181116,7 +181166,7 @@ var cmsRouter = createRouter({
         ];
       }
       const queryLimit = input?.limit || 100;
-      return await TransferCertificate.find(filter).sort({ dateOfIssue: -1 }).limit(queryLimit);
+      return await TransferCertificate.find(filter).sort({ dateOfIssue: -1 }).limit(queryLimit).lean();
     } catch {
       return [];
     }
@@ -181171,7 +181221,7 @@ var cmsRouter = createRouter({
         { admissionNumber: { $regex: new RegExp(`^${escapeRegex3(baseAlphanumeric)}$`, "i") } }
       ],
       isDeleted: false
-    });
+    }).lean();
     const matched = candidateMatches.find((cert) => {
       const recordDob = cert.dob ? String(cert.dob).trim().replace(/\s+/g, "") : "2010-01-01";
       const recordDate = new Date(recordDob);
@@ -181287,10 +181337,12 @@ var cmsRouter = createRouter({
     })
   ).mutation(async ({ input }) => {
     const { TransferCertificate } = await getTcModels();
-    return TransferCertificate.create({
+    const created = await TransferCertificate.create({
       ...input,
       dateOfIssue: new Date(input.dateOfIssue)
     });
+    invalidateCache("tc:");
+    return created;
   }),
   updateTc: adminMutation.input(
     external_exports.object({
@@ -181313,7 +181365,9 @@ var cmsRouter = createRouter({
     if (input.dateOfIssue) {
       updateData.dateOfIssue = new Date(input.dateOfIssue);
     }
-    return TransferCertificate.findByIdAndUpdate(input.id, updateData, { new: true });
+    const updated = await TransferCertificate.findByIdAndUpdate(input.id, updateData, { new: true });
+    invalidateCache("tc:");
+    return updated;
   }),
   deleteTc: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]), permanent: external_exports.boolean().default(true) })).mutation(async ({ input, ctx }) => {
     const { TransferCertificate } = await getTcModels();
@@ -181335,12 +181389,13 @@ var cmsRouter = createRouter({
       documentId: tcId,
       details: `Deleted TC: ${deleted?.studentName || tcId} (Adm #${deleted?.admissionNumber || "N/A"})`
     });
+    invalidateCache("tc:");
     return deleted || { success: true, id: tcId };
   }),
   // --- 13. MUN REGISTRATIONS ---
   listMunRegistrations: adminQuery.query(async () => {
     const { MunRegistration } = await getMainModels();
-    return MunRegistration.find({ isDeleted: false }).sort({ createdAt: -1 });
+    return MunRegistration.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
   }),
   updateMunStatus: adminMutation.input(
     external_exports.object({

@@ -16,10 +16,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "doppler:pull": "node scripts/doppler-sync.mjs pull prd",
-    "doppler:push": "node scripts/doppler-sync.mjs push prd",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "doppler:push": "node scripts/doppler-sync.mjs push prd"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.965.0",

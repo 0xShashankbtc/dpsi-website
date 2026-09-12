@@ -4,7 +4,7 @@ import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { clsx, type ClassValue } from "clsx";
 import * as Color from "color-bits";
 import { motion } from "motion/react";
-import Link from "next/link";
+import { Link } from "react-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -1121,7 +1121,7 @@ export const Component = () => {
     <footer id="footer" className="w-full pb-0">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between p-10">
         <div className="flex flex-col items-start justify-start gap-y-5 max-w-xs mx-0">
-          <Link href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <Icons.logo className="size-8" />
             <p className="text-xl font-semibold text-primary">Footer</p>
           </Link>
@@ -1151,7 +1151,7 @@ export const Component = () => {
                     key={link.id}
                     className="group inline-flex cursor-pointer items-center justify-start gap-1 text-[15px]/snug text-muted-foreground"
                   >
-                    <Link href={link.url}>{link.title}</Link>
+                    <Link to={link.url}>{link.title}</Link>
                     <div className="flex size-4 items-center justify-center border border-border rounded translate-x-0 transform opacity-0 transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:opacity-100">
                       <ChevronRightIcon className="h-4 w-4 " />
                     </div>

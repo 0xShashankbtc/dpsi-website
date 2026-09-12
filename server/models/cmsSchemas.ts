@@ -833,23 +833,6 @@ export async function getMainModels(tenantId?: string) {
   return models;
 }
 
-/**
- * Proactively builds critical database indexes in Atlas on boot (TTL for RateLimit, lookups for Inquiries).
- */
-export async function ensureCriticalIndexes(tenantId?: string): Promise<void> {
-  try {
-    const { RateLimit, ContactMessage, AdmissionInquiry } = await getMainModels(tenantId);
-    await Promise.allSettled([
-      RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
-      RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
-      ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
-      AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
-      AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true }),
-    ]);
-  } catch (err: any) {
-    console.warn("[MongoDB] Background index initialization notice:", err?.message);
-  }
-}
 
 export interface IAuditLog extends Document {
   sequenceNumber: number;
@@ -994,4 +977,60 @@ export async function getTcModels(tenantId?: string) {
 
   modelsCache.set(dbName, { conn, models });
   return models;
+}
+
+/**
+ * Proactively builds critical database compound indexes in Atlas on boot across all collections.
+ * Turns full collection scans (COLLSCAN) into instant sub-10ms index scans (IXSCAN).
+ */
+export async function ensureCriticalIndexes(tenantId?: string): Promise<void> {
+  try {
+    const main = await getMainModels(tenantId);
+    const gallery = await getGalleryModels(tenantId);
+    const tc = await getTcModels(tenantId);
+
+    await Promise.allSettled([
+      // Main DB compound indexes
+      main.RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
+      main.RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
+      main.ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true }),
+      main.Page.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
+      main.Page.collection.createIndex({ slug: 1, isDeleted: 1 }, { background: true }),
+      main.Menu.collection.createIndex({ location: 1, isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.Popup.collection.createIndex({ isDeleted: 1, isActive: 1, showOnLoad: 1 }, { background: true }),
+      main.Marquee.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.Activity.collection.createIndex({ isDeleted: 1, eventDate: -1 }, { background: true }),
+      main.Slider.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.Attachment.collection.createIndex({ isDeleted: 1, category: 1, createdAt: -1 }, { background: true }),
+      main.SiteSettings.collection.createIndex({ group: 1, key: 1 }, { background: true }),
+      main.Achievement.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1, featured: 1 }, { background: true }),
+      main.Testimonial.collection.createIndex({ isDeleted: 1, isActive: 1, featured: 1, order: 1 }, { background: true }),
+      main.Leadership.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.Facility.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.Department.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.AdmissionStep.collection.createIndex({ isActive: 1, stepNumber: 1 }, { background: true }),
+      main.Faq.collection.createIndex({ category: 1, isActive: 1, order: 1 }, { background: true }),
+      main.QuickStat.collection.createIndex({ isDeleted: 1, isActive: 1, order: 1 }, { background: true }),
+      main.TimelineItem.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.CoreValue.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.FeatureCard.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.BoardResult.collection.createIndex({ isActive: 1, order: 1, year: 1 }, { background: true }),
+      main.StreamDistribution.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      main.AuditLog.collection.createIndex({ sequenceNumber: -1 }, { background: true }),
+      main.AuditLog.collection.createIndex({ timestamp: -1 }, { background: true }),
+
+      // Gallery DB indexes
+      gallery.GalleryCategory.collection.createIndex({ isActive: 1, order: 1 }, { background: true }),
+      gallery.GalleryImage.collection.createIndex({ isDeleted: 1, category: 1, createdAt: -1 }, { background: true }),
+      gallery.VideoGallery.collection.createIndex({ isDeleted: 1, isPublished: 1, order: 1 }, { background: true }),
+
+      // TC DB indexes
+      tc.TransferCertificate.collection.createIndex({ admissionNumber: 1, isDeleted: 1 }, { background: true }),
+      tc.TransferCertificate.collection.createIndex({ studentName: 1, isDeleted: 1 }, { background: true }),
+    ]);
+  } catch (err: any) {
+    console.warn("[MongoDB] Background index initialization notice:", err?.message);
+  }
 }

@@ -9,7 +9,7 @@ export const newsRouter = createRouter({
     return withCache("news:list", 300, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).lean();
         return acts.map((a: any, idx: number) => ({
           id: a._id?.toString() || idx + 1,
           title: a.title,
@@ -32,7 +32,7 @@ export const newsRouter = createRouter({
     return withCache("news:featured", 300, async () => {
       try {
         const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3).lean();
         return acts.map((a: any, idx: number) => ({
           id: a._id?.toString() || idx + 1,
           title: a.title,
@@ -67,12 +67,12 @@ export const newsRouter = createRouter({
               isDeleted: false,
               isPublished: true,
               title: { $regex: new RegExp(`^${regexPattern}$`, "i") },
-            });
+            }).lean();
           }
 
           if (!matched) {
             // Fallback check limited to top 50 recent published items
-            const recentActs = await Activity.find({ isDeleted: false, isPublished: true }).sort({ createdAt: -1 }).limit(50);
+            const recentActs = await Activity.find({ isDeleted: false, isPublished: true }).sort({ createdAt: -1 }).limit(50).lean();
             matched = recentActs.find((a: any) => {
               const s = a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
               return s === safeSlug;
@@ -103,7 +103,7 @@ export const newsRouter = createRouter({
   adminList: adminQuery.query(async () => {
     try {
       const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: false }).sort({ eventDate: -1, createdAt: -1 });
+      const acts = await Activity.find({ isDeleted: false }).sort({ eventDate: -1, createdAt: -1 }).lean();
       return acts.map((a: any) => ({
         id: a._id?.toString(),
         title: a.title,

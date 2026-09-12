@@ -9,7 +9,7 @@ export const announcementRouter = createRouter({
     return withCache("announcements:list", 300, async () => {
       try {
         const { Marquee } = await getMainModels();
-        const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
+        const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 }).lean();
         return marquees.map((m: any, idx: number) => ({
           id: m._id?.toString() || idx + 1,
           title: m.text,
@@ -26,7 +26,7 @@ export const announcementRouter = createRouter({
   adminList: adminQuery.query(async () => {
     try {
       const { Marquee } = await getMainModels();
-      const marquees = await Marquee.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+      const marquees = await Marquee.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
       return marquees.map((m: any, idx: number) => ({
         id: m._id?.toString() || idx + 1,
         title: m.text,

@@ -78,6 +78,7 @@ const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: (import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "") + "/api/trpc",
+      maxURLLength: 4096,
       transformer: superjson,
       headers() {
         const isAdminRoute =

@@ -26,12 +26,6 @@
       ],
       "@contracts/*": [
         "./contracts/*"
-      ],
-      "@db/*": [
-        "./db/*"
-      ],
-      "next/link": [
-        "./src/lib/next-link-shim.tsx"
       ]
     }
   }

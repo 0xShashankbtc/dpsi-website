@@ -9,7 +9,7 @@ export const testimonialRouter = createRouter({
     return withCache("testimonials:list", 120, async () => {
       try {
         const { Testimonial } = await getMainModels();
-        const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
         return docs.map((d: any) => ({
           id: d._id.toString(),
           _id: d._id.toString(),
@@ -33,7 +33,7 @@ export const testimonialRouter = createRouter({
     return withCache("testimonials:featured", 120, async () => {
       try {
         const { Testimonial } = await getMainModels();
-        const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 }).lean();
         return docs.map((d: any) => ({
           id: d._id.toString(),
           _id: d._id.toString(),

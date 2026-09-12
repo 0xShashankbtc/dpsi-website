@@ -614,66 +614,74 @@ export const cmsRouter = createRouter({
 
   // --- 2. DASHBOARD STATS ---
   dashboardStats: publicQuery.query(async () => {
-    const { Page, Activity, Popup, Slider, Attachment, MunRegistration } = await getMainModels();
-    const { GalleryImage, VideoGallery } = await getGalleryModels();
-    const { TransferCertificate } = await getTcModels();
+    return withCache("cms:dashboardStats", 60, async () => {
+      const { Page, Activity, Popup, Slider, Attachment, MunRegistration } = await getMainModels();
+      const { GalleryImage, VideoGallery } = await getGalleryModels();
+      const { TransferCertificate } = await getTcModels();
 
-    const [
-      totalPages,
-      totalActivities,
-      totalPopups,
-      totalSliders,
-      totalAttachments,
-      totalMun,
-      totalImages,
-      totalVideos,
-      totalTc,
-    ] = await Promise.all([
-      Page.countDocuments({ isDeleted: false }),
-      Activity.countDocuments({ isDeleted: false }),
-      Popup.countDocuments({ isDeleted: false }),
-      Slider.countDocuments({ isDeleted: false }),
-      Attachment.countDocuments({ isDeleted: false }),
-      MunRegistration.countDocuments({ isDeleted: false }),
-      GalleryImage.countDocuments({ isDeleted: false }),
-      VideoGallery.countDocuments({ isDeleted: false }),
-      TransferCertificate.countDocuments({ isDeleted: false }),
-    ]);
+      const [
+        totalPages,
+        totalActivities,
+        totalPopups,
+        totalSliders,
+        totalAttachments,
+        totalMun,
+        totalImages,
+        totalVideos,
+        totalTc,
+      ] = await Promise.all([
+        Page.countDocuments({ isDeleted: false }),
+        Activity.countDocuments({ isDeleted: false }),
+        Popup.countDocuments({ isDeleted: false }),
+        Slider.countDocuments({ isDeleted: false }),
+        Attachment.countDocuments({ isDeleted: false }),
+        MunRegistration.countDocuments({ isDeleted: false }),
+        GalleryImage.countDocuments({ isDeleted: false }),
+        VideoGallery.countDocuments({ isDeleted: false }),
+        TransferCertificate.countDocuments({ isDeleted: false }),
+      ]);
 
-    return {
-      pages: totalPages,
-      activities: totalActivities,
-      popups: totalPopups,
-      sliders: totalSliders,
-      attachments: totalAttachments,
-      munRegistrations: totalMun,
-      galleryImages: totalImages,
-      videos: totalVideos,
-      transferCertificates: totalTc,
-    };
+      return {
+        pages: totalPages,
+        activities: totalActivities,
+        popups: totalPopups,
+        sliders: totalSliders,
+        attachments: totalAttachments,
+        munRegistrations: totalMun,
+        galleryImages: totalImages,
+        videos: totalVideos,
+        transferCertificates: totalTc,
+      };
+    });
   }),
 
   // --- 3. MANAGE PAGES ---
   listPages: publicQuery
     .input(z.object({ showTrash: z.boolean().default(false) }).optional())
     .query(async ({ input }) => {
-      const { Page } = await getMainModels();
-      if (input?.showTrash) {
-        return Page.find({ isDeleted: true }).sort({ createdAt: -1 });
-      }
-      return Page.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+      const showTrash = !!input?.showTrash;
+      const cacheKey = showTrash ? "cms:pages:trash" : "cms:pages:published";
+      return withCache(cacheKey, 300, async () => {
+        const { Page } = await getMainModels();
+        if (showTrash) {
+          return Page.find({ isDeleted: true }).sort({ createdAt: -1 }).lean();
+        }
+        return Page.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
+      });
     }),
   getPageBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      const { Page } = await getMainModels();
       const cleanSlug = input.slug.replace(/^\/+/, "").trim();
       const safeSlug = escapeRegex(cleanSlug);
-      const page = await Page.findOne({
-        slug: { $regex: new RegExp(`^${safeSlug}$`, "i") },
-        isDeleted: { $ne: true },
+      return withCache(`cms:page:${cleanSlug.toLowerCase()}`, 300, async () => {
+        const { Page } = await getMainModels();
+        const page = await Page.findOne({
+          slug: { $regex: new RegExp(`^${safeSlug}$`, "i") },
+          isDeleted: { $ne: true },
+        }).lean();
+        return page || null;
       });
-      return page || null;
     }),
   createPage: adminMutation
     .input(
@@ -731,6 +739,9 @@ export const cmsRouter = createRouter({
         ctx.tenantId
       );
 
+      invalidateCache("cms:pages");
+      invalidateCache("cms:page:");
+      invalidateCache("cms:dashboardStats");
       return pageDoc;
     }),
   updatePage: adminMutation
@@ -767,6 +778,8 @@ export const cmsRouter = createRouter({
           ctx.tenantId
         );
       }
+      invalidateCache("cms:pages");
+      invalidateCache("cms:page:");
       return updated;
     }),
   deletePage: adminMutation
@@ -809,6 +822,9 @@ export const cmsRouter = createRouter({
         documentId: pageId,
         details: `Deleted dynamic page: ${deleted?.title || pageId}`,
       });
+      invalidateCache("cms:pages");
+      invalidateCache("cms:page:");
+      invalidateCache("cms:dashboardStats");
       return deleted || { success: true, id: pageId };
     }),
 
@@ -1320,7 +1336,7 @@ export const cmsRouter = createRouter({
   listAttachments: publicQuery.query(async () => {
     return withCache("cms:attachments", 300, async () => {
       const { Attachment } = await getMainModels();
-      return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+      return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
     });
   }),
   createAttachment: adminMutation
@@ -1409,7 +1425,7 @@ export const cmsRouter = createRouter({
         if (input?.category && input.category !== "All") {
           filter.category = input.category;
         }
-        return GalleryImage.find(filter).sort({ createdAt: -1 });
+        return GalleryImage.find(filter).sort({ createdAt: -1 }).lean();
       });
     }),
   createGalleryImage: adminMutation
@@ -1469,7 +1485,7 @@ export const cmsRouter = createRouter({
   listVideos: publicQuery.query(async () => {
     return withCache("cms:videos", 300, async () => {
       const { VideoGallery } = await getGalleryModels();
-      return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+      return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
     });
   }),
   createVideo: adminMutation
@@ -1579,7 +1595,7 @@ export const cmsRouter = createRouter({
         }
 
         const queryLimit = input?.limit || 100;
-        return await TransferCertificate.find(filter).sort({ dateOfIssue: -1 }).limit(queryLimit);
+        return await TransferCertificate.find(filter).sort({ dateOfIssue: -1 }).limit(queryLimit).lean();
       } catch {
         return [];
       }
@@ -1647,7 +1663,7 @@ export const cmsRouter = createRouter({
           { admissionNumber: { $regex: new RegExp(`^${escapeRegex(baseAlphanumeric)}$`, "i") } },
         ],
         isDeleted: false,
-      });
+      }).lean();
 
       // Strict validation: Must match BOTH admissionNumber AND dob together
       const matched = candidateMatches.find((cert: any) => {
@@ -1796,10 +1812,12 @@ export const cmsRouter = createRouter({
     )
     .mutation(async ({ input }) => {
       const { TransferCertificate } = await getTcModels();
-      return TransferCertificate.create({
+      const created = await TransferCertificate.create({
         ...input,
         dateOfIssue: new Date(input.dateOfIssue),
       });
+      invalidateCache("tc:");
+      return created;
     }),
   updateTc: adminMutation
     .input(
@@ -1824,7 +1842,9 @@ export const cmsRouter = createRouter({
       if (input.dateOfIssue) {
         updateData.dateOfIssue = new Date(input.dateOfIssue);
       }
-      return TransferCertificate.findByIdAndUpdate(input.id, updateData, { new: true });
+      const updated = await TransferCertificate.findByIdAndUpdate(input.id, updateData, { new: true });
+      invalidateCache("tc:");
+      return updated;
     }),
   deleteTc: adminMutation
     .input(z.object({ id: z.union([z.string(), z.any()]), permanent: z.boolean().default(true) }))
@@ -1850,13 +1870,14 @@ export const cmsRouter = createRouter({
         documentId: tcId,
         details: `Deleted TC: ${deleted?.studentName || tcId} (Adm #${deleted?.admissionNumber || "N/A"})`,
       });
+      invalidateCache("tc:");
       return deleted || { success: true, id: tcId };
     }),
 
   // --- 13. MUN REGISTRATIONS ---
   listMunRegistrations: adminQuery.query(async () => {
     const { MunRegistration } = await getMainModels();
-    return MunRegistration.find({ isDeleted: false }).sort({ createdAt: -1 });
+    return MunRegistration.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
   }),
   updateMunStatus: adminMutation
     .input(

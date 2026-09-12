@@ -1,8 +1,9 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import Layout from "@/components/Layout";
 import HeroSection from "@/sections/HeroSection";
 import AnnouncementsBar from "@/sections/AnnouncementsBar";
 import QuickStats from "@/sections/QuickStats";
+import { trpc } from "@/providers/trpc";
 
 // Below-fold sections: lazy-loaded to defer JS parsing until needed
 // This removes ~120KB from the critical-path bundle
@@ -22,6 +23,27 @@ function SectionSkeleton({ height = "h-64" }: { height?: string }) {
 }
 
 export default function Home() {
+  const utils = trpc.useUtils();
+
+  useEffect(() => {
+    // Eagerly prefetch all Home page queries in a single batched HTTP request
+    // This primes the TanStack Query cache before the user scrolls, eliminating all loading delays
+    utils.cms.getSiteSettings.prefetch();
+    utils.cms.listMenus.prefetch({ location: "header" });
+    utils.cms.listMenus.prefetch({ location: "footer_quick" });
+    utils.cms.listMenus.prefetch({ location: "footer_resources" });
+    utils.cms.listMarquees.prefetch();
+    utils.announcements.list.prefetch();
+    utils.stats.list.prefetch();
+    utils.cms.listSliders.prefetch();
+    utils.cms.listFacilities.prefetch();
+    utils.cms.listActivities.prefetch();
+    utils.news.featured.prefetch();
+    utils.achievements.list.prefetch();
+    utils.testimonials.featured.prefetch();
+    utils.cms.listVideos.prefetch();
+  }, [utils]);
+
   return (
     <Layout>
       {/* 1. Full-Screen Cinematic Hero Video — above fold, eager */}
