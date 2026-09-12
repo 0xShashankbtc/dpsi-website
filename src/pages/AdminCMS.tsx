@@ -67,6 +67,15 @@ import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 import { toast } from "sonner";
 import { formatISTDate } from "@/lib/dateUtils";
 import RichTextEditor from "@/components/RichTextEditor";
+import {
+  Sidebar001,
+  Sidebar001Header,
+  Sidebar001Content,
+  Sidebar001Section,
+  Sidebar001Group,
+  Sidebar001Item,
+  Sidebar001Footer,
+} from "@/components/ui/sidebar-001";
 
 type TabType =
   | "dashboard"
@@ -101,6 +110,7 @@ export default function AdminCMS() {
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [tabSearch, setTabSearch] = useState("");
+  const [navSearch, setNavSearch] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return !!localStorage.getItem("dpsi_admin_token") || localStorage.getItem("dpsi_admin_auth") === "true";
@@ -1882,6 +1892,56 @@ export default function AdminCMS() {
     { id: "audit_logs", label: "Immutable Audit Logs", icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />, count: auditLogsList?.length ?? null },
   ];
 
+  const navMenuItemsMap = useMemo(() => {
+    return new Map(navMenuItems.map((item) => [item.id, item]));
+  }, [navMenuItems]);
+
+  const contentMediaTabIds = useMemo(() => [
+    "pages",
+    "menus",
+    "sliders",
+    "gallery",
+    "videos",
+    "marquee",
+    "popups",
+    "activities",
+    "attachments",
+  ], []);
+
+  const academicsCampusTabIds = useMemo(() => [
+    "achievements",
+    "facilities",
+    "feature_cards",
+    "departments",
+    "board_results",
+    "core_values",
+    "timeline",
+    "leadership",
+    "testimonials",
+  ], []);
+
+  const admissionsPortalTabIds = useMemo(() => [
+    "admission_steps",
+    "faqs",
+    "stats_metrics",
+    "tc",
+    "mun",
+  ], []);
+
+  const systemAdminTabIds = useMemo(() => [
+    "site_settings",
+    "ai_settings",
+    "audit_logs",
+  ], []);
+
+  const filteredNavItems = useMemo(() => {
+    if (!navSearch.trim()) return [];
+    const q = navSearch.toLowerCase().trim();
+    return navMenuItems.filter((item) =>
+      item.label.toLowerCase().includes(q) || item.id.toLowerCase().includes(q)
+    );
+  }, [navMenuItems, navSearch]);
+
 
 
   // 🔒 LIGHT LOGIN VIEW / FIRST TIME PASSWORD RESET VIEW
@@ -2290,41 +2350,219 @@ export default function AdminCMS() {
 
         <div className="max-w-[1750px] w-full mx-auto px-2 sm:px-4 lg:px-6 pt-5">
           <div className="flex flex-col lg:flex-row gap-5 items-start">
-            {/* Left Nav Bar - Independent Sticky Scroll */}
-            <div className="w-full lg:w-64 bg-white border border-slate-200 rounded-xl p-3 shadow-sm shrink-0 lg:sticky lg:top-[68px] lg:h-[calc(100vh-88px)] lg:overflow-y-auto custom-scrollbar">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-2">
-                Menu Navigation
-              </div>
-              <div className="space-y-1">
-                {navMenuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id as TabType)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      activeTab === item.id
-                        ? "bg-emerald-800 text-white shadow-sm"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {item.icon}
-                      <span>{item.label}</span>
+            {/* Left Nav Bar - Animated Resizable Sidebar-001 */}
+            <Sidebar001
+              defaultWidth={280}
+              minWidth={240}
+              maxWidth={380}
+              className="w-full lg:w-auto bg-white border border-slate-200 rounded-2xl shadow-sm shrink-0 lg:sticky lg:top-[68px] lg:h-[calc(100vh-88px)] overflow-hidden"
+            >
+              <Sidebar001Header className="bg-slate-50/70 border-b border-slate-100 px-3 py-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="size-6 rounded-lg bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                      D
                     </div>
-                    {item.count !== null && item.count !== undefined && (
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                          activeTab === item.id
-                            ? "bg-emerald-950/50 text-white"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {item.count}
-                      </span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold tracking-tight text-slate-900 truncate">
+                        DPSI CMS
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-medium leading-none">
+                        Admin Portal
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                    27 Tabs
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Quick jump / search..."
+                    value={navSearch}
+                    onChange={(e) => setNavSearch(e.target.value)}
+                    className="w-full pl-8 pr-7 py-1 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-600 transition-all text-slate-800 placeholder:text-slate-400 shadow-2xs"
+                  />
+                  {navSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setNavSearch("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </Sidebar001Header>
+
+              <Sidebar001Content className="px-1.5 py-2">
+                {navSearch.trim() ? (
+                  <Sidebar001Section label={`Matches (${filteredNavItems.length})`}>
+                    {filteredNavItems.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400">
+                        No tabs match "{navSearch}"
+                      </div>
+                    ) : (
+                      filteredNavItems.map((item) => (
+                        <Sidebar001Item
+                          key={item.id}
+                          href={`#${item.id}`}
+                          label={item.label}
+                          icon={item.icon}
+                          count={item.count}
+                          isActive={activeTab === item.id}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveTab(item.id as TabType);
+                          }}
+                        />
+                      ))
                     )}
-                  </button>
-                ))}
-              </div>
-            </div>
+                  </Sidebar001Section>
+                ) : (
+                  <>
+                    <Sidebar001Section label="Overview">
+                      {(() => {
+                        const item = navMenuItemsMap.get("dashboard");
+                        if (!item) return null;
+                        return (
+                          <Sidebar001Item
+                            key="dashboard"
+                            href="#dashboard"
+                            label={item.label}
+                            icon={item.icon}
+                            count={item.count}
+                            isActive={activeTab === "dashboard"}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setActiveTab("dashboard");
+                            }}
+                          />
+                        );
+                      })()}
+                    </Sidebar001Section>
+
+                    <Sidebar001Section label="Modules">
+                      <Sidebar001Group
+                        label="Content & Media"
+                        icon={<FileText className="w-4 h-4" />}
+                        defaultOpen={true}
+                      >
+                        {contentMediaTabIds.map((id) => {
+                          const item = navMenuItemsMap.get(id);
+                          if (!item) return null;
+                          return (
+                            <Sidebar001Item
+                              key={item.id}
+                              href={`#${item.id}`}
+                              label={item.label}
+                              icon={item.icon}
+                              count={item.count}
+                              isActive={activeTab === item.id}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab(item.id as TabType);
+                              }}
+                            />
+                          );
+                        })}
+                      </Sidebar001Group>
+
+                      <Sidebar001Group
+                        label="Academics & Campus"
+                        icon={<Building className="w-4 h-4" />}
+                        defaultOpen={true}
+                      >
+                        {academicsCampusTabIds.map((id) => {
+                          const item = navMenuItemsMap.get(id);
+                          if (!item) return null;
+                          return (
+                            <Sidebar001Item
+                              key={item.id}
+                              href={`#${item.id}`}
+                              label={item.label}
+                              icon={item.icon}
+                              count={item.count}
+                              isNew={id === "achievements" || id === "feature_cards"}
+                              isActive={activeTab === item.id}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab(item.id as TabType);
+                              }}
+                            />
+                          );
+                        })}
+                      </Sidebar001Group>
+
+                      <Sidebar001Group
+                        label="Admissions & Portal"
+                        icon={<Award className="w-4 h-4" />}
+                        defaultOpen={true}
+                      >
+                        {admissionsPortalTabIds.map((id) => {
+                          const item = navMenuItemsMap.get(id);
+                          if (!item) return null;
+                          return (
+                            <Sidebar001Item
+                              key={item.id}
+                              href={`#${item.id}`}
+                              label={item.label}
+                              icon={item.icon}
+                              count={item.count}
+                              isActive={activeTab === item.id}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab(item.id as TabType);
+                              }}
+                            />
+                          );
+                        })}
+                      </Sidebar001Group>
+
+                      <Sidebar001Group
+                        label="System & Administration"
+                        icon={<Settings className="w-4 h-4" />}
+                        defaultOpen={true}
+                      >
+                        {systemAdminTabIds.map((id) => {
+                          const item = navMenuItemsMap.get(id);
+                          if (!item) return null;
+                          return (
+                            <Sidebar001Item
+                              key={item.id}
+                              href={`#${item.id}`}
+                              label={item.label}
+                              icon={item.icon}
+                              count={item.count}
+                              isActive={activeTab === item.id}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab(item.id as TabType);
+                              }}
+                            />
+                          );
+                        })}
+                      </Sidebar001Group>
+                    </Sidebar001Section>
+                  </>
+                )}
+              </Sidebar001Content>
+
+              <Sidebar001Footer className="bg-slate-50/70 border-t border-slate-100 py-2.5 px-3">
+                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                  <div className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="font-medium text-slate-600">Database Live</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                    v2.5
+                  </span>
+                </div>
+              </Sidebar001Footer>
+            </Sidebar001>
 
             {/* Right Main Body Content Panel */}
             <div className="flex-1 w-full min-w-0">

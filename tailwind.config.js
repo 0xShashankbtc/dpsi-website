@@ -48,6 +48,7 @@ module.exports = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "accent-pro": "var(--accent-pro, #f12e54)",
       },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
