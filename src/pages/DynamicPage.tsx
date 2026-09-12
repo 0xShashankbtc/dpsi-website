@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router";
 import { motion } from "framer-motion";
 import { ChevronRight, Calendar, ArrowLeft, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { formatISTDate } from "@/lib/dateUtils";
@@ -18,6 +19,15 @@ export default function DynamicPage() {
 
   return (
     <Layout>
+      <SEO
+        title={page?.metaTitle || page?.title || "Page"}
+        description={
+          page?.metaDescription ||
+          (page?.title
+            ? `Read ${page.title} on Delhi Public School Indirapuram.`
+            : "Delhi Public School Indirapuram official page.")
+        }
+      />
       <div className="min-h-[70vh] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {isLoading ? (

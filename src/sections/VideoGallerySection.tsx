@@ -216,8 +216,17 @@ export default function VideoGallerySection() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ duration: 0.4 }}
-                    className="relative w-full h-full cursor-pointer"
+                    className="relative w-full h-full cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
                     onClick={() => setIsPlaying(true)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Play video: ${activeVideo.title}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setIsPlaying(true);
+                      }
+                    }}
                   >
                     <img
                       src={activeVideo.thumbnail}
@@ -235,8 +244,8 @@ export default function VideoGallerySection() {
                         <p className="text-[11px] text-slate-300 font-medium">DPS Indirapuram Official Channel</p>
                       </div>
 
-                      {/* Center Minimalist Play Button */}
-                      <div className="self-center my-auto relative">
+                      {/* Center Play Button */}
+                      <div className="self-center">
                         <motion.div
                           whileHover={{ scale: 1.15 }}
                           whileTap={{ scale: 0.95 }}
@@ -248,7 +257,9 @@ export default function VideoGallerySection() {
 
                       {/* Bottom Watch prompt */}
                       <div className="self-end text-xs font-semibold text-white/90 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-sm">
-                        Click to Watch Video ▶
+                        <span className="inline-flex items-center gap-1.5">
+                          Click to Watch Video <Play className="w-2.5 h-2.5 fill-current inline ml-0.5" />
+                        </span>
                       </div>
                     </div>
                   </motion.div>

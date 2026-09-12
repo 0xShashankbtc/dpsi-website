@@ -12,6 +12,7 @@ import {
   FileCheck2,
 } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,10 @@ export default function TransferCertificate() {
 
   return (
     <Layout>
+      <SEO
+        title="Transfer Certificate (TC) Verification"
+        description="Digitally authenticate and download official Transfer Certificates issued by DPS Indirapuram."
+      />
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header Banner */}
@@ -83,11 +88,12 @@ export default function TransferCertificate() {
             <form onSubmit={handleVerify} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+                  <label htmlFor="tc-admission-number" className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
                     Student Admission Number
                   </label>
                   <Input
+                    id="tc-admission-number"
                     type="text"
                     placeholder="e.g. DPSI-1082 or ADM-18492"
                     value={admissionNumber}
@@ -99,11 +105,12 @@ export default function TransferCertificate() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+                  <label htmlFor="tc-dob" className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-emerald-600" />
                     Date of Birth (DOB)
                   </label>
                   <Input
+                    id="tc-dob"
                     type="date"
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}

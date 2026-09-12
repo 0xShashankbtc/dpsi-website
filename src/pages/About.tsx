@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Target, Eye, Heart, BookOpen, Users, Award, Shield, Compass, Sparkles } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -39,6 +40,10 @@ export default function About() {
 
   return (
     <Layout>
+      <SEO
+        title="About Us & Leadership"
+        description="Learn about the heritage, vision, mission, and leadership of Delhi Public School Indirapuram, Ghaziabad."
+      />
       <section className="relative py-20 sm:py-24 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div

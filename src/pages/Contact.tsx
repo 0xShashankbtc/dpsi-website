@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Layout from "@/components/Layout";
 import LazyMap from "@/components/LazyMap";
+import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 
 export default function Contact() {
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const getSetting = (key: string, fallback: string) => {
     const item = siteSettings?.find((s: any) => s.key === key);
@@ -25,16 +27,27 @@ export default function Contact() {
   const officeHours = getSetting("office_hours", "Monday – Saturday: 8:00 AM – 3:00 PM (Second & Fourth Saturdays Closed)");
 
   const mutation = trpc.contact.create.useMutation({
-    onSuccess: () => setSubmitted(true),
+    onSuccess: () => {
+      setSubmitted(true);
+      setErrorMessage(null);
+    },
+    onError: (err) => {
+      setErrorMessage(err.message || "Failed to send message. Please try again.");
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     mutation.mutate(form);
   };
 
   return (
     <Layout>
+      <SEO
+        title="Contact Us"
+        description="Reach out to DPS Indirapuram admissions office, administration, and campus location in Ahinsa Khand-II, Ghaziabad."
+      />
       <section className="relative py-20 sm:py-24 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div
@@ -127,6 +140,11 @@ export default function Contact() {
               ) : (
                 <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-8 space-y-5">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Send a Message</h2>
+                  {errorMessage && (
+                    <div role="alert" className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-sm font-medium">
+                      {errorMessage}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>

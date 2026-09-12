@@ -13,10 +13,20 @@ import app from './boot';
  */
 export default async function handler(req: any, res: any) {
   try {
-    // 1. Buffer the incoming Node stream safely
+    // 1. Buffer the incoming Node stream safely (capped at 20MB to prevent memory exhaustion)
+    const MAX_BUFFER_BYTES = 20 * 1024 * 1024;
+    let totalBytes = 0;
     const chunks: Buffer[] = [];
     for await (const chunk of req) {
-      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+      const buf = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+      totalBytes += buf.length;
+      if (totalBytes > MAX_BUFFER_BYTES) {
+        res.statusCode = 413;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Payload Too Large" }));
+        return;
+      }
+      chunks.push(buf);
     }
     const bodyBuffer = Buffer.concat(chunks);
 

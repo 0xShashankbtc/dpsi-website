@@ -37,12 +37,43 @@ export function Spotlight({
     }
   }, []);
 
+  const rectRef = useRef<{ left: number; top: number } | null>(null);
+  const rafId = useRef<number | null>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+    if (parentElement) {
+      const rect = parentElement.getBoundingClientRect();
+      rectRef.current = { left: rect.left, top: rect.top };
+    }
+  }, [parentElement]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    rectRef.current = null;
+    if (rafId.current) {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = null;
+    }
+  }, []);
+
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
-      if (!parentElement) return;
-      const { left, top } = parentElement.getBoundingClientRect();
-      mouseX.set(event.clientX - left);
-      mouseY.set(event.clientY - top);
+      if (!rectRef.current && parentElement) {
+        const rect = parentElement.getBoundingClientRect();
+        rectRef.current = { left: rect.left, top: rect.top };
+      }
+      if (!rectRef.current) return;
+
+      const clientX = event.clientX;
+      const clientY = event.clientY;
+
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        if (!rectRef.current) return;
+        mouseX.set(clientX - rectRef.current.left);
+        mouseY.set(clientY - rectRef.current.top);
+      });
     },
     [mouseX, mouseY, parentElement]
   );
@@ -50,18 +81,19 @@ export function Spotlight({
   useEffect(() => {
     if (!parentElement) return;
 
-    parentElement.addEventListener('mousemove', handleMouseMove);
-    parentElement.addEventListener('mouseenter', () => setIsHovered(true));
-    parentElement.addEventListener('mouseleave', () => setIsHovered(false));
+    parentElement.addEventListener('mousemove', handleMouseMove, { passive: true });
+    parentElement.addEventListener('mouseenter', handleMouseEnter);
+    parentElement.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
       parentElement.removeEventListener('mousemove', handleMouseMove);
-      parentElement.removeEventListener('mouseenter', () => setIsHovered(true));
-      parentElement.removeEventListener('mouseleave', () =>
-        setIsHovered(false)
-      );
+      parentElement.removeEventListener('mouseenter', handleMouseEnter);
+      parentElement.removeEventListener('mouseleave', handleMouseLeave);
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
     };
-  }, [parentElement, handleMouseMove]);
+  }, [parentElement, handleMouseMove, handleMouseEnter, handleMouseLeave]);
 
   return (
     <motion.div

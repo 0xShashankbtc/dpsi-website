@@ -3,6 +3,7 @@ import { CalendarDays, Clock, ArrowRight, MapPin, Newspaper, Calendar } from "lu
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 import { formatISTDate } from "@/lib/dateUtils";
 
@@ -61,6 +62,10 @@ export default function NewsEvents() {
 
   return (
     <Layout>
+      <SEO
+        title="News & Events"
+        description="Latest updates, student achievements, celebrations, and notices from Delhi Public School Indirapuram."
+      />
       <section className="relative py-20 sm:py-24 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div
@@ -190,8 +195,8 @@ export default function NewsEvents() {
                             {event.image ? (
                               <img src={event.image} alt={event.title} className="w-full h-full object-cover" loading="lazy" />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-blue-900 to-slate-900 flex items-center justify-center p-6 text-center">
-                                <CalendarDays className="w-10 h-10 text-sky-300/60" />
+                              <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-slate-900 to-amber-950/40 flex items-center justify-center p-6 text-center">
+                                <CalendarDays className="w-10 h-10 text-emerald-300/60" />
                               </div>
                             )}
                             <div className="absolute top-3 left-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl p-2.5 text-center min-w-[60px] shadow-lg border border-slate-200 dark:border-slate-800">

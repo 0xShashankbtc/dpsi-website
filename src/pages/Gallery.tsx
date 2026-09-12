@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Layers, Image as ImageIcon } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 import VideoGallerySection from "@/sections/VideoGallerySection";
 import { CoverflowCarousel, type CoverflowSlide } from "@/components/ui/coverflow-carousel";
@@ -67,6 +68,10 @@ export default function Gallery() {
 
   return (
     <Layout>
+      <SEO
+        title="Campus Gallery"
+        description="Explore campus photo gallery, events, labs, sports grounds, and facilities at DPS Indirapuram."
+      />
       <section className="relative py-20 sm:py-24 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div
@@ -147,6 +152,8 @@ export default function Gallery() {
               {categories.map((cat) => (
                 <button
                   key={cat}
+                  type="button"
+                  aria-pressed={selectedCategory === cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
                     selectedCategory === cat

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import mongoose from "mongoose";
+import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, publicMutation, adminQuery, adminMutation } from "./middleware";
 import { getMainModels, checkPersistentRateLimit, createImmutableAuditLog } from "./models/cmsSchemas";
 
@@ -13,19 +14,22 @@ export const admissionRouter = createRouter({
         phone: z.string().min(10).max(20),
         grade: z.string().min(1).max(50),
         dob: z.string().min(1).max(50),
-        address: z.string().min(5),
+        address: z.string().min(5).max(500),
         city: z.string().min(2).max(100),
         state: z.string().min(2).max(100),
         pincode: z.string().min(4).max(20),
         previousSchool: z.string().max(255).optional(),
-        message: z.string().optional(),
+        message: z.string().max(3000).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
       const allowed = await checkPersistentRateLimit(`admission:${clientIp}`, 10, 60);
       if (!allowed) {
-        return { success: false, error: "Too many registration attempts. Please wait a moment before trying again." };
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many registration attempts. Please wait a moment before trying again.",
+        });
       }
       try {
         const { AdmissionInquiry } = await getMainModels();
@@ -47,15 +51,19 @@ export const admissionRouter = createRouter({
         });
         return { success: true, id: doc._id.toString() };
       } catch (err: any) {
+        if (err instanceof TRPCError) throw err;
         console.error("[Admission] Failed to save admission application:", err?.message);
-        return { success: false, error: "Failed to submit admission application. Please try again or contact the admissions desk." };
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to submit admission application. Please try again or contact the admissions desk.",
+        });
       }
     }),
 
   list: adminQuery.query(async () => {
     try {
       const { AdmissionInquiry } = await getMainModels();
-      const docs = await AdmissionInquiry.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200);
+      const docs = await AdmissionInquiry.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200).lean();
       return docs.map((doc: any) => ({
         id: doc._id.toString(),
         _id: doc._id.toString(),

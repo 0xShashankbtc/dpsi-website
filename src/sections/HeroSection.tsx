@@ -316,6 +316,11 @@ export default function HeroSection() {
         </motion.div>
       </AnimatePresence>
 
+      {/* PRIMARY SEMANTIC H1 FOR ACCESSIBILITY & SEO */}
+      <h1 className="sr-only">
+        Delhi Public School Indirapuram — Premier CBSE School in Ghaziabad
+      </h1>
+
       {/* TOP PORTION: ADMISSIONS OPEN BADGE (86% TRANSPARENT GLASSMORPHISM) */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}

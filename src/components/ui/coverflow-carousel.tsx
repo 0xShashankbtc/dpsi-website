@@ -301,6 +301,8 @@ export function CoverflowCarousel({
                 <img
                   src={slide.src}
                   alt={slide.alt}
+                  loading="lazy"
+                  decoding="async"
                   draggable={false}
                   className="h-full w-full select-none object-cover"
                 />

@@ -116,9 +116,18 @@ export default function Navbar() {
   );
 
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+    let timer: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setWindowWidth(window.innerWidth);
+      }, 150);
+    };
     window.addEventListener("resize", handleResize, { passive: true });
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   // Determine max visible top-level links before overflowing to "More" dropdown
@@ -333,6 +342,8 @@ export default function Navbar() {
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 src={logoUrl}
                 alt={schoolName}
+                width={240}
+                height={84}
                 style={
                   windowWidth < 640
                     ? { height: "32px", maxHeight: "34px" }
@@ -682,6 +693,10 @@ export default function Navbar() {
                   <img
                     src={logoUrl}
                     alt={schoolName}
+                    loading="lazy"
+                    decoding="async"
+                    width={160}
+                    height={40}
                     className="h-9 sm:h-10 w-auto object-contain shrink-0"
                   />
                   <div className="flex flex-col min-w-0">
@@ -842,6 +857,10 @@ export default function Navbar() {
                         }
                       }}
                       alt="British Council International Dimension in Schools"
+                      loading="lazy"
+                      decoding="async"
+                      width={48}
+                      height={48}
                       className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded drop-shadow-xs shrink-0"
                     />
                     <div className="flex flex-col">

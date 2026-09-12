@@ -18,14 +18,11 @@
     "moduleResolution": "bundler",
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "strict": false,
+    "strict": true,
     "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@contracts/*": [
-        "./contracts/*"
       ]
     }
   }

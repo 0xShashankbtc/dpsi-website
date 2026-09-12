@@ -432,7 +432,7 @@ export default function InteractiveFacilitiesSection() {
                         <p className={`text-xs font-semibold uppercase tracking-widest ${theme.catColor}`}>
                           {facility.category}
                         </p>
-                        <h4 className="text-lg sm:text-xl font-black">{facility.tagline}</h4>
+                        <p className="text-lg sm:text-xl font-black">{facility.tagline}</p>
                       </div>
                       <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/20 text-white text-xs font-bold backdrop-blur-sm border border-white/30">
                         <ShieldCheck className={`w-3.5 h-3.5 ${theme.catColor}`} /> Certified

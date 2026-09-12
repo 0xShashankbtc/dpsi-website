@@ -76935,6 +76935,7 @@ async function getDbConnection(dbName) {
 var import_mongoose4, cached3, MONGO_OPTIONS;
 var init_mongodb = __esm({
   "server/lib/mongodb.ts"() {
+    "use strict";
     import_mongoose4 = __toESM(require_mongoose2(), 1);
     cached3 = global._mongoCache || {
       baseConn: null,
@@ -77114,8 +77115,9 @@ async function ensureCriticalIndexes(tenantId) {
       // Main DB compound indexes
       main.RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
       main.RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
-      main.ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
-      main.AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      main.ContactMessage.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ isDeleted: 1, status: 1 }, { background: true }),
       main.AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true }),
       main.Page.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
       main.Page.collection.createIndex({ slug: 1, isDeleted: 1 }, { background: true }),
@@ -77147,7 +77149,8 @@ async function ensureCriticalIndexes(tenantId) {
       gallery.VideoGallery.collection.createIndex({ isDeleted: 1, isPublished: 1, order: 1 }, { background: true }),
       // TC DB indexes
       tc2.TransferCertificate.collection.createIndex({ admissionNumber: 1, isDeleted: 1 }, { background: true }),
-      tc2.TransferCertificate.collection.createIndex({ studentName: 1, isDeleted: 1 }, { background: true })
+      tc2.TransferCertificate.collection.createIndex({ studentName: 1, isDeleted: 1 }, { background: true }),
+      tc2.TransferCertificate.collection.createIndex({ isDeleted: 1, dateOfIssue: -1 }, { background: true })
     ]);
   } catch (err) {
     console.warn("[MongoDB] Background index initialization notice:", err?.message);
@@ -77156,6 +77159,7 @@ async function ensureCriticalIndexes(tenantId) {
 var import_mongoose5, PageSchema, MenuSchema, PopupSchema, MarqueeSchema, ActivitySchema, SliderSchema, AttachmentSchema, MunRegistrationSchema, ContactMessageSchema, AdmissionInquirySchema, GalleryCategorySchema, GalleryImageSchema, VideoGallerySchema, TransferCertificateSchema, SiteSettingsSchema, AiConfigSchema, AchievementSchema, TestimonialSchema, LeadershipSchema, FacilitySchema, FeatureCardSchema, DepartmentSchema, AdmissionStepSchema, FaqSchema, QuickStatSchema, TimelineItemSchema, CoreValueSchema, BoardResultSchema, StreamDistributionSchema, RateLimitSchema, tenantContextStorage, modelsCache, AuditLogSchema;
 var init_cmsSchemas = __esm({
   "server/models/cmsSchemas.ts"() {
+    "use strict";
     import_mongoose5 = __toESM(require_mongoose2(), 1);
     init_mongodb();
     init_mongodb();
@@ -95270,6 +95274,7 @@ async function uploadToCloudinary(buffer, folder = "dpsi_cms", resourceType = "a
 var import_cloudinary, import_dotenv, cloudinary_default;
 var init_cloudinary = __esm({
   "server/lib/cloudinary.ts"() {
+    "use strict";
     import_cloudinary = __toESM(require_cloudinary2(), 1);
     import_dotenv = __toESM(require_main(), 1);
     import_dotenv.default.config();
@@ -130797,6 +130802,7 @@ async function deleteFromR2(key, bucketName = R2_BUCKET_NAME) {
 var import_client_s3, import_dotenv2, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_DOMAIN, r2Client;
 var init_cloudflareR2 = __esm({
   "server/lib/cloudflareR2.ts"() {
+    "use strict";
     import_client_s3 = __toESM(require_dist_cjs71(), 1);
     import_dotenv2 = __toESM(require_main(), 1);
     import_dotenv2.default.config();
@@ -177448,18 +177454,21 @@ var admissionRouter = createRouter({
       phone: external_exports.string().min(10).max(20),
       grade: external_exports.string().min(1).max(50),
       dob: external_exports.string().min(1).max(50),
-      address: external_exports.string().min(5),
+      address: external_exports.string().min(5).max(500),
       city: external_exports.string().min(2).max(100),
       state: external_exports.string().min(2).max(100),
       pincode: external_exports.string().min(4).max(20),
       previousSchool: external_exports.string().max(255).optional(),
-      message: external_exports.string().optional()
+      message: external_exports.string().max(3e3).optional()
     })
   ).mutation(async ({ input, ctx }) => {
     const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
     const allowed = await checkPersistentRateLimit(`admission:${clientIp}`, 10, 60);
     if (!allowed) {
-      return { success: false, error: "Too many registration attempts. Please wait a moment before trying again." };
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many registration attempts. Please wait a moment before trying again."
+      });
     }
     try {
       const { AdmissionInquiry } = await getMainModels();
@@ -177481,14 +177490,18 @@ var admissionRouter = createRouter({
       });
       return { success: true, id: doc._id.toString() };
     } catch (err) {
+      if (err instanceof TRPCError) throw err;
       console.error("[Admission] Failed to save admission application:", err?.message);
-      return { success: false, error: "Failed to submit admission application. Please try again or contact the admissions desk." };
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to submit admission application. Please try again or contact the admissions desk."
+      });
     }
   }),
   list: adminQuery.query(async () => {
     try {
       const { AdmissionInquiry } = await getMainModels();
-      const docs = await AdmissionInquiry.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200);
+      const docs = await AdmissionInquiry.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200).lean();
       return docs.map((doc) => ({
         id: doc._id.toString(),
         _id: doc._id.toString(),
@@ -177586,6 +177599,25 @@ init_cmsSchemas();
 
 // server/lib/cache.ts
 var memoryCache = /* @__PURE__ */ new Map();
+var MAX_CACHE_ENTRIES = 2e3;
+function enforceMaxLimit() {
+  if (memoryCache.size < MAX_CACHE_ENTRIES) return;
+  const now = Date.now();
+  for (const [k6, entry] of memoryCache.entries()) {
+    if (entry.expiresAt <= now) {
+      memoryCache.delete(k6);
+    }
+  }
+  if (memoryCache.size >= MAX_CACHE_ENTRIES) {
+    const toDelete = Math.ceil(MAX_CACHE_ENTRIES * 0.2);
+    let count = 0;
+    for (const k6 of memoryCache.keys()) {
+      memoryCache.delete(k6);
+      count++;
+      if (count >= toDelete) break;
+    }
+  }
+}
 async function withCache(key, ttlSeconds, fetcher) {
   const now = Date.now();
   const cached4 = memoryCache.get(key);
@@ -177593,6 +177625,7 @@ async function withCache(key, ttlSeconds, fetcher) {
     return cached4.data;
   }
   const freshData = await fetcher();
+  enforceMaxLimit();
   memoryCache.set(key, {
     data: freshData,
     expiresAt: now + ttlSeconds * 1e3
@@ -178071,13 +178104,16 @@ var contactRouter = createRouter({
       email: external_exports.string().email(),
       phone: external_exports.string().max(20).optional(),
       subject: external_exports.string().max(255).optional(),
-      message: external_exports.string().min(5)
+      message: external_exports.string().min(5).max(3e3)
     })
   ).mutation(async ({ input, ctx }) => {
     const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
     const allowed = await checkPersistentRateLimit(`contact:${clientIp}`, 10, 60);
     if (!allowed) {
-      return { success: false, error: "Too many submissions. Please wait a moment before sending another message." };
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many submissions. Please wait a moment before sending another message."
+      });
     }
     try {
       const { ContactMessage } = await getMainModels();
@@ -178092,14 +178128,18 @@ var contactRouter = createRouter({
       });
       return { success: true, id: doc._id.toString() };
     } catch (err) {
+      if (err instanceof TRPCError) throw err;
       console.error("[Contact Form] Failed to save contact submission:", err?.message);
-      return { success: false, error: "Failed to send your message. Please try again or call the school office directly." };
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to send your message. Please try again or call the school office directly."
+      });
     }
   }),
   list: adminQuery.query(async () => {
     try {
       const { ContactMessage } = await getMainModels();
-      const docs = await ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200);
+      const docs = await ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200).lean();
       return docs.map((doc) => ({
         id: doc._id.toString(),
         _id: doc._id.toString(),
@@ -180368,9 +180408,9 @@ var cmsRouter = createRouter({
   listTenants: adminQuery.query(async ({ ctx }) => {
     const Tenant = await getTenantModel();
     if (ctx.user?.tenantId && ctx.user.tenantId !== "all" && ctx.user.tenantId !== "dpsi") {
-      return Tenant.find({ tenantId: ctx.user.tenantId });
+      return Tenant.find({ tenantId: ctx.user.tenantId }).lean();
     }
-    return Tenant.find({}).sort({ createdAt: -1 });
+    return Tenant.find({}).sort({ createdAt: -1 }).lean();
   }),
   createTenant: adminMutation.input(
     external_exports.object({
@@ -181002,6 +181042,7 @@ var cmsRouter = createRouter({
       details: `Created marquee alert: ${created.text} (Shape: ${created.shape}, Transparent: ${created.isTransparent})`
     });
     invalidateCache("cms:marquees");
+    invalidateCache("announcements:");
     return created;
   }),
   updateMarquee: adminMutation.input(
@@ -181031,6 +181072,7 @@ var cmsRouter = createRouter({
       details: `Updated marquee alert: ${updated?.text} (Shape: ${updated?.shape}, Transparent: ${updated?.isTransparent})`
     });
     invalidateCache("cms:marquees");
+    invalidateCache("announcements:");
     return updated;
   }),
   toggleMarquee: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]), isActive: external_exports.boolean() })).mutation(async ({ input }) => {
@@ -181038,6 +181080,7 @@ var cmsRouter = createRouter({
     const marqueeId = String(input.id?._id || input.id);
     const res = await Marquee.findByIdAndUpdate(marqueeId, { isActive: input.isActive }, { new: true });
     invalidateCache("cms:marquees");
+    invalidateCache("announcements:");
     return res;
   }),
   deleteMarquee: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181061,6 +181104,7 @@ var cmsRouter = createRouter({
       details: `Deleted marquee alert: ${deleted?.text || marqueeId}`
     });
     invalidateCache("cms:marquees");
+    invalidateCache("announcements:");
     return deleted || { success: true, id: marqueeId };
   }),
   // --- 7. RECENT ACTIVITIES ---
@@ -181093,6 +181137,8 @@ var cmsRouter = createRouter({
       details: `Created activity/news: ${created.title}`
     });
     invalidateCache("cms:activities");
+    invalidateCache("news:");
+    invalidateCache("events:");
     return created;
   }),
   deleteActivity: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -181123,6 +181169,8 @@ var cmsRouter = createRouter({
       details: `Deleted activity/news: ${deleted?.title || activityId}`
     });
     invalidateCache("cms:activities");
+    invalidateCache("news:");
+    invalidateCache("events:");
     return deleted || { success: true, id: activityId };
   }),
   // --- 8. HERO SLIDERS ---
@@ -181286,7 +181334,7 @@ var cmsRouter = createRouter({
   listGalleryCategories: publicQuery.query(async () => {
     return withCache("cms:galleryCategories", 300, async () => {
       const { GalleryCategory } = await getGalleryModels();
-      return GalleryCategory.find({ isDeleted: false });
+      return GalleryCategory.find({ isDeleted: false }).lean();
     });
   }),
   createGalleryCategory: adminMutation.input(
@@ -181445,6 +181493,9 @@ var cmsRouter = createRouter({
     }).optional()
   ).query(async ({ input, ctx }) => {
     try {
+      if (!ctx.user) {
+        return [];
+      }
       const { TransferCertificate } = await getTcModels();
       const isAdmin = !!ctx.user;
       const isDeleted = isAdmin ? input?.showTrash ?? false : false;
@@ -182002,7 +182053,9 @@ var cmsRouter = createRouter({
   ).mutation(async ({ input }) => {
     const { Popup } = await getMainModels();
     const { id, ...data2 } = input;
-    return Popup.findByIdAndUpdate(id, data2, { new: true });
+    const res = await Popup.findByIdAndUpdate(id, data2, { new: true });
+    invalidateCache("cms:popups");
+    return res;
   }),
   // --- 25. REORDER MENU ---
   reorderMenuItems: adminMutation.input(
@@ -182016,6 +182069,7 @@ var cmsRouter = createRouter({
         (item) => Menu.findByIdAndUpdate(item.id, { order: item.order })
       )
     );
+    invalidateCache("cms:menus");
     return { success: true };
   }),
   // --- 26. LEADERSHIP & FACULTY ---
@@ -182683,11 +182737,11 @@ var cmsRouter = createRouter({
     if (input?.module && input.module !== "All") {
       filter.module = input.module;
     }
-    return AuditLog.find(filter).sort({ sequenceNumber: -1 }).limit(input?.limit || 100);
+    return AuditLog.find(filter).sort({ sequenceNumber: -1 }).limit(input?.limit || 100).lean();
   }),
   verifyAuditLedger: adminQuery.query(async () => {
     const { AuditLog } = await getMainModels();
-    const logs = await AuditLog.find({}).sort({ sequenceNumber: 1 });
+    const logs = await AuditLog.find({}).sort({ sequenceNumber: 1 }).lean();
     if (!logs || logs.length === 0) {
       return { isTamperFree: true, totalLogs: 0, verifiedAt: /* @__PURE__ */ new Date(), latestHash: "GENESIS" };
     }
@@ -182876,6 +182930,7 @@ var createTrpcHandler = (endpoint) => async (c5) => {
   const isPublicQuery = c5.req.method === "GET" && !c5.req.header("authorization") && c5.req.header("x-admin-auth") !== "true";
   if (isPublicQuery) {
     headers.set("Cache-Control", "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400");
+    headers.set("Vary", "x-tenant-id, Origin");
   } else {
     headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     headers.set("Pragma", "no-cache");
@@ -182920,9 +182975,19 @@ var boot_default = app;
 // server/index.ts
 async function handler(req, res) {
   try {
+    const MAX_BUFFER_BYTES = 20 * 1024 * 1024;
+    let totalBytes = 0;
     const chunks = [];
     for await (const chunk of req) {
-      chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+      const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+      totalBytes += buf.length;
+      if (totalBytes > MAX_BUFFER_BYTES) {
+        res.statusCode = 413;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Payload Too Large" }));
+        return;
+      }
+      chunks.push(buf);
     }
     const bodyBuffer = Buffer.concat(chunks);
     const protocol = req.headers["x-forwarded-proto"] || "https";

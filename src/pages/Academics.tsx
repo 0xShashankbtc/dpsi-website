@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { BookOpen, FlaskConical, Calculator, Globe, Palette, Cpu, Activity, BarChart3, GraduationCap } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { trpc } from "@/providers/trpc";
@@ -60,6 +61,10 @@ export default function Academics() {
 
   return (
     <Layout>
+      <SEO
+        title="Academics & CBSE Curriculum"
+        description="Comprehensive academic streams (Science, Commerce, Humanities), CBSE curriculum, and board examination results at DPS Indirapuram."
+      />
       <section className="relative py-20 sm:py-24 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div
@@ -113,7 +118,7 @@ export default function Academics() {
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-700 dark:text-blue-400 shrink-0">
+                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0">
                   <Cpu className="w-6 h-6" />
                 </div>
                 <div>
@@ -134,25 +139,25 @@ export default function Academics() {
             <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="grid grid-cols-2 gap-4">
               <Card className="bg-emerald-50 dark:bg-emerald-950/20 border-0">
                 <CardContent className="p-6 text-center">
-                  <h4 className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">{latestResult?.passRate}%</h4>
+                  <span className="block text-3xl font-bold text-emerald-700 dark:text-emerald-400">{latestResult?.passRate}%</span>
                   <p className="text-sm text-muted-foreground mt-1">Pass Rate</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-blue-50 dark:bg-blue-950/20 border-0">
-                <CardContent className="p-6 text-center">
-                  <h4 className="text-3xl font-bold text-blue-700 dark:text-blue-400">{latestResult?.distinction}%</h4>
-                  <p className="text-sm text-muted-foreground mt-1">Distinction</p>
                 </CardContent>
               </Card>
               <Card className="bg-amber-50 dark:bg-amber-950/20 border-0">
                 <CardContent className="p-6 text-center">
-                  <h4 className="text-3xl font-bold text-amber-700 dark:text-amber-400">25+</h4>
+                  <span className="block text-3xl font-bold text-amber-700 dark:text-amber-400">{latestResult?.distinction}%</span>
+                  <p className="text-sm text-muted-foreground mt-1">Distinction</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-amber-50/80 dark:bg-amber-950/30 border-0">
+                <CardContent className="p-6 text-center">
+                  <span className="block text-3xl font-bold text-amber-600 dark:text-amber-300">25+</span>
                   <p className="text-sm text-muted-foreground mt-1">Subjects</p>
                 </CardContent>
               </Card>
-              <Card className="bg-rose-50 dark:bg-rose-950/20 border-0">
+              <Card className="bg-emerald-50/80 dark:bg-emerald-950/30 border-0">
                 <CardContent className="p-6 text-center">
-                  <h4 className="text-3xl font-bold text-rose-700 dark:text-rose-400">300+</h4>
+                  <span className="block text-3xl font-bold text-emerald-800 dark:text-emerald-300">300+</span>
                   <p className="text-sm text-muted-foreground mt-1">Faculty</p>
                 </CardContent>
               </Card>

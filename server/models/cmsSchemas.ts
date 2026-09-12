@@ -993,8 +993,9 @@ export async function ensureCriticalIndexes(tenantId?: string): Promise<void> {
       // Main DB compound indexes
       main.RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
       main.RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
-      main.ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
-      main.AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      main.ContactMessage.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
+      main.AdmissionInquiry.collection.createIndex({ isDeleted: 1, status: 1 }, { background: true }),
       main.AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true }),
       main.Page.collection.createIndex({ isDeleted: 1, createdAt: -1 }, { background: true }),
       main.Page.collection.createIndex({ slug: 1, isDeleted: 1 }, { background: true }),
@@ -1029,6 +1030,7 @@ export async function ensureCriticalIndexes(tenantId?: string): Promise<void> {
       // TC DB indexes
       tc.TransferCertificate.collection.createIndex({ admissionNumber: 1, isDeleted: 1 }, { background: true }),
       tc.TransferCertificate.collection.createIndex({ studentName: 1, isDeleted: 1 }, { background: true }),
+      tc.TransferCertificate.collection.createIndex({ isDeleted: 1, dateOfIssue: -1 }, { background: true }),
     ]);
   } catch (err: any) {
     console.warn("[MongoDB] Background index initialization notice:", err?.message);

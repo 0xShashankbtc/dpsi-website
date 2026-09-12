@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import HeroSection from "@/sections/HeroSection";
 import AnnouncementsBar from "@/sections/AnnouncementsBar";
 import QuickStats from "@/sections/QuickStats";
@@ -46,6 +47,11 @@ export default function Home() {
 
   return (
     <Layout>
+      <SEO
+        title="Premier CBSE School in Ghaziabad"
+        description="Delhi Public School Indirapuram is a premier CBSE affiliated institution nurturing academic excellence, cutting-edge innovation labs, world-class sports facilities, and global leadership."
+      />
+
       {/* 1. Full-Screen Cinematic Hero Video — above fold, eager */}
       <HeroSection />
 

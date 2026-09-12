@@ -374,9 +374,9 @@ export const cmsRouter = createRouter({
   listTenants: adminQuery.query(async ({ ctx }) => {
     const Tenant = await getTenantModel();
     if (ctx.user?.tenantId && ctx.user.tenantId !== "all" && ctx.user.tenantId !== "dpsi") {
-      return Tenant.find({ tenantId: ctx.user.tenantId });
+      return Tenant.find({ tenantId: ctx.user.tenantId }).lean();
     }
-    return Tenant.find({}).sort({ createdAt: -1 });
+    return Tenant.find({}).sort({ createdAt: -1 }).lean();
   }),
 
   createTenant: adminMutation
@@ -1078,6 +1078,7 @@ export const cmsRouter = createRouter({
         details: `Created marquee alert: ${created.text} (Shape: ${created.shape}, Transparent: ${created.isTransparent})`,
       });
       invalidateCache("cms:marquees");
+      invalidateCache("announcements:");
       return created;
     }),
   updateMarquee: adminMutation
@@ -1109,6 +1110,7 @@ export const cmsRouter = createRouter({
         details: `Updated marquee alert: ${updated?.text} (Shape: ${updated?.shape}, Transparent: ${updated?.isTransparent})`,
       });
       invalidateCache("cms:marquees");
+      invalidateCache("announcements:");
       return updated;
     }),
   toggleMarquee: adminMutation
@@ -1118,6 +1120,7 @@ export const cmsRouter = createRouter({
       const marqueeId = String(input.id?._id || input.id);
       const res = await Marquee.findByIdAndUpdate(marqueeId, { isActive: input.isActive }, { new: true });
       invalidateCache("cms:marquees");
+      invalidateCache("announcements:");
       return res;
     }),
   deleteMarquee: adminMutation
@@ -1145,6 +1148,7 @@ export const cmsRouter = createRouter({
         details: `Deleted marquee alert: ${deleted?.text || marqueeId}`,
       });
       invalidateCache("cms:marquees");
+      invalidateCache("announcements:");
       return deleted || { success: true, id: marqueeId };
     }),
 
@@ -1181,6 +1185,8 @@ export const cmsRouter = createRouter({
         details: `Created activity/news: ${created.title}`,
       });
       invalidateCache("cms:activities");
+      invalidateCache("news:");
+      invalidateCache("events:");
       return created;
     }),
   deleteActivity: adminMutation
@@ -1215,6 +1221,8 @@ export const cmsRouter = createRouter({
         details: `Deleted activity/news: ${deleted?.title || activityId}`,
       });
       invalidateCache("cms:activities");
+      invalidateCache("news:");
+      invalidateCache("events:");
       return deleted || { success: true, id: activityId };
     }),
 
@@ -1395,7 +1403,7 @@ export const cmsRouter = createRouter({
   listGalleryCategories: publicQuery.query(async () => {
     return withCache("cms:galleryCategories", 300, async () => {
       const { GalleryCategory } = await getGalleryModels();
-      return GalleryCategory.find({ isDeleted: false });
+      return GalleryCategory.find({ isDeleted: false }).lean();
     });
   }),
   createGalleryCategory: adminMutation
@@ -1578,6 +1586,10 @@ export const cmsRouter = createRouter({
     )
     .query(async ({ input, ctx }) => {
       try {
+        if (!ctx.user) {
+          // Public users must use verifyTc with admissionNumber + DOB to authenticate certificates
+          return [];
+        }
         const { TransferCertificate } = await getTcModels();
         const isAdmin = !!ctx.user;
         // Only authenticated admins are allowed to inspect deleted/trashed certificates
@@ -2235,7 +2247,9 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input }) => {
       const { Popup } = await getMainModels();
       const { id, ...data } = input;
-      return Popup.findByIdAndUpdate(id, data, { new: true });
+      const res = await Popup.findByIdAndUpdate(id, data, { new: true });
+      invalidateCache("cms:popups");
+      return res;
     }),
 
   // --- 25. REORDER MENU ---
@@ -2252,6 +2266,7 @@ export const cmsRouter = createRouter({
           Menu.findByIdAndUpdate(item.id, { order: item.order })
         )
       );
+      invalidateCache("cms:menus");
       return { success: true };
     }),
 
@@ -3005,12 +3020,12 @@ export const cmsRouter = createRouter({
       if (input?.module && input.module !== "All") {
         filter.module = input.module;
       }
-      return AuditLog.find(filter).sort({ sequenceNumber: -1 }).limit(input?.limit || 100);
+      return AuditLog.find(filter).sort({ sequenceNumber: -1 }).limit(input?.limit || 100).lean();
     }),
 
   verifyAuditLedger: adminQuery.query(async () => {
     const { AuditLog } = await getMainModels();
-    const logs = await AuditLog.find({}).sort({ sequenceNumber: 1 });
+    const logs = await AuditLog.find({}).sort({ sequenceNumber: 1 }).lean();
     if (!logs || logs.length === 0) {
       return { isTamperFree: true, totalLogs: 0, verifiedAt: new Date(), latestHash: "GENESIS" };
     }

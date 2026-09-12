@@ -26,6 +26,7 @@ import {
   Calendar,
 } from "lucide-react";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
@@ -305,6 +306,10 @@ export default function Facilities() {
 
   return (
     <Layout>
+      <SEO
+        title="Campus Facilities & Infrastructure"
+        description="Explore our 40-acre campus with AI Robotics Lab, 25m heated Olympic pool, and 1200-seat auditorium at DPS Indirapuram."
+      />
       {/* 1. HERO SECTION WITH CINEMATIC GLOW & CAMPUS STATS */}
       <section className="relative py-20 sm:py-28 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden border-b border-emerald-950/60">
         {/* Dynamic Background Mesh Orbs */}
@@ -388,6 +393,7 @@ export default function Facilities() {
                 <button
                   key={cat}
                   type="button"
+                  aria-pressed={selectedCategory === cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     selectedCategory === cat

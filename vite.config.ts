@@ -25,8 +25,8 @@ export default defineConfig({
         name: "DPS Indirapuram",
         short_name: "DPSI",
         description: "Delhi Public School Indirapuram - Premier CBSE School in Ghaziabad",
-        theme_color: "#0f172a",
-        background_color: "#0f172a",
+        theme_color: "#022c22",
+        background_color: "#022c22",
         display: "standalone",
         orientation: "any",
         start_url: "/",
@@ -46,8 +46,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2,ttf,mp4}"],
-        maximumFileSizeToCacheInBytes: 35 * 1024 * 1024,
+        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2,ttf}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         clientsClaim: true,
         skipWaiting: true,
         navigateFallback: "/index.html",
@@ -164,13 +164,15 @@ export default defineConfig({
         ]
       : []),
   ],
+  esbuild: {
+    drop: process.env.NODE_ENV === "production" ? ["console", "debugger"] : [],
+  },
   server: {
     port: 3000,
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@contracts": path.resolve(__dirname, "./contracts"),
     },
   },
   envDir: path.resolve(__dirname),

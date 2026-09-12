@@ -44,6 +44,8 @@ export default function PrincipalMessage() {
               <img
                 src={image}
                 alt={name}
+                width={600}
+                height={450}
                 className="w-full h-full object-cover"
                 loading="lazy"
                 decoding="async"
@@ -54,7 +56,7 @@ export default function PrincipalMessage() {
                   <p className="font-extrabold text-slate-900 dark:text-white text-sm tracking-tight">{name}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{title}</p>
                 </div>
-                <div className="w-9 h-9 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 bg-emerald-800 text-white rounded-xl flex items-center justify-center shrink-0">
                   <GraduationCap className="w-4 h-4" />
                 </div>
               </div>
@@ -68,7 +70,7 @@ export default function PrincipalMessage() {
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold mb-5 border border-slate-200 dark:border-slate-700">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-semibold mb-5 border border-emerald-400/30">
               <GraduationCap className="w-3.5 h-3.5" />
               {badge}
             </div>
@@ -77,14 +79,14 @@ export default function PrincipalMessage() {
               {headline}
             </h2>
 
-            <div className="border-l-2 border-slate-300 dark:border-slate-700 pl-5 space-y-4 text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
+            <div className="border-l-2 border-emerald-500/40 pl-5 space-y-4 text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
               <p>{p1}</p>
               {p2 && <p>{p2}</p>}
             </div>
 
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-max">
               <Button
-                className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all"
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all"
                 asChild
               >
                 <Link to="/about">

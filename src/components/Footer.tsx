@@ -12,7 +12,7 @@ import {
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { motion } from "framer-motion";
 import { trpc } from "@/providers/trpc";
-import { FlickeringGrid, useMediaQuery } from "@/components/ui/flickering-footer";
+import { FlickeringGrid, useMediaQuery } from "@/components/ui/flickering-grid";
 import { DEFAULT_FOOTER_QUICK_MENUS, DEFAULT_FOOTER_RESOURCE_MENUS } from "@/lib/initialDataSnapshot";
 import { preloadRoute } from "@/lib/routePreloader";
 
@@ -78,6 +78,10 @@ export default function Footer() {
               <img
                 src={logoUrl}
                 alt="DPS Indirapuram Logo"
+                loading="lazy"
+                decoding="async"
+                width={180}
+                height={60}
                 style={{ height: `${Math.min(Math.max(logoHeight, 32), 64)}px` }}
                 className={`w-auto object-contain ${
                   logoShape === "circle"
@@ -99,37 +103,37 @@ export default function Footer() {
                 href={fbUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#1877F2] transition-colors"
-                title="Facebook"
+                className="p-2 rounded-full bg-slate-800 hover:bg-[#1877F2] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                aria-label="Follow DPS Indirapuram on Facebook (opens in new tab)"
               >
-                <Facebook className="w-4 h-4" />
+                <Facebook className="w-4 h-4" aria-hidden="true" />
               </a>
               <a
                 href={ytUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#FF0000] transition-colors"
-                title="YouTube"
+                className="p-2 rounded-full bg-slate-800 hover:bg-[#FF0000] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                aria-label="Watch DPS Indirapuram on YouTube (opens in new tab)"
               >
-                <Youtube className="w-4 h-4" />
+                <Youtube className="w-4 h-4" aria-hidden="true" />
               </a>
               <a
                 href="https://www.linkedin.com/company/dpsindirapuram/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#0A66C2] transition-colors"
-                title="LinkedIn"
+                className="p-2 rounded-full bg-slate-800 hover:bg-[#0A66C2] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                aria-label="Connect with DPS Indirapuram on LinkedIn (opens in new tab)"
               >
-                <Linkedin className="w-4 h-4" />
+                <Linkedin className="w-4 h-4" aria-hidden="true" />
               </a>
               <a
                 href={instaUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#dc2743] transition-colors"
-                title="Instagram"
+                className="p-2 rounded-full bg-slate-800 hover:bg-[#dc2743] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                aria-label="Follow DPS Indirapuram on Instagram (opens in new tab)"
               >
-                <Instagram className="w-4 h-4" />
+                <Instagram className="w-4 h-4" aria-hidden="true" />
               </a>
             </div>
           </div>

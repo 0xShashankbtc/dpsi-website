@@ -1,5 +1,6 @@
 import { z } from "zod";
 import mongoose from "mongoose";
+import { TRPCError } from "@trpc/server";
 import { createRouter, publicMutation, adminQuery, adminMutation } from "./middleware";
 import { getMainModels, checkPersistentRateLimit, createImmutableAuditLog } from "./models/cmsSchemas";
 
@@ -11,14 +12,17 @@ export const contactRouter = createRouter({
         email: z.string().email(),
         phone: z.string().max(20).optional(),
         subject: z.string().max(255).optional(),
-        message: z.string().min(5),
+        message: z.string().min(5).max(3000),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
       const allowed = await checkPersistentRateLimit(`contact:${clientIp}`, 10, 60);
       if (!allowed) {
-        return { success: false, error: "Too many submissions. Please wait a moment before sending another message." };
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many submissions. Please wait a moment before sending another message.",
+        });
       }
 
       try {
@@ -35,15 +39,19 @@ export const contactRouter = createRouter({
 
         return { success: true, id: doc._id.toString() };
       } catch (err: any) {
+        if (err instanceof TRPCError) throw err;
         console.error("[Contact Form] Failed to save contact submission:", err?.message);
-        return { success: false, error: "Failed to send your message. Please try again or call the school office directly." };
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to send your message. Please try again or call the school office directly.",
+        });
       }
     }),
 
   list: adminQuery.query(async () => {
     try {
       const { ContactMessage } = await getMainModels();
-      const docs = await ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200);
+      const docs = await ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200).lean();
       return docs.map((doc: any) => ({
         id: doc._id.toString(),
         _id: doc._id.toString(),

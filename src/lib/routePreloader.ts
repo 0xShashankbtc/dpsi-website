@@ -55,7 +55,6 @@ export function prefetchRouteData(href?: string, utils?: any) {
         break;
       case "/transfer-certificate":
       case "/tc":
-        utils.cms?.listTc?.prefetch();
         break;
     }
   } catch {

@@ -29,14 +29,14 @@ export default function TestimonialsSection() {
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-14"
         >
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-3 border border-slate-200 dark:border-slate-700">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/15 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3 border border-emerald-400/30">
             <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
             Parent & Alumni Voices
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             What They Say About Us
           </h2>
-          <div className="w-14 h-1 bg-slate-900 dark:bg-slate-100 mx-auto mt-4 rounded-full" />
+          <div className="w-14 h-1 bg-gradient-to-r from-emerald-500 to-amber-500 mx-auto mt-4 rounded-full" />
         </motion.div>
 
         {isLoading && effectiveTestimonials.length === 0 ? (
@@ -90,8 +90,8 @@ export default function TestimonialsSection() {
                   variant="outline"
                   size="icon"
                   onClick={prev}
-                  className="rounded-full w-10 h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
-                  title="Previous"
+                  aria-label="Previous testimonial"
+                  className="rounded-full w-10 h-10 border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
                 >
                   <ChevronLeft className="w-5 h-5 text-slate-700 dark:text-slate-200" />
                 </Button>
@@ -104,11 +104,13 @@ export default function TestimonialsSection() {
                     onClick={() => setCurrent(i)}
                     animate={{
                       width: i === current ? 24 : 8,
-                      backgroundColor: i === current ? "#0f172a" : "rgba(148, 163, 184, 0.4)",
+                      backgroundColor: i === current ? "#059669" : "rgba(148, 163, 184, 0.4)",
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     className="h-1.5 rounded-full cursor-pointer"
                     title={`Testimonial ${i + 1}`}
+                    aria-label={`Go to testimonial ${i + 1}`}
+                    aria-pressed={i === current}
                   />
                 ))}
               </div>
@@ -118,8 +120,8 @@ export default function TestimonialsSection() {
                   variant="outline"
                   size="icon"
                   onClick={next}
-                  className="rounded-full w-10 h-10 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
-                  title="Next"
+                  aria-label="Next testimonial"
+                  className="rounded-full w-10 h-10 border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
                 >
                   <ChevronRight className="w-5 h-5 text-slate-700 dark:text-slate-200" />
                 </Button>

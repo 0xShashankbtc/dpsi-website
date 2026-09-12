@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/providers/trpc";
 import Layout from "@/components/Layout";
+import SEO from "@/components/SEO";
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText className="w-6 h-6" />,
@@ -41,18 +42,30 @@ export default function Admissions() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const mutation = trpc.admissions.create.useMutation({
-    onSuccess: () => setSubmitted(true),
+    onSuccess: () => {
+      setSubmitted(true);
+      setErrorMessage(null);
+    },
+    onError: (err) => {
+      setErrorMessage(err.message || "Failed to submit admission application. Please check details and try again.");
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     mutation.mutate(formData);
   };
 
   return (
     <Layout>
+      <SEO
+        title="Admissions 2026-27"
+        description="Admissions open for Session 2026-27 from Pre-Nursery to Class 9 and 11 at Delhi Public School Indirapuram. Apply online."
+      />
       <section className="relative py-20 sm:py-24 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div
@@ -134,6 +147,11 @@ export default function Admissions() {
             </motion.div>
           ) : (
             <motion.form initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg space-y-6">
+              {errorMessage && (
+                <div role="alert" className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-sm font-medium">
+                  {errorMessage}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="studentName">Student Name *</Label>

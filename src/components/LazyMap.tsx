@@ -9,7 +9,7 @@ export default function LazyMap() {
         height="100%"
         style={{ border: 0 }}
         allowFullScreen
-        loading="eager"
+        loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
         title="DPS Indirapuram Google Maps Location"
         className="w-full h-full"

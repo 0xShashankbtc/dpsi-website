@@ -182,7 +182,8 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
           src={imgSrc}
           className="w-full h-full object-cover"
           alt={`Image representing ${heading}`}
-          loading="eager"
+          loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
         <span className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white uppercase tracking-wider px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-xs border border-white/20">

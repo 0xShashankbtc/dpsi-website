@@ -32,14 +32,13 @@ export default function AchievementsSection() {
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold uppercase tracking-wider mb-4 border border-slate-200 dark:border-slate-700">
+          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-emerald-500/15 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4 border border-emerald-400/30">
             Academic Excellence
           </div>
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
             Class X & XII Toppers
           </h2>
-          {/* Neutral underline */}
-          <div className="w-16 h-1 bg-slate-900 dark:bg-slate-100 mx-auto rounded-full mb-4" />
+          <div className="w-16 h-1 bg-gradient-to-r from-emerald-500 to-amber-500 mx-auto rounded-full mb-4" />
           <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-base font-normal leading-relaxed">
             Celebrating outstanding academic achievements in CBSE Board Examinations. Our Dipsites continue to set benchmark results nationwide.
           </p>
