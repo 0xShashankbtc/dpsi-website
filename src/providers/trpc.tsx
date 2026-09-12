@@ -38,35 +38,39 @@ if (typeof window !== "undefined") {
   // Pre-seed any baseline snapshot queries missing from cache for first-time visitors
   seedInitialQueryData(queryClient);
 
-  // Background debounced persistence to localStorage
-  let persistTimer: any = null;
-  queryClient.getQueryCache().subscribe((event) => {
-    if (event?.type === "updated" && event.action?.type === "success") {
-      if (persistTimer) clearTimeout(persistTimer);
-      persistTimer = setTimeout(() => {
-        try {
-          const dehydrated = dehydrate(queryClient, {
-            shouldDehydrateQuery: (query) => {
-              const qk = query.queryKey;
-              const first = Array.isArray(qk[0]) ? qk[0][0] : qk[0];
-              const second = Array.isArray(qk[0]) ? qk[0][1] : "";
-              if (
-                first === "admin" ||
-                second === "verifyTc" ||
-                first === "auth" ||
-                typeof first !== "string"
-              ) {
-                return false;
-              }
-              return query.state.status === "success";
-            },
-          });
-          localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(dehydrated));
-        } catch {
-          // Ignore quota or serialization errors
-        }
-      }, 1000);
+  // Helper function to persist dehydrated cache safely to localStorage
+  const persistCache = () => {
+    try {
+      const dehydrated = dehydrate(queryClient, {
+        shouldDehydrateQuery: (query) => {
+          const qk = query.queryKey;
+          const first = Array.isArray(qk[0]) ? qk[0][0] : qk[0];
+          const second = Array.isArray(qk[0]) ? qk[0][1] : "";
+          if (
+            first === "admin" ||
+            second === "verifyTc" ||
+            first === "auth" ||
+            typeof first !== "string"
+          ) {
+            return false;
+          }
+          return query.state.status === "success";
+        },
+      });
+      localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(dehydrated));
+    } catch {
+      // Ignore quota or serialization errors
     }
+  };
+
+  // Persist baseline snapshot immediately so returning frames always have instant data
+  persistCache();
+
+  // Background debounced persistence whenever any query completes or updates
+  let persistTimer: any = null;
+  queryClient.getQueryCache().subscribe(() => {
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(persistCache, 1000);
   });
 }
 
