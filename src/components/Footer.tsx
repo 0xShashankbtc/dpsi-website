@@ -14,9 +14,11 @@ import { motion } from "framer-motion";
 import { trpc } from "@/providers/trpc";
 import { FlickeringGrid, useMediaQuery } from "@/components/ui/flickering-footer";
 import { DEFAULT_FOOTER_QUICK_MENUS, DEFAULT_FOOTER_RESOURCE_MENUS } from "@/lib/initialDataSnapshot";
+import { preloadRoute } from "@/lib/routePreloader";
 
 export default function Footer() {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const utils = trpc.useUtils();
   const { data: dbQuickMenus } = trpc.cms.listMenus.useQuery({ location: "footer_quick" });
   const { data: dbResourceMenus } = trpc.cms.listMenus.useQuery({ location: "footer_resources" });
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
@@ -145,7 +147,9 @@ export default function Footer() {
                   >
                     <Link
                       to={link.href}
-                      className="text-sm text-slate-300 group-hover:text-emerald-400 transition-colors"
+                      onMouseEnter={() => preloadRoute(link.href, utils)}
+                      onTouchStart={() => preloadRoute(link.href, utils)}
+                      className="text-sm text-slate-300 group-hover:text-emerald-400 transition-colors touch-manipulation"
                     >
                       {link.label}
                     </Link>
@@ -174,14 +178,16 @@ export default function Footer() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-semibold text-amber-400 group-hover:text-amber-300 transition-colors flex items-center gap-1"
+                        className="text-sm font-semibold text-amber-400 group-hover:text-amber-300 transition-colors flex items-center gap-1 touch-manipulation"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         to={link.href}
-                        className="text-sm text-slate-300 group-hover:text-emerald-400 transition-colors"
+                        onMouseEnter={() => preloadRoute(link.href, utils)}
+                        onTouchStart={() => preloadRoute(link.href, utils)}
+                        className="text-sm text-slate-300 group-hover:text-emerald-400 transition-colors touch-manipulation"
                       >
                         {link.label}
                       </Link>

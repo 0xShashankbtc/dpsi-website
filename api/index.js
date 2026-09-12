@@ -28969,7 +28969,7 @@ var require_url_state_machine = __commonJS({
     function parseIPv6(input) {
       const address = [0, 0, 0, 0, 0, 0, 0, 0];
       let pieceIndex = 0;
-      let compress = null;
+      let compress2 = null;
       let pointer = 0;
       input = Array.from(input, (c5) => c5.codePointAt(0));
       if (input[pointer] === p2(":")) {
@@ -28978,19 +28978,19 @@ var require_url_state_machine = __commonJS({
         }
         pointer += 2;
         ++pieceIndex;
-        compress = pieceIndex;
+        compress2 = pieceIndex;
       }
       while (pointer < input.length) {
         if (pieceIndex === 8) {
           return failure;
         }
         if (input[pointer] === p2(":")) {
-          if (compress !== null) {
+          if (compress2 !== null) {
             return failure;
           }
           ++pointer;
           ++pieceIndex;
-          compress = pieceIndex;
+          compress2 = pieceIndex;
           continue;
         }
         let value = 0;
@@ -29056,24 +29056,24 @@ var require_url_state_machine = __commonJS({
         address[pieceIndex] = value;
         ++pieceIndex;
       }
-      if (compress !== null) {
-        let swaps = pieceIndex - compress;
+      if (compress2 !== null) {
+        let swaps = pieceIndex - compress2;
         pieceIndex = 7;
         while (pieceIndex !== 0 && swaps > 0) {
-          const temp = address[compress + swaps - 1];
-          address[compress + swaps - 1] = address[pieceIndex];
+          const temp = address[compress2 + swaps - 1];
+          address[compress2 + swaps - 1] = address[pieceIndex];
           address[pieceIndex] = temp;
           --pieceIndex;
           --swaps;
         }
-      } else if (compress === null && pieceIndex !== 8) {
+      } else if (compress2 === null && pieceIndex !== 8) {
         return failure;
       }
       return address;
     }
     function serializeIPv6(address) {
       let output = "";
-      const compress = findTheIPv6AddressCompressedPieceIndex(address);
+      const compress2 = findTheIPv6AddressCompressedPieceIndex(address);
       let ignore0 = false;
       for (let pieceIndex = 0; pieceIndex <= 7; ++pieceIndex) {
         if (ignore0 && address[pieceIndex] === 0) {
@@ -29081,7 +29081,7 @@ var require_url_state_machine = __commonJS({
         } else if (ignore0) {
           ignore0 = false;
         }
-        if (compress === pieceIndex) {
+        if (compress2 === pieceIndex) {
           const separator = pieceIndex === 0 ? "::" : ":";
           output += separator;
           ignore0 = true;
@@ -31984,7 +31984,7 @@ var require_compression = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.uncompressibleCommands = exports.Compressor = void 0;
-    exports.compress = compress;
+    exports.compress = compress2;
     exports.decompress = decompress;
     exports.compressCommand = compressCommand;
     exports.decompressResponse = decompressResponse;
@@ -32044,7 +32044,7 @@ var require_compression = __commonJS({
       }
       return Snappy;
     }
-    async function compress(options, dataToBeCompressed) {
+    async function compress2(options, dataToBeCompressed) {
       const zlibOptions = {};
       switch (options.agreedCompressor) {
         case "snappy": {
@@ -159900,6 +159900,299 @@ var cors = (options) => {
   };
 };
 
+// node_modules/hono/dist/utils/accept.js
+var isWhitespace = (char) => char === 32 || char === 9 || char === 10 || char === 13;
+var consumeWhitespace = (acceptHeader, startIndex) => {
+  while (startIndex < acceptHeader.length) {
+    if (!isWhitespace(acceptHeader.charCodeAt(startIndex))) {
+      break;
+    }
+    startIndex++;
+  }
+  return startIndex;
+};
+var ignoreTrailingWhitespace = (acceptHeader, startIndex) => {
+  while (startIndex > 0) {
+    if (!isWhitespace(acceptHeader.charCodeAt(startIndex - 1))) {
+      break;
+    }
+    startIndex--;
+  }
+  return startIndex;
+};
+var skipInvalidParam = (acceptHeader, startIndex) => {
+  while (startIndex < acceptHeader.length) {
+    const char = acceptHeader.charCodeAt(startIndex);
+    if (char === 59) {
+      return [startIndex + 1, true];
+    }
+    if (char === 44) {
+      return [startIndex + 1, false];
+    }
+    startIndex++;
+  }
+  return [startIndex, false];
+};
+var skipInvalidAcceptValue = (acceptHeader, startIndex) => {
+  let i5 = startIndex;
+  let inQuotes = false;
+  while (i5 < acceptHeader.length) {
+    const char = acceptHeader.charCodeAt(i5);
+    if (inQuotes && char === 92) {
+      i5++;
+    } else if (char === 34) {
+      inQuotes = !inQuotes;
+    } else if (!inQuotes && char === 44) {
+      return i5 + 1;
+    }
+    i5++;
+  }
+  return i5;
+};
+var getNextParam = (acceptHeader, startIndex) => {
+  startIndex = consumeWhitespace(acceptHeader, startIndex);
+  let i5 = startIndex;
+  let key;
+  let value;
+  let hasNext = false;
+  while (i5 < acceptHeader.length) {
+    const char = acceptHeader.charCodeAt(i5);
+    if (char === 61) {
+      key = acceptHeader.slice(startIndex, ignoreTrailingWhitespace(acceptHeader, i5));
+      i5++;
+      break;
+    }
+    if (char === 59) {
+      return [i5 + 1, void 0, void 0, true];
+    }
+    if (char === 44) {
+      return [i5 + 1, void 0, void 0, false];
+    }
+    i5++;
+  }
+  if (key === void 0) {
+    return [i5, void 0, void 0, false];
+  }
+  i5 = consumeWhitespace(acceptHeader, i5);
+  if (acceptHeader.charCodeAt(i5) === 61) {
+    const skipResult = skipInvalidParam(acceptHeader, i5 + 1);
+    return [skipResult[0], key, void 0, skipResult[1]];
+  }
+  let inQuotes = false;
+  const paramStartIndex = i5;
+  while (i5 < acceptHeader.length) {
+    const char = acceptHeader.charCodeAt(i5);
+    if (inQuotes && char === 92) {
+      i5++;
+    } else if (char === 34) {
+      if (inQuotes) {
+        let nextIndex = consumeWhitespace(acceptHeader, i5 + 1);
+        const nextChar = acceptHeader.charCodeAt(nextIndex);
+        if (nextIndex < acceptHeader.length && !(nextChar === 59 || nextChar === 44)) {
+          const skipResult = skipInvalidParam(acceptHeader, nextIndex);
+          return [skipResult[0], key, void 0, skipResult[1]];
+        }
+        value = acceptHeader.slice(paramStartIndex + 1, i5);
+        if (value.includes("\\")) {
+          value = value.replace(/\\(.)/g, "$1");
+        }
+        if (nextChar === 44) {
+          return [nextIndex + 1, key, value, false];
+        }
+        if (nextChar === 59) {
+          hasNext = true;
+          nextIndex++;
+        }
+        i5 = nextIndex;
+        break;
+      }
+      inQuotes = true;
+    } else if (!inQuotes && (char === 59 || char === 44)) {
+      value = acceptHeader.slice(paramStartIndex, ignoreTrailingWhitespace(acceptHeader, i5));
+      if (char === 59) {
+        hasNext = true;
+      }
+      i5++;
+      break;
+    }
+    i5++;
+  }
+  return [
+    i5,
+    key,
+    value ?? acceptHeader.slice(paramStartIndex, ignoreTrailingWhitespace(acceptHeader, i5)),
+    hasNext
+  ];
+};
+var getNextAcceptValue = (acceptHeader, startIndex) => {
+  const accept = {
+    type: "",
+    params: /* @__PURE__ */ Object.create(null),
+    q: 1
+  };
+  startIndex = consumeWhitespace(acceptHeader, startIndex);
+  let i5 = startIndex;
+  while (i5 < acceptHeader.length) {
+    const char = acceptHeader.charCodeAt(i5);
+    if (char === 59 || char === 44) {
+      accept.type = acceptHeader.slice(startIndex, ignoreTrailingWhitespace(acceptHeader, i5));
+      i5++;
+      if (char === 44) {
+        return [i5, accept.type ? accept : void 0];
+      }
+      if (!accept.type) {
+        return [skipInvalidAcceptValue(acceptHeader, i5), void 0];
+      }
+      break;
+    }
+    i5++;
+  }
+  if (!accept.type) {
+    accept.type = acceptHeader.slice(
+      startIndex,
+      ignoreTrailingWhitespace(acceptHeader, acceptHeader.length)
+    );
+    return [acceptHeader.length, accept.type ? accept : void 0];
+  }
+  let param;
+  let value;
+  let hasNext;
+  while (i5 < acceptHeader.length) {
+    ;
+    [i5, param, value, hasNext] = getNextParam(acceptHeader, i5);
+    if (param && value) {
+      accept.params[param] = value;
+    }
+    if (!hasNext) {
+      break;
+    }
+  }
+  return [i5, accept];
+};
+var parseAccept = (acceptHeader) => {
+  if (!acceptHeader) {
+    return [];
+  }
+  const values = [];
+  let i5 = 0;
+  let accept;
+  let requiresSort = false;
+  let lastAccept;
+  while (i5 < acceptHeader.length) {
+    ;
+    [i5, accept] = getNextAcceptValue(acceptHeader, i5);
+    if (accept) {
+      accept.q = parseQuality(accept.params.q);
+      values.push(accept);
+      if (lastAccept && lastAccept.q < accept.q) {
+        requiresSort = true;
+      }
+      lastAccept = accept;
+    }
+  }
+  if (requiresSort) {
+    values.sort((a5, b6) => b6.q - a5.q);
+  }
+  return values;
+};
+var parseQuality = (qVal) => {
+  if (qVal === void 0) {
+    return 1;
+  }
+  if (qVal === "") {
+    return 1;
+  }
+  if (qVal === "NaN") {
+    return 0;
+  }
+  const num = Number(qVal);
+  if (num === Infinity) {
+    return 1;
+  }
+  if (num === -Infinity) {
+    return 0;
+  }
+  if (Number.isNaN(num)) {
+    return 1;
+  }
+  if (num < 0 || num > 1) {
+    return 1;
+  }
+  return num;
+};
+
+// node_modules/hono/dist/utils/compress.js
+var COMPRESSIBLE_CONTENT_TYPE_REGEX = /^\s*(?:text\/(?!event-stream(?:[;\s]|$))[^;\s]+|application\/(?:javascript|json|xml|xml-dtd|ecmascript|dart|msgpack|postscript|rtf|tar|toml|vnd\.dart|vnd\.ms-fontobject|vnd\.ms-opentype|vnd\.msgpack|wasm|x-httpd-php|x-javascript|x-msgpack|x-ns-proxy-autoconfig|x-sh|x-tar|x-virtualbox-hdd|x-virtualbox-ova|x-virtualbox-ovf|x-virtualbox-vbox|x-virtualbox-vdi|x-virtualbox-vhd|x-virtualbox-vmdk|x-www-form-urlencoded)|font\/(?:otf|ttf)|image\/(?:bmp|vnd\.adobe\.photoshop|vnd\.microsoft\.icon|vnd\.ms-dds|x-icon|x-ms-bmp)|message\/rfc822|model\/gltf-binary|x-shader\/x-fragment|x-shader\/x-vertex|[^;\s]+?\+(?:json|text|xml|yaml|msgpack))(?:[;\s]|$)/i;
+
+// node_modules/hono/dist/middleware/compress/index.js
+var ENCODING_TYPES = ["gzip", "deflate"];
+var cacheControlNoTransformRegExp = /(?:^|,)\s*?no-transform\s*?(?:,|$)/i;
+var selectEncoding = (header, candidates) => {
+  if (header === void 0) {
+    return void 0;
+  }
+  const accepts = parseAccept(header);
+  const wildcardQ = accepts.find((a5) => a5.type === "*")?.q;
+  let best;
+  for (const enc of candidates) {
+    const explicit = accepts.find((a5) => a5.type.toLowerCase() === enc);
+    const q2 = explicit ? explicit.q : wildcardQ ?? 0;
+    if (q2 === 1) {
+      return enc;
+    } else if (q2 > 0 && (!best || q2 > best.q)) {
+      best = { encoding: enc, q: q2 };
+    }
+  }
+  return best?.encoding;
+};
+var varyAcceptEncodingRegExp = /(?:^|,)\s*accept-encoding\s*(?:,|$)/i;
+var compress = (options) => {
+  const threshold = options?.threshold ?? 1024;
+  const candidates = options?.encoding ? [options.encoding] : ENCODING_TYPES;
+  const contentTypeFilter = options?.contentTypeFilter ?? COMPRESSIBLE_CONTENT_TYPE_REGEX;
+  const shouldCompress = typeof contentTypeFilter === "function" ? (res) => {
+    const type = res.headers.get("Content-Type");
+    return type && contentTypeFilter(type);
+  } : (res) => {
+    const type = res.headers.get("Content-Type");
+    return type && contentTypeFilter.test(type);
+  };
+  return async function compress2(ctx, next) {
+    await next();
+    const contentLength = ctx.res.headers.get("Content-Length");
+    if (ctx.res.status === 206 || // partial content, Content-Range refers to the uncompressed bytes
+    ctx.res.headers.has("Content-Encoding") || // already encoded
+    ctx.res.headers.has("Transfer-Encoding") || // already encoded or chunked
+    ctx.req.method === "HEAD" || // HEAD request
+    contentLength && Number(contentLength) < threshold || // content-length below threshold
+    !shouldCompress(ctx.res) || // not compressible type
+    !shouldTransform(ctx.res)) {
+      return;
+    }
+    const current = ctx.res.headers.get("Vary");
+    if (current !== "*" && !(current && varyAcceptEncodingRegExp.test(current))) {
+      ctx.header("Vary", current ? `${current}, Accept-Encoding` : "Accept-Encoding");
+    }
+    const accepted = ctx.req.header("Accept-Encoding");
+    const encoding = selectEncoding(accepted, candidates);
+    if (!encoding || !ctx.res.body) {
+      return;
+    }
+    const stream = new CompressionStream(encoding);
+    ctx.res = new Response(ctx.res.body.pipeThrough(stream), ctx.res);
+    ctx.res.headers.delete("Content-Length");
+    ctx.res.headers.set("Content-Encoding", encoding);
+    const etag = ctx.res.headers.get("ETag");
+    if (etag && !etag.startsWith("W/")) {
+      ctx.res.headers.set("ETag", `W/${etag}`);
+    }
+  };
+};
+var shouldTransform = (res) => {
+  const cacheControl = res.headers.get("Cache-Control");
+  return !cacheControl || !cacheControlNoTransformRegExp.test(cacheControl);
+};
+
 // node_modules/@trpc/server/dist/codes-DagpWZLc.mjs
 function mergeWithoutOverrides(obj1, ...objs) {
   const newObj = Object.assign(emptyObject(), obj1);
@@ -182531,6 +182824,7 @@ if (process.env.MONGODB_URI) {
   });
 }
 var app = new Hono2();
+app.use("*", compress());
 app.use("*", async (c5, next) => {
   console.log(`[HTTP] ${c5.req.method} ${c5.req.url}`);
   await next();

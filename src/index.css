@@ -78,6 +78,11 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: none;
+  }
+  button, a, input, select, textarea, [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'DM Sans', 'Plus Jakarta Sans', sans-serif;
@@ -86,6 +91,9 @@
   body {
     @apply bg-background text-foreground antialiased selection:bg-emerald-500/20 selection:text-emerald-700;
     overflow-x: hidden;
+    width: 100%;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

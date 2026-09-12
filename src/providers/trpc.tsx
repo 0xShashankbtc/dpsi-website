@@ -13,7 +13,7 @@ const CACHE_STORAGE_KEY = "dpsi_query_cache_v3";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
+      staleTime: 10 * 60 * 1000, // 10 minutes of instant fresh cache hits
       gcTime: 24 * 60 * 60 * 1000,
       refetchOnWindowFocus: false,
       refetchOnMount: true,

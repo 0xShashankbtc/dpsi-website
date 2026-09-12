@@ -61,27 +61,39 @@ export default function Home() {
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton height="h-96" />}>
-          <NewsHighlights />
+          <div className="content-visibility-auto">
+            <NewsHighlights />
+          </div>
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton height="h-80" />}>
-          <PrincipalMessage />
+          <div className="content-visibility-auto">
+            <PrincipalMessage />
+          </div>
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton height="h-64" />}>
-          <AchievementsSection />
+          <div className="content-visibility-auto">
+            <AchievementsSection />
+          </div>
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton height="h-96" />}>
-          <VideoGallerySection />
+          <div className="content-visibility-auto">
+            <VideoGallerySection />
+          </div>
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton height="h-64" />}>
-          <TestimonialsSection />
+          <div className="content-visibility-auto">
+            <TestimonialsSection />
+          </div>
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton height="h-64" />}>
-          <CTASection />
+          <div className="content-visibility-auto">
+            <CTASection />
+          </div>
         </Suspense>
       </div>
     </Layout>

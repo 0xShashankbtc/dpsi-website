@@ -105,4 +105,34 @@ describe("Lean Query Shape & Memory Optimization", () => {
     expect((mockLeanDoc as any).$isNew).toBeUndefined();
     expect(typeof mockLeanDoc.studentName).toBe("string");
   });
+
+  it("verifies HTTP compression middleware is available for rapid network delivery", async () => {
+    const { Hono } = await import("hono");
+    const { compress } = await import("hono/compress");
+    const testApp = new Hono();
+    testApp.use("*", compress());
+    testApp.get("/test-compress", (c) => c.json({ data: "A".repeat(500) }));
+
+    const res = await testApp.fetch(
+      new Request("http://localhost/test-compress", {
+        headers: { "accept-encoding": "gzip" },
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-encoding")).toBe("gzip");
+  });
+
+  it("validates that all page baseline snapshots are complete and non-empty", async () => {
+    const snapshots = await import("../../src/lib/initialDataSnapshot");
+    expect(snapshots.DEFAULT_SITE_SETTINGS.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_HEADER_MENUS.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_LEADERSHIP.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_DEPARTMENTS.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_ADMISSION_STEPS.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_FAQS.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_TIMELINE.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_CORE_VALUES.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_BOARD_RESULTS.length).toBeGreaterThan(0);
+    expect(snapshots.DEFAULT_STREAM_DISTRIBUTIONS.length).toBeGreaterThan(0);
+  });
 });

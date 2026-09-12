@@ -92,6 +92,12 @@ export const FlowArt: React.FC<FlowArtProps> = ({
       );
       if (sections.length === 0) return;
 
+      const isMobile =
+        typeof window !== 'undefined' &&
+        (window.innerWidth < 768 ||
+          window.matchMedia('(pointer: coarse)').matches ||
+          'ontouchstart' in window);
+
       const triggers: ScrollTrigger[] = [];
 
       sections.forEach((section, i) => {
@@ -100,31 +106,55 @@ export const FlowArt: React.FC<FlowArtProps> = ({
         const inner = section.querySelector<HTMLElement>('.flow-art-container');
         if (!inner) return;
 
-        if (i > 0) {
-          gsap.set(inner, { rotation: 30, transformOrigin: 'bottom left' });
-          const tween = gsap.to(inner, {
-            rotation: 0,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: section,
-              start: 'top bottom',
-              end: 'top 25%',
-              scrub: true,
-            },
-          });
-          if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-        }
+        if (isMobile) {
+          // Mobile: Zero diagonal rotation, zero touch scroll hijacking for native 120Hz/60Hz smoothness
+          gsap.set(inner, { rotation: 0, transformOrigin: 'center center' });
+          if (i > 0) {
+            const tween = gsap.fromTo(
+              inner,
+              { opacity: 0.9, y: 25 },
+              {
+                opacity: 1,
+                y: 0,
+                ease: 'power1.out',
+                scrollTrigger: {
+                  trigger: section,
+                  start: 'top 90%',
+                  end: 'top 50%',
+                  scrub: 0.4,
+                },
+              }
+            );
+            if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+          }
+        } else {
+          // Desktop: Full cinematic 30° rotation & GSAP viewport pinning
+          if (i > 0) {
+            gsap.set(inner, { rotation: 30, transformOrigin: 'bottom left' });
+            const tween = gsap.to(inner, {
+              rotation: 0,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: section,
+                start: 'top bottom',
+                end: 'top 25%',
+                scrub: true,
+              },
+            });
+            if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+          }
 
-        if (i < sections.length - 1) {
-          triggers.push(
-            ScrollTrigger.create({
-              trigger: section,
-              start: 'bottom bottom',
-              end: 'bottom top',
-              pin: true,
-              pinSpacing: false,
-            }),
-          );
+          if (i < sections.length - 1) {
+            triggers.push(
+              ScrollTrigger.create({
+                trigger: section,
+                start: 'bottom bottom',
+                end: 'bottom top',
+                pin: true,
+                pinSpacing: false,
+              }),
+            );
+          }
         }
       });
 

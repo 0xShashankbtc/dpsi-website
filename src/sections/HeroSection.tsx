@@ -334,14 +334,14 @@ export default function HeroSection() {
       </motion.div>
 
       {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM) */}
-      <div className="absolute bottom-5 inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6">
         {/* Left: Video Play & Audio Controls */}
         {hasVideo && (
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={toggleVideoPlayback}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 hover:bg-black/70 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-full bg-black/55 hover:bg-black/75 active:scale-95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm touch-manipulation"
               title={isPlayingVideo ? "Pause Video" : "Play Video"}
             >
               {isPlayingVideo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -351,7 +351,7 @@ export default function HeroSection() {
             <button
               type="button"
               onClick={toggleMute}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/45 hover:bg-black/70 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-full bg-black/55 hover:bg-black/75 active:scale-95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm touch-manipulation"
               title={isMuted ? "Unmute Video Audio" : "Mute Video Audio"}
             >
               {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
@@ -361,7 +361,7 @@ export default function HeroSection() {
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="p-1.5 rounded-full bg-black/45 hover:bg-black/70 backdrop-blur-md border border-white/15 text-white/80 hover:text-white text-xs transition-all cursor-pointer hidden md:inline-flex shadow-sm"
+              className="p-2 sm:p-1.5 rounded-full bg-black/55 hover:bg-black/75 active:scale-95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs transition-all cursor-pointer hidden md:inline-flex shadow-sm touch-manipulation"
               title="Toggle Fullscreen"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -371,10 +371,10 @@ export default function HeroSection() {
 
         {/* Right: Slide Controls (If Multiple Slides) */}
         {activeSlides.length > 1 && (
-          <div className="flex items-center gap-2 bg-black/45 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 ml-auto shadow-sm">
+          <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 ml-auto shadow-sm">
             <button
               onClick={handlePrevSlide}
-              className="p-1 rounded-full text-white/70 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer touch-manipulation active:scale-90"
               title="Previous Slide"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -384,7 +384,7 @@ export default function HeroSection() {
                 <button
                   key={idx}
                   onClick={() => setCurrentSlide(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer touch-manipulation ${
                     safeSlideIndex === idx ? "w-5 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
                   }`}
                   title={`Go to slide ${idx + 1}`}
@@ -393,7 +393,7 @@ export default function HeroSection() {
             </div>
             <button
               onClick={handleNextSlide}
-              className="p-1 rounded-full text-white/70 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer touch-manipulation active:scale-90"
               title="Next Slide"
             >
               <ChevronRight className="w-4 h-4" />

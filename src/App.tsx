@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router'
 import ErrorBoundary from './components/ErrorBoundary'
 import { idlePrefetchTopRoutes } from './lib/routePreloader'
+import { trpc } from './providers/trpc'
 
 const Home = lazy(() => import('./pages/Home'))
 const About = lazy(() => import('./pages/About'))
@@ -53,9 +54,11 @@ function PageLoader() {
 }
 
 export default function App() {
+  const utils = trpc.useUtils()
+
   useEffect(() => {
-    idlePrefetchTopRoutes()
-  }, [])
+    idlePrefetchTopRoutes(utils)
+  }, [utils])
 
   return (
     <ErrorBoundary fallbackTitle="Application Interface Notice">

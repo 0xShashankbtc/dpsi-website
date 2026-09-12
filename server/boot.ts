@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
 import { cors } from "hono/cors";
+import { compress } from "hono/compress";
 import type { HttpBindings } from "@hono/node-server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
@@ -23,6 +24,9 @@ if (process.env.MONGODB_URI) {
 }
 
 const app = new Hono<{ Bindings: HttpBindings }>();
+
+// High-speed response compression (Gzip / Deflate) for mobile network acceleration
+app.use("*", compress());
 
 app.use("*", async (c, next) => {
   console.log(`[HTTP] ${c.req.method} ${c.req.url}`);

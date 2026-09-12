@@ -52,6 +52,7 @@ export default function Navbar() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
   const location = useLocation();
+  const utils = trpc.useUtils();
 
   const { data: dbMenus } = trpc.cms.listMenus.useQuery({ location: "header" });
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
@@ -373,7 +374,7 @@ export default function Navbar() {
                     className="relative shrink-0"
                     onMouseEnter={() => {
                       setHoveredLink(link.label);
-                      preloadRoute(link.href);
+                      preloadRoute(link.href, utils);
                       if (hasChildren) setActiveDropdown(link.label);
                       else setActiveDropdown(null);
                     }}
@@ -435,7 +436,7 @@ export default function Navbar() {
                             >
                               <Link
                                 to={child.href}
-                                onMouseEnter={() => preloadRoute(child.href)}
+                                onMouseEnter={() => preloadRoute(child.href, utils)}
                                 className="group flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl transition-all"
                                 onClick={() => setActiveDropdown(null)}
                               >
@@ -784,8 +785,8 @@ export default function Navbar() {
                         <Link
                           to={link.href}
                           onClick={() => setIsMobileOpen(false)}
-                          onMouseEnter={() => preloadRoute(link.href)}
-                          onTouchStart={() => preloadRoute(link.href)}
+                          onMouseEnter={() => preloadRoute(link.href, utils)}
+                          onTouchStart={() => preloadRoute(link.href, utils)}
                           className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.99] touch-manipulation ${
                             isActive
                               ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 shadow-xs"
@@ -802,8 +803,8 @@ export default function Navbar() {
                                 key={child.label}
                                 to={child.href}
                                 onClick={() => setIsMobileOpen(false)}
-                                onMouseEnter={() => preloadRoute(child.href)}
-                                onTouchStart={() => preloadRoute(child.href)}
+                                onMouseEnter={() => preloadRoute(child.href, utils)}
+                                onTouchStart={() => preloadRoute(child.href, utils)}
                                 className="block px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors touch-manipulation"
                               >
                                 {child.label}

@@ -23,7 +23,6 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: string }) {
-  const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -31,8 +30,9 @@ function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: str
   const isPercentage = target.includes("%");
 
   useEffect(() => {
-    if (!isInView || isNaN(numericValue)) return;
-    const duration = 1400;
+    if (!isInView || isNaN(numericValue) || !ref.current) return;
+    const node = ref.current;
+    const duration = 1200;
     let startTime: number | null = null;
     let rafId: number;
 
@@ -40,24 +40,27 @@ function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: str
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
       const easeProgress = 1 - Math.pow(1 - progress, 3);
-      setCount(easeProgress * numericValue);
+      const current = easeProgress * numericValue;
+      const display = isPercentage ? current.toFixed(1) : Math.floor(current).toLocaleString();
+      node.textContent = `${display}${suffix}`;
       if (progress < 1) {
         rafId = requestAnimationFrame(step);
       } else {
-        setCount(numericValue);
+        const finalDisplay = isPercentage ? numericValue.toFixed(1) : Math.floor(numericValue).toLocaleString();
+        node.textContent = `${finalDisplay}${suffix}`;
       }
     };
 
     rafId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafId);
-  }, [isInView, numericValue]);
+  }, [isInView, numericValue, isPercentage, suffix]);
 
   if (isNaN(numericValue)) {
     return <span>{target}</span>;
   }
 
-  const display = isPercentage ? count.toFixed(1) : Math.floor(count).toLocaleString();
-  return <span ref={ref}>{display}{suffix}</span>;
+  const initialDisplay = isPercentage ? numericValue.toFixed(1) : Math.floor(numericValue).toLocaleString();
+  return <span ref={ref}>{initialDisplay}{suffix}</span>;
 }
 
 export default function QuickStats() {

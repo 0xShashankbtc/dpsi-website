@@ -378,6 +378,231 @@ export const DEFAULT_VIDEOS = [
   },
 ];
 
+export const DEFAULT_LEADERSHIP = [
+  {
+    _id: "lead_shunglu",
+    name: "Mr. V.K. Shunglu",
+    role: "Chairman, DPS Society & Managing Committee",
+    designation: "Chairman",
+    bio: "Eminent civil servant and former Comptroller and Auditor General of India, providing visionary leadership to DPS Society institutions worldwide.",
+    imageUrl: "/images/leadership/vk_shunglu.webp",
+    order: 1,
+    category: "Management",
+    isActive: true,
+  },
+  {
+    _id: "lead_bansal",
+    name: "Ms. Santosh Bansal",
+    role: "Pro-Vice Chairperson",
+    designation: "Pro-Vice Chairperson",
+    bio: "Pioneering educator and administrator committed to cultivating world-class educational opportunities and infrastructure for students.",
+    imageUrl: "/images/leadership/santosh_bansal.webp",
+    order: 2,
+    category: "Management",
+    isActive: true,
+  },
+  {
+    _id: "lead_john",
+    name: "Ms. Priya Elizabeth John",
+    role: "Principal, DPS Indirapuram",
+    designation: "Principal",
+    bio: "National Award-winning educator driving innovation in CBSE pedagogy, holistic student well-being, and future-ready robotics curriculum.",
+    imageUrl: "/images/leadership/priya_john.webp",
+    order: 3,
+    category: "Principal",
+    isActive: true,
+  },
+];
+
+export const DEFAULT_DEPARTMENTS = [
+  {
+    _id: "dept_science",
+    name: "Science",
+    subjects: "Physics, Chemistry, Biology, Biotechnology",
+    icon: "FlaskConical",
+    color: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
+    order: 1,
+    isActive: true,
+  },
+  {
+    _id: "dept_math",
+    name: "Mathematics",
+    subjects: "Pure Math, Applied Math, Statistics",
+    icon: "Calculator",
+    color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
+    order: 2,
+    isActive: true,
+  },
+  {
+    _id: "dept_lang",
+    name: "Languages",
+    subjects: "English, Hindi, Sanskrit, French, German",
+    icon: "Globe",
+    color: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+    order: 3,
+    isActive: true,
+  },
+  {
+    _id: "dept_arts",
+    name: "Arts & Humanities",
+    subjects: "History, Geography, Political Science, Economics, Psychology",
+    icon: "Palette",
+    color: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400",
+    order: 4,
+    isActive: true,
+  },
+  {
+    _id: "dept_cs",
+    name: "Computer Science & AI",
+    subjects: "Artificial Intelligence, Robotics, Python, Web Dev, Data Science",
+    icon: "Cpu",
+    color: "bg-violet-50 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400",
+    order: 5,
+    isActive: true,
+  },
+  {
+    _id: "dept_pe",
+    name: "Physical Education",
+    subjects: "Sports Science, Athletics, Yoga, Health Education",
+    icon: "Activity",
+    color: "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
+    order: 6,
+    isActive: true,
+  },
+];
+
+export const DEFAULT_ADMISSION_STEPS = [
+  {
+    _id: "step_1",
+    stepNumber: 1,
+    title: "Online Registration",
+    description: "Fill out the online application form with student bio-data and parent details.",
+    icon: "FileText",
+    order: 1,
+    isActive: true,
+  },
+  {
+    _id: "step_2",
+    stepNumber: 2,
+    title: "Document Submission",
+    description: "Upload necessary documents: birth certificate, previous report cards, and transfer certificate.",
+    icon: "ClipboardList",
+    order: 2,
+    isActive: true,
+  },
+  {
+    _id: "step_3",
+    stepNumber: 3,
+    title: "Registration Fee Payment",
+    description: "Pay the registration processing fee securely via our instant payment gateway.",
+    icon: "CreditCard",
+    order: 3,
+    isActive: true,
+  },
+  {
+    _id: "step_4",
+    stepNumber: 4,
+    title: "Student Interaction & Assessment",
+    description: "Participate in an interactive evaluation designed to understand the child's academic readiness.",
+    icon: "BadgeCheck",
+    order: 4,
+    isActive: true,
+  },
+  {
+    _id: "step_5",
+    stepNumber: 5,
+    title: "Admission Formalities & Onboarding",
+    description: "Receive admission confirmation letter and complete enrollment formalities.",
+    icon: "CheckCircle",
+    order: 5,
+    isActive: true,
+  },
+];
+
+export const DEFAULT_FAQS = [
+  {
+    _id: "faq_1",
+    question: "What is the age criteria for admission to Pre-School / Nursery?",
+    answer: "The child should be 3+ years as of March 31st of the admission academic year.",
+    category: "Admissions",
+    order: 1,
+    isActive: true,
+  },
+  {
+    _id: "faq_2",
+    question: "What documents are required for the admission process?",
+    answer: "Birth certificate, passport-size photographs of student & parents, previous report card, transfer certificate (Class II upwards), and proof of residence.",
+    category: "Admissions",
+    order: 2,
+    isActive: true,
+  },
+  {
+    _id: "faq_3",
+    question: "Is there an entrance examination for higher classes?",
+    answer: "An age-appropriate competency assessment is conducted for Class I onwards to understand baseline readiness.",
+    category: "Admissions",
+    order: 3,
+    isActive: true,
+  },
+  {
+    _id: "faq_4",
+    question: "What is the fee structure and scholarship policy?",
+    answer: "Please contact our admissions office or refer to the fee breakdown table. Merit scholarships are offered for national Olympiad winners and sports champions.",
+    category: "Admissions",
+    order: 4,
+    isActive: true,
+  },
+  {
+    _id: "faq_5",
+    question: "Does the school provide GPS-monitored AC bus transport?",
+    answer: "Yes, we operate an extensive fleet of air-conditioned GPS-tracked buses covering Ghaziabad, Noida, and East Delhi.",
+    category: "Transport",
+    order: 5,
+    isActive: true,
+  },
+  {
+    _id: "faq_6",
+    question: "What is the average student-teacher ratio?",
+    answer: "We strictly maintain a 25:1 student-to-educator ratio to guarantee individual attention and care.",
+    category: "General",
+    order: 6,
+    isActive: true,
+  },
+];
+
+export const DEFAULT_TIMELINE = [
+  { _id: "tl_1", year: "2003", title: "Foundation", description: "DPS Indirapuram established under the aegis of The DPS Society.", order: 1, isActive: true },
+  { _id: "tl_2", year: "2008", title: "CBSE Affiliation", description: "Granted permanent CBSE affiliation with exemplary rating.", order: 2, isActive: true },
+  { _id: "tl_3", year: "2012", title: "First Batch Success", description: "100% CBSE board results with multiple students securing >95%.", order: 3, isActive: true },
+  { _id: "tl_4", year: "2015", title: "Sports Complex", description: "Inaugurated Olympic-size aquatic complex and national sports grounds.", order: 4, isActive: true },
+  { _id: "tl_5", year: "2021", title: "Digital Transformation", description: "Complete smart classroom and digital infrastructure upgrade.", order: 5, isActive: true },
+  { _id: "tl_6", year: "2023", title: "20th Anniversary", description: "Celebrated two decades of holistic excellence and character building.", order: 6, isActive: true },
+  { _id: "tl_7", year: "2024", title: "AI & Robotics Lab", description: "State-of-the-art innovation center launched with humanoid robotics kits.", order: 7, isActive: true },
+  { _id: "tl_8", year: "2025", title: "Global Recognition", description: "Ranked among top CBSE schools in India with British Council ISA honors.", order: 8, isActive: true },
+];
+
+export const DEFAULT_CORE_VALUES = [
+  { _id: "cv_1", title: "Excellence", description: "Striving for the highest standards in education and character development.", icon: "Target", order: 1, isActive: true },
+  { _id: "cv_2", title: "Integrity", description: "Building honest, ethical individuals who lead with moral courage.", icon: "Heart", order: 2, isActive: true },
+  { _id: "cv_3", title: "Inclusivity", description: "Celebrating diversity and creating a welcoming environment for all.", icon: "Users", order: 3, isActive: true },
+  { _id: "cv_4", title: "Innovation", description: "Embracing new ideas and technologies to prepare students for the future.", icon: "BookOpen", order: 4, isActive: true },
+  { _id: "cv_5", title: "Resilience", description: "Developing grit and perseverance to overcome challenges with confidence.", icon: "Award", order: 5, isActive: true },
+];
+
+export const DEFAULT_BOARD_RESULTS = [
+  { _id: "br_1", year: "2022", passRate: 98, distinction: 45, order: 1, isActive: true },
+  { _id: "br_2", year: "2023", passRate: 99, distinction: 52, order: 2, isActive: true },
+  { _id: "br_3", year: "2024", passRate: 99.5, distinction: 58, order: 3, isActive: true },
+  { _id: "br_4", year: "2025", passRate: 99.8, distinction: 65, order: 4, isActive: true },
+  { _id: "br_5", year: "2026", passRate: 99.9, distinction: 72, order: 5, isActive: true },
+];
+
+export const DEFAULT_STREAM_DISTRIBUTIONS = [
+  { _id: "sd_1", name: "Science", value: 40, color: "#047857", order: 1, isActive: true },
+  { _id: "sd_2", name: "Commerce", value: 35, color: "#059669", order: 2, isActive: true },
+  { _id: "sd_3", name: "Humanities", value: 25, color: "#10b981", order: 3, isActive: true },
+];
+
 /**
  * Injects baseline snapshots directly into TanStack QueryClient if no cached data exists,
  * guaranteeing instantaneous (0.00ms) first-paint render on first load without layout shifts.
@@ -407,4 +632,14 @@ export function seedInitialQueryData(queryClient: QueryClient): void {
   seedIfMissing([["achievements", "list"], { type: "query" }], DEFAULT_ACHIEVEMENTS);
   seedIfMissing([["testimonials", "featured"], { type: "query" }], DEFAULT_TESTIMONIALS);
   seedIfMissing([["cms", "listVideos"], { type: "query" }], DEFAULT_VIDEOS);
+
+  // Inner pages baseline snapshots for 0ms navigation
+  seedIfMissing([["cms", "listLeadership"], { type: "query" }], DEFAULT_LEADERSHIP);
+  seedIfMissing([["cms", "listCoreValues"], { type: "query" }], DEFAULT_CORE_VALUES);
+  seedIfMissing([["cms", "listTimeline"], { type: "query" }], DEFAULT_TIMELINE);
+  seedIfMissing([["cms", "listDepartments"], { type: "query" }], DEFAULT_DEPARTMENTS);
+  seedIfMissing([["cms", "listBoardResults"], { type: "query" }], DEFAULT_BOARD_RESULTS);
+  seedIfMissing([["cms", "listStreamDistributions"], { type: "query" }], DEFAULT_STREAM_DISTRIBUTIONS);
+  seedIfMissing([["cms", "listAdmissionSteps"], { type: "query" }], DEFAULT_ADMISSION_STEPS);
+  seedIfMissing([["cms", "listFaqs"], { input: { category: "Admissions" }, type: "query" }], DEFAULT_FAQS);
 }
