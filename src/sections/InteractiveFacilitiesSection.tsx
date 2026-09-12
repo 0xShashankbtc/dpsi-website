@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router";
 import {
@@ -153,64 +154,134 @@ const ICON_LOOKUP: Record<string, React.ComponentType<{ className?: string }>> =
 
 const CARD_THEMES = [
   {
-    bg: "#F0FDF4", // Soft emerald mist
-    badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-300",
-    catColor: "text-emerald-700",
-    tagBg: "bg-emerald-100/90 text-emerald-900 border-emerald-200",
-    btnPrimary: "bg-emerald-800 hover:bg-emerald-900 text-white",
-    btnOutline: "border-emerald-300 text-emerald-900 hover:bg-emerald-100/60",
-    metricColor: "text-emerald-800",
+    bg: "#06130D", // Deep emerald forest
+    isDark: true,
+    textColor: "text-slate-100",
+    badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    catColor: "text-emerald-400",
+    tagBg: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
+    btnPrimary: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold",
+    btnOutline: "border-emerald-500/30 text-emerald-200 hover:bg-emerald-950/50",
+    metricColor: "text-emerald-400",
+    subTextColor: "text-slate-300",
+    descColor: "text-slate-300",
+    highlightTextColor: "text-slate-200",
+    checkColor: "text-emerald-400",
+    borderTop: "border-emerald-500/20",
+    imgBorder: "border-emerald-500/30",
     defaultSubBadge: "NITI Aayog Atal Tinkering Lab Certified",
+    scrollHintColor: "text-emerald-300/70",
   },
   {
-    bg: "#F0F9FF", // Soft sky breeze
-    badgeBg: "bg-sky-100 text-sky-900 border-sky-300",
-    catColor: "text-sky-700",
-    tagBg: "bg-sky-100/90 text-sky-900 border-sky-200",
-    btnPrimary: "bg-sky-800 hover:bg-sky-900 text-white",
-    btnOutline: "border-sky-300 text-sky-900 hover:bg-sky-100/60",
-    metricColor: "text-sky-800",
+    bg: "#040F1E", // Deep oceanic navy (Image 1 Card 02)
+    isDark: true,
+    textColor: "text-slate-100",
+    badgeBg: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+    catColor: "text-cyan-400",
+    tagBg: "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
+    btnPrimary: "bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold",
+    btnOutline: "border-cyan-500/30 text-cyan-200 hover:bg-cyan-950/50",
+    metricColor: "text-cyan-400",
+    subTextColor: "text-slate-300",
+    descColor: "text-slate-300",
+    highlightTextColor: "text-slate-200",
+    checkColor: "text-cyan-400",
+    borderTop: "border-cyan-500/20",
+    imgBorder: "border-cyan-500/30",
     defaultSubBadge: "25m Competition Pool • All-Weather Heated",
+    scrollHintColor: "text-cyan-300/70",
   },
   {
-    bg: "#FFFBEB", // Soft warm cream
-    badgeBg: "bg-amber-100 text-amber-900 border-amber-300",
-    catColor: "text-amber-800",
-    tagBg: "bg-amber-100/90 text-amber-900 border-amber-200",
-    btnPrimary: "bg-amber-900 hover:bg-amber-950 text-white",
-    btnOutline: "border-amber-300 text-amber-900 hover:bg-amber-100/60",
+    bg: "#F8F6F0", // Warm luxury cream (Image 1 Card 03)
+    isDark: false,
+    textColor: "text-slate-900",
+    badgeBg: "bg-amber-800/10 text-amber-900 border-amber-800/20",
+    catColor: "text-amber-900",
+    tagBg: "bg-amber-900/10 text-amber-900 border-amber-900/20",
+    btnPrimary: "bg-slate-900 hover:bg-slate-800 text-white font-bold",
+    btnOutline: "border-slate-300 text-slate-800 hover:bg-slate-200",
     metricColor: "text-amber-900",
+    subTextColor: "text-slate-700",
+    descColor: "text-slate-700",
+    highlightTextColor: "text-slate-800",
+    checkColor: "text-emerald-600",
+    borderTop: "border-slate-300",
+    imgBorder: "border-slate-300",
     defaultSubBadge: "Exceeds CBSE Experimental Standards",
+    scrollHintColor: "text-slate-600",
   },
   {
-    bg: "#FAF5FF", // Soft lavender elegance
-    badgeBg: "bg-purple-100 text-purple-900 border-purple-300",
-    catColor: "text-purple-700",
-    tagBg: "bg-purple-100/90 text-purple-900 border-purple-200",
-    btnPrimary: "bg-purple-900 hover:bg-purple-950 text-white",
-    btnOutline: "border-purple-300 text-purple-900 hover:bg-purple-100/60",
-    metricColor: "text-purple-900",
-    defaultSubBadge: "Acoustic Treated • Steinway Grand Piano",
+    bg: "#17071A", // Deep royal aubergine
+    isDark: true,
+    textColor: "text-slate-100",
+    badgeBg: "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30",
+    catColor: "text-fuchsia-400",
+    tagBg: "bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20",
+    btnPrimary: "bg-fuchsia-500 hover:bg-fuchsia-400 text-slate-950 font-bold",
+    btnOutline: "border-fuchsia-500/30 text-fuchsia-200 hover:bg-fuchsia-950/50",
+    metricColor: "text-fuchsia-400",
+    subTextColor: "text-slate-300",
+    descColor: "text-slate-300",
+    highlightTextColor: "text-slate-200",
+    checkColor: "text-fuchsia-400",
+    borderTop: "border-fuchsia-500/20",
+    imgBorder: "border-fuchsia-500/30",
+    defaultSubBadge: "1,200 Seats • Acoustic Sound Engineering",
+    scrollHintColor: "text-fuchsia-300/70",
   },
   {
-    bg: "#F8FAFC", // Crisp modern slate
-    badgeBg: "bg-slate-200 text-slate-900 border-slate-300",
-    catColor: "text-slate-700",
-    tagBg: "bg-slate-200/90 text-slate-800 border-slate-300",
-    btnPrimary: "bg-slate-900 hover:bg-slate-800 text-white",
-    btnOutline: "border-slate-300 text-slate-800 hover:bg-slate-200/60",
-    metricColor: "text-slate-900",
+    bg: "#070B16", // Deep midnight slate navy
+    isDark: true,
+    textColor: "text-slate-100",
+    badgeBg: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+    catColor: "text-indigo-400",
+    tagBg: "bg-indigo-500/10 text-indigo-300 border-indigo-500/20",
+    btnPrimary: "bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold",
+    btnOutline: "border-indigo-500/30 text-indigo-200 hover:bg-indigo-950/50",
+    metricColor: "text-indigo-400",
+    subTextColor: "text-slate-300",
+    descColor: "text-slate-300",
+    highlightTextColor: "text-slate-200",
+    checkColor: "text-indigo-400",
+    borderTop: "border-indigo-500/20",
+    imgBorder: "border-indigo-500/30",
     defaultSubBadge: "350+ AI Surveillance Nodes • 100% AC Fleet",
+    scrollHintColor: "text-indigo-300/70",
   },
 ];
 
 export default function InteractiveFacilitiesSection() {
-  const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery();
+  // Cached facilities for zero-latency instant hydration
+  const [cachedFacilities, setCachedFacilities] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("dpsi_cached_facilities");
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return [];
+  });
+
+  const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery(undefined, {
+    staleTime: 1000 * 60 * 10,
+  });
+
+  useEffect(() => {
+    if (cmsFacilities && cmsFacilities.length > 0 && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("dpsi_cached_facilities", JSON.stringify(cmsFacilities));
+        setCachedFacilities(cmsFacilities);
+      } catch {}
+    }
+  }, [cmsFacilities]);
+
+  const rawFacilities =
+    cmsFacilities && cmsFacilities.length > 0 ? cmsFacilities : cachedFacilities;
 
   // Combine live MongoDB facilities with rich templates (100% admin-editable)
   const facilities: FacilityItem[] =
-    cmsFacilities && cmsFacilities.length > 0
-      ? cmsFacilities
+    rawFacilities && rawFacilities.length > 0
+      ? rawFacilities
           .filter((f: any) => !f.isDeleted && f.isActive !== false)
           .map((f: any, idx: number) => {
             const fallback = FACILITIES_FALLBACK[idx % FACILITIES_FALLBACK.length];
@@ -289,7 +360,7 @@ export default function InteractiveFacilitiesSection() {
         </motion.div>
       </div>
 
-      {/* 3D PARALLAX STORY FLOW (GSAP ScrollTrigger Powered) — No borders, light colors, zero line artifacts */}
+      {/* 3D PARALLAX STORY FLOW (GSAP ScrollTrigger Powered) — Matching Image 1 */}
       <FlowArt
         as="div"
         aria-label="DPS Indirapuram World-Class Facilities Showcase"
@@ -297,18 +368,18 @@ export default function InteractiveFacilitiesSection() {
       >
         {displayCards.map((facility, idx) => {
           const theme = CARD_THEMES[idx % CARD_THEMES.length];
-          const IconComp = facility.icon || theme.defaultIcon;
+          const IconComp = facility.icon || Sparkles;
           const stepNum = `0${idx + 1} / 0${displayCards.length}`;
 
           return (
             <FlowSection
-              key={facility.id || idx}
+              key={`fac-card-${idx}`}
               aria-label={`${stepNum} ${facility.name}`}
-              style={{ backgroundColor: theme.bg, color: "#0F172A" }}
+              style={{ backgroundColor: theme.bg }}
               className="border-none shadow-none outline-none"
             >
               {/* Card Top Row */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
+              <div className={`flex flex-wrap items-center justify-between gap-3 pb-3 border-b ${theme.borderTop}`}>
                 <div className="flex items-center gap-3">
                   <span
                     className={`px-3 py-1 rounded-full font-mono text-xs font-black tracking-widest border ${theme.badgeBg}`}
@@ -319,7 +390,7 @@ export default function InteractiveFacilitiesSection() {
                     {facility.category}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <div className={`flex items-center gap-2 text-xs font-semibold ${theme.subTextColor}`}>
                   <IconComp className={`w-4 h-4 ${theme.catColor}`} />
                   <span>{theme.defaultSubBadge}</span>
                 </div>
@@ -329,7 +400,7 @@ export default function InteractiveFacilitiesSection() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center my-auto py-4">
                 {/* Left Column: Visual Showcase */}
                 <div className="lg:col-span-7 relative group">
-                  <div className="relative aspect-[16/10] rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 bg-white">
+                  <div className={`relative aspect-[16/10] rounded-3xl overflow-hidden shadow-xl border ${theme.imgBorder} ${theme.isDark ? 'bg-slate-900' : 'bg-white'}`}>
                     <img
                       src={facility.image}
                       alt={facility.name}
@@ -353,20 +424,20 @@ export default function InteractiveFacilitiesSection() {
 
                     <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300">
+                        <p className={`text-xs font-semibold uppercase tracking-widest ${theme.catColor}`}>
                           {facility.category}
                         </p>
                         <h4 className="text-lg sm:text-xl font-black">{facility.tagline}</h4>
                       </div>
                       <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/20 text-white text-xs font-bold backdrop-blur-sm border border-white/30">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" /> Certified
+                        <ShieldCheck className={`w-3.5 h-3.5 ${theme.catColor}`} /> Certified
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right Column: Editorial Copy */}
-                <div className="lg:col-span-5 flex flex-col justify-center text-slate-900">
+                <div className={`lg:col-span-5 flex flex-col justify-center ${theme.textColor}`}>
                   <div
                     className={`inline-flex items-center gap-2 w-max px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-3 border ${theme.tagBg}`}
                   >
@@ -374,19 +445,19 @@ export default function InteractiveFacilitiesSection() {
                     <span>{facility.tagline}</span>
                   </div>
 
-                  <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.08] text-slate-900 mb-4">
+                  <h3 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.08] mb-4 ${theme.isDark ? 'text-white' : 'text-slate-900'}`}>
                     {facility.name}
                   </h3>
 
-                  <p className="text-slate-700 text-sm sm:text-base leading-relaxed mb-6 font-normal">
+                  <p className={`text-sm sm:text-base leading-relaxed mb-6 font-normal ${theme.descColor}`}>
                     {facility.description}
                   </p>
 
                   {/* Key Highlights */}
                   <div className="space-y-2.5 mb-6">
                     {facility.highlights.map((item, i) => (
-                      <div key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-800">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div key={i} className={`flex items-start gap-2.5 text-xs sm:text-sm ${theme.highlightTextColor}`}>
+                        <CheckCircle2 className={`w-4 h-4 ${theme.checkColor} shrink-0 mt-0.5`} />
                         <span className="font-semibold">{item}</span>
                       </div>
                     ))}
@@ -414,14 +485,14 @@ export default function InteractiveFacilitiesSection() {
               </div>
 
               {/* Bottom Row: Metrics & Scroll Guidance */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-3 text-slate-900">
+              <div className={`flex flex-wrap items-center justify-between gap-4 pt-3 border-t ${theme.borderTop} ${theme.textColor}`}>
                 <div className="flex flex-wrap gap-4 sm:gap-8">
                   {facility.metrics.map((metric, mIdx) => (
                     <div key={mIdx}>
                       <p className={`text-xl sm:text-2xl font-black ${theme.metricColor}`}>
                         {metric.value}
                       </p>
-                      <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wider">
+                      <p className={`text-[11px] font-medium uppercase tracking-wider ${theme.isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                         {metric.label}
                       </p>
                     </div>
@@ -429,7 +500,7 @@ export default function InteractiveFacilitiesSection() {
                 </div>
 
                 {idx < displayCards.length - 1 && (
-                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 animate-bounce">
+                  <div className={`flex items-center gap-2 text-xs font-semibold ${theme.scrollHintColor} animate-bounce`}>
                     <span>Scroll to explore {displayCards[idx + 1]?.name}</span>
                     <ChevronRight className="w-4 h-4 rotate-90" />
                   </div>

@@ -29,12 +29,12 @@ export const FlowSection: React.FC<FlowSectionProps> = ({
   <section
     data-flow-section
     aria-label={ariaLabel}
-    className={cx('sticky top-0 min-h-screen w-full overflow-hidden border-0 outline-none', className)}
+    className={cx('relative min-h-screen w-full overflow-visible border-0 outline-none', className)}
   >
     <div
       data-flow-inner
       className={cx(
-        'flow-art-container relative flex min-h-screen w-full flex-col justify-between gap-6 px-[4vw] pt-[clamp(2rem,8vw,4vw)] pb-[4vw] border-0 outline-none shadow-2xl',
+        'flow-art-container relative flex min-h-screen w-full flex-col justify-between gap-6 px-[4vw] pt-[clamp(2rem,8vw,4vw)] pb-[4vw] border-0 outline-none shadow-[0_-20px_50px_rgba(0,0,0,0.35),0_25px_50px_rgba(0,0,0,0.25)]',
         'will-change-transform',
       )}
       style={{ transformOrigin: 'bottom left', ...style }}
@@ -101,18 +101,30 @@ export const FlowArt: React.FC<FlowArtProps> = ({
         if (!inner) return;
 
         if (i > 0) {
-          gsap.set(inner, { rotation: 25, transformOrigin: 'bottom left' });
+          gsap.set(inner, { rotation: 30, transformOrigin: 'bottom left' });
           const tween = gsap.to(inner, {
             rotation: 0,
             ease: 'none',
             scrollTrigger: {
               trigger: section,
               start: 'top bottom',
-              end: 'top 20%',
+              end: 'top 25%',
               scrub: true,
             },
           });
           if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+        }
+
+        if (i < sections.length - 1) {
+          triggers.push(
+            ScrollTrigger.create({
+              trigger: section,
+              start: 'bottom bottom',
+              end: 'bottom top',
+              pin: true,
+              pinSpacing: false,
+            }),
+          );
         }
       });
 
@@ -123,7 +135,9 @@ export const FlowArt: React.FC<FlowArtProps> = ({
 
       return () => {
         clearTimeout(timer);
-        triggers.forEach((t) => t.kill());
+        triggers.forEach((t) => {
+          t.kill(true);
+        });
       };
     },
     { scope: containerRef, dependencies: [childCount(children), reducedMotion] },
@@ -133,7 +147,7 @@ export const FlowArt: React.FC<FlowArtProps> = ({
     <Component
       ref={containerRef}
       aria-label={ariaLabel}
-      className={cx('relative w-full', className)}
+      className={cx('relative w-full overflow-x-clip', className)}
     >
       {children}
     </Component>
