@@ -2,49 +2,54 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, adminMutation } from "./middleware";
 import { getMainModels, createImmutableAuditLog } from "./models/cmsSchemas";
+import { withCache, invalidateCache } from "./lib/cache";
 
 export const testimonialRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Testimonial } = await getMainModels();
-      const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
-      return docs.map((d: any) => ({
-        id: d._id.toString(),
-        _id: d._id.toString(),
-        name: d.name,
-        role: d.role,
-        content: d.content,
-        avatar: d.avatarUrl || "",
-        avatarUrl: d.avatarUrl || "",
-        rating: d.rating || 5,
-        featured: d.featured,
-        order: d.order,
-        isActive: d.isActive,
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("testimonials:list", 120, async () => {
+      try {
+        const { Testimonial } = await getMainModels();
+        const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        return docs.map((d: any) => ({
+          id: d._id.toString(),
+          _id: d._id.toString(),
+          name: d.name,
+          role: d.role,
+          content: d.content,
+          avatar: d.avatarUrl || "",
+          avatarUrl: d.avatarUrl || "",
+          rating: d.rating || 5,
+          featured: d.featured,
+          order: d.order,
+          isActive: d.isActive,
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   featured: publicQuery.query(async () => {
-    try {
-      const { Testimonial } = await getMainModels();
-      const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
-      return docs.map((d: any) => ({
-        id: d._id.toString(),
-        _id: d._id.toString(),
-        name: d.name,
-        role: d.role,
-        content: d.content,
-        avatar: d.avatarUrl || "",
-        avatarUrl: d.avatarUrl || "",
-        rating: d.rating || 5,
-        featured: d.featured,
-        order: d.order,
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("testimonials:featured", 120, async () => {
+      try {
+        const { Testimonial } = await getMainModels();
+        const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        return docs.map((d: any) => ({
+          id: d._id.toString(),
+          _id: d._id.toString(),
+          name: d.name,
+          role: d.role,
+          content: d.content,
+          avatar: d.avatarUrl || "",
+          avatarUrl: d.avatarUrl || "",
+          rating: d.rating || 5,
+          featured: d.featured,
+          order: d.order,
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   create: adminMutation
@@ -62,6 +67,7 @@ export const testimonialRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { Testimonial } = await getMainModels();
       const doc = await Testimonial.create(input);
+      invalidateCache("testimonials:");
       await createImmutableAuditLog({
         action: "CREATE_TESTIMONIAL",
         module: "Testimonials",
@@ -91,6 +97,7 @@ export const testimonialRouter = createRouter({
       const testId = String(id?._id || id);
       const { Testimonial } = await getMainModels();
       const updated = await Testimonial.findByIdAndUpdate(testId, data, { new: true });
+      invalidateCache("testimonials:");
       await createImmutableAuditLog({
         action: "UPDATE_TESTIMONIAL",
         module: "Testimonials",
@@ -118,6 +125,7 @@ export const testimonialRouter = createRouter({
         }).catch(() => null);
       }
 
+      invalidateCache("testimonials:");
       await createImmutableAuditLog({
         action: "DELETE_TESTIMONIAL",
         module: "Testimonials",

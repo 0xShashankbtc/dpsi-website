@@ -3,18 +3,18 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const R2_ACCOUNT_ID = (process.env.CLOUDFLARE_R2_ACCOUNT_ID || "82ff39eb8fc02961ce32469aaad2f3fe").trim();
-const R2_ACCESS_KEY_ID = (process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "8020ab677123b74c36572afa90b4f24f").trim();
+const R2_ACCOUNT_ID = (process.env.CLOUDFLARE_R2_ACCOUNT_ID || "").trim();
+const R2_ACCESS_KEY_ID = (process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "").trim();
 const R2_SECRET_ACCESS_KEY = (process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || "").trim();
 const R2_BUCKET_NAME = (process.env.CLOUDFLARE_R2_BUCKET_NAME || "dpsi-media").trim();
 const R2_PUBLIC_DOMAIN = (process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || "").trim();
 
 export const r2Client = new S3Client({
   region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  endpoint: R2_ACCOUNT_ID ? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : "https://r2.cloudflarestorage.com",
   credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
+    accessKeyId: R2_ACCESS_KEY_ID || "unconfigured",
+    secretAccessKey: R2_SECRET_ACCESS_KEY || "unconfigured",
   },
 });
 
@@ -28,8 +28,8 @@ export async function uploadToR2(
   folder: string = "uploads",
   bucketName: string = R2_BUCKET_NAME
 ): Promise<{ url: string; key: string; bucket: string; size: number }> {
-  if (!R2_SECRET_ACCESS_KEY) {
-    throw new Error("CLOUDFLARE_R2_SECRET_ACCESS_KEY is required for Cloudflare R2 uploads.");
+  if (!R2_SECRET_ACCESS_KEY || !R2_ACCESS_KEY_ID || !R2_ACCOUNT_ID) {
+    throw new Error("Cloudflare R2 credentials (CLOUDFLARE_R2_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY_ID, CLOUDFLARE_R2_SECRET_ACCESS_KEY) are required for R2 uploads.");
   }
 
   const cleanFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");

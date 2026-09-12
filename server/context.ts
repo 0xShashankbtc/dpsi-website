@@ -15,15 +15,19 @@ export type TrpcContext = {
   tenantId: string;
 };
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"
-    ? "dpsi_cms_super_secret_jwt_key_2026_dev"
-    : "dpsi_secure_prod_fallback_token_key_2026_verified");
-
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.warn("[Security] Notice: Dedicated JWT_SECRET recommended in production environment.");
+export function getJwtSecret(): string {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.trim().length > 0) {
+    return process.env.JWT_SECRET.trim();
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[Security FATAL] JWT_SECRET environment variable is mandatory in production.");
+  }
+  return "dpsi_cms_super_secret_jwt_key_2026_dev";
 }
+
+export const JWT_SECRET =
+  (process.env.JWT_SECRET && process.env.JWT_SECRET.trim()) ||
+  (process.env.NODE_ENV === "production" ? "" : "dpsi_cms_super_secret_jwt_key_2026_dev");
 
 export async function createContext(
   opts: FetchCreateContextFnOptions,
@@ -33,10 +37,11 @@ export async function createContext(
 
   // Extract JWT from Authorization header
   const authHeader = opts.req.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ") && JWT_SECRET) {
+  if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     try {
-      const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] }) as any;
+      const secret = getJwtSecret();
+      const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] }) as any;
       user = {
         id: decoded.id,
         username: decoded.username,
@@ -44,7 +49,7 @@ export async function createContext(
         tenantId: decoded.tenantId || "dpsi",
       };
     } catch {
-      // Token expired or invalid signature
+      // Token expired, invalid signature, or missing production secret
     }
   }
 

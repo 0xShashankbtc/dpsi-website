@@ -42,7 +42,17 @@ export default function AchievementsSection() {
           </p>
         </motion.div>
 
-        {slides.length > 0 && (
+        {isLoading ? (
+          <div className="w-full max-w-4xl mx-auto py-8 flex items-center justify-center gap-4 sm:gap-6 overflow-hidden">
+            <div className="hidden sm:block w-48 h-64 rounded-2xl bg-slate-100 dark:bg-slate-800/60 animate-pulse opacity-40 scale-90 shrink-0" />
+            <div className="w-64 sm:w-72 h-80 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse shadow-lg shrink-0 flex flex-col justify-end p-6">
+              <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded w-3/4 mb-3" />
+              <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/2 mb-2" />
+              <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded w-1/3" />
+            </div>
+            <div className="hidden sm:block w-48 h-64 rounded-2xl bg-slate-100 dark:bg-slate-800/60 animate-pulse opacity-40 scale-90 shrink-0" />
+          </div>
+        ) : slides.length > 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -63,7 +73,7 @@ export default function AchievementsSection() {
               cardClassName="border border-slate-200 dark:border-slate-700 shadow-xl rounded-3xl bg-white dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800"
             />
           </motion.div>
-        )}
+        ) : null}
       </div>
     </section>
   );

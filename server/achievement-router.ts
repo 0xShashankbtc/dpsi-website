@@ -2,57 +2,62 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, adminMutation } from "./middleware";
 import { getMainModels, createImmutableAuditLog } from "./models/cmsSchemas";
+import { withCache, invalidateCache } from "./lib/cache";
 
 export const achievementRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Achievement } = await getMainModels();
-      const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
-      return docs.map((d: any) => ({
-        id: d._id.toString(),
-        _id: d._id.toString(),
-        studentName: d.studentName,
-        class: d.className,
-        className: d.className,
-        score: d.score,
-        exam: d.exam,
-        stream: d.stream || "",
-        rank: d.rank || "",
-        year: d.year,
-        image: d.imageUrl || "",
-        imageUrl: d.imageUrl || "",
-        featured: d.featured,
-        order: d.order,
-        isActive: d.isActive,
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("achievements:list", 120, async () => {
+      try {
+        const { Achievement } = await getMainModels();
+        const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        return docs.map((d: any) => ({
+          id: d._id.toString(),
+          _id: d._id.toString(),
+          studentName: d.studentName,
+          class: d.className,
+          className: d.className,
+          score: d.score,
+          exam: d.exam,
+          stream: d.stream || "",
+          rank: d.rank || "",
+          year: d.year,
+          image: d.imageUrl || "",
+          imageUrl: d.imageUrl || "",
+          featured: d.featured,
+          order: d.order,
+          isActive: d.isActive,
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   featured: publicQuery.query(async () => {
-    try {
-      const { Achievement } = await getMainModels();
-      const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
-      return docs.map((d: any) => ({
-        id: d._id.toString(),
-        _id: d._id.toString(),
-        studentName: d.studentName,
-        class: d.className,
-        className: d.className,
-        score: d.score,
-        exam: d.exam,
-        stream: d.stream || "",
-        rank: d.rank || "",
-        year: d.year,
-        image: d.imageUrl || "",
-        imageUrl: d.imageUrl || "",
-        featured: d.featured,
-        order: d.order,
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("achievements:featured", 120, async () => {
+      try {
+        const { Achievement } = await getMainModels();
+        const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        return docs.map((d: any) => ({
+          id: d._id.toString(),
+          _id: d._id.toString(),
+          studentName: d.studentName,
+          class: d.className,
+          className: d.className,
+          score: d.score,
+          exam: d.exam,
+          stream: d.stream || "",
+          rank: d.rank || "",
+          year: d.year,
+          image: d.imageUrl || "",
+          imageUrl: d.imageUrl || "",
+          featured: d.featured,
+          order: d.order,
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   create: adminMutation
@@ -73,6 +78,7 @@ export const achievementRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { Achievement } = await getMainModels();
       const doc = await Achievement.create(input);
+      invalidateCache("achievements:");
       await createImmutableAuditLog({
         action: "CREATE_ACHIEVEMENT",
         module: "Academics",
@@ -105,6 +111,7 @@ export const achievementRouter = createRouter({
       const achId = String(id?._id || id);
       const { Achievement } = await getMainModels();
       const updated = await Achievement.findByIdAndUpdate(achId, data, { new: true });
+      invalidateCache("achievements:");
       await createImmutableAuditLog({
         action: "UPDATE_ACHIEVEMENT",
         module: "Academics",
@@ -132,6 +139,7 @@ export const achievementRouter = createRouter({
         }).catch(() => null);
       }
 
+      invalidateCache("achievements:");
       await createImmutableAuditLog({
         action: "DELETE_ACHIEVEMENT",
         module: "Academics",

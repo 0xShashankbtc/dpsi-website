@@ -66,6 +66,39 @@ export default function VideoGallerySection() {
 
   const videos = dynamicVideos || [];
 
+  if (isLoading) {
+    return (
+      <div className="w-full flex flex-col">
+        <div className="w-full py-12 sm:py-14 bg-white dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-3">
+              Video Showcase
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Experience Life at DPS Indirapuram
+            </h2>
+            <div className="w-16 h-1 bg-slate-900 dark:bg-slate-100 mx-auto mt-4 rounded-full" />
+            <p className="text-slate-600 dark:text-slate-400 mt-3 max-w-2xl mx-auto text-sm sm:text-base font-normal">
+              Explore our state-of-the-art AI & Robotics Innovation Lab, Annual Cultural Celebrations, and campus achievements.
+            </p>
+          </div>
+        </div>
+
+        <section className="relative py-16 sm:py-20 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white overflow-hidden border-b border-slate-200 dark:border-slate-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="relative max-w-4xl mx-auto">
+              <div className="w-full aspect-video rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-300 dark:border-slate-700 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center">
+                  <Play className="w-8 h-8 text-slate-400 dark:text-slate-600 fill-current ml-1" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (!isLoading && videos.length === 0) {
     return null;
   }

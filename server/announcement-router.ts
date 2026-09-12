@@ -2,22 +2,25 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, adminMutation, adminQuery } from "./middleware";
 import { getMainModels, createImmutableAuditLog } from "./models/cmsSchemas";
+import { withCache, invalidateCache } from "./lib/cache";
 
 export const announcementRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Marquee } = await getMainModels();
-      const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
-      return marquees.map((m: any, idx: number) => ({
-        id: m._id?.toString() || idx + 1,
-        title: m.text,
-        link: m.linkUrl || "/admissions",
-        active: m.isActive,
-        priority: m.speed || 50,
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("announcements:list", 120, async () => {
+      try {
+        const { Marquee } = await getMainModels();
+        const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
+        return marquees.map((m: any, idx: number) => ({
+          id: m._id?.toString() || idx + 1,
+          title: m.text,
+          link: m.linkUrl || "/admissions",
+          active: m.isActive,
+          priority: m.speed || 50,
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   adminList: adminQuery.query(async () => {
@@ -53,6 +56,8 @@ export const announcementRouter = createRouter({
         isActive: input.active,
         speed: input.priority,
       });
+      invalidateCache("announcements:");
+      invalidateCache("cms:marquees");
       await createImmutableAuditLog({
         action: "CREATE_MARQUEE",
         module: "Marquee",
@@ -87,6 +92,8 @@ export const announcementRouter = createRouter({
         },
         { new: true }
       );
+      invalidateCache("announcements:");
+      invalidateCache("cms:marquees");
       await createImmutableAuditLog({
         action: "UPDATE_MARQUEE",
         module: "Marquee",
@@ -114,6 +121,8 @@ export const announcementRouter = createRouter({
         }).catch(() => null);
       }
 
+      invalidateCache("announcements:");
+      invalidateCache("cms:marquees");
       await createImmutableAuditLog({
         action: "DELETE_MARQUEE",
         module: "Marquee",

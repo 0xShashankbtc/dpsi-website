@@ -16,12 +16,7 @@ import { getTenantModel } from "./models/tenantSchema";
 import { seedDatabase } from "./lib/seedDatabase";
 import { convertImageToWebP } from "./utils/mediaConverter";
 import { withCache, invalidateCache } from "./lib/cache";
-
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"
-    ? "dpsi_cms_super_secret_jwt_key_2026_dev"
-    : "dpsi_secure_prod_fallback_token_key_2026_verified");
+import { getJwtSecret } from "./context";
 
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -146,7 +141,7 @@ export const cmsRouter = createRouter({
             const assignedTenantId = user.tenantId || targetTenantId || "dpsi";
             const token = jwt.sign(
               { id: user._id.toString(), username: user.username, role: user.role || "superadmin", tenantId: assignedTenantId },
-              JWT_SECRET,
+              getJwtSecret(),
               { expiresIn: "8h" }
             );
 
@@ -183,7 +178,7 @@ export const cmsRouter = createRouter({
 
           const token = jwt.sign(
             { id: "master", username: "Admin", role: "superadmin" as const, tenantId: "all" },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: "8h" }
           );
 
@@ -214,7 +209,7 @@ export const cmsRouter = createRouter({
           resetLoginAttempts(clientIp);
           const token = jwt.sign(
             { id: "master", username: "Admin", role: "superadmin" as const, tenantId: "all" },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: "8h" }
           );
           return {
@@ -319,7 +314,7 @@ export const cmsRouter = createRouter({
         const assignedTenantId = user.tenantId || "dpsi";
         const token = jwt.sign(
           { id: user._id.toString(), username: user.username, role: user.role || "superadmin", tenantId: assignedTenantId },
-          JWT_SECRET,
+          getJwtSecret(),
           { expiresIn: "8h" }
         );
 
@@ -1323,8 +1318,10 @@ export const cmsRouter = createRouter({
 
   // --- 9. ATTACHMENTS & CIRCULARS ---
   listAttachments: publicQuery.query(async () => {
-    const { Attachment } = await getMainModels();
-    return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    return withCache("cms:attachments", 60, async () => {
+      const { Attachment } = await getMainModels();
+      return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    });
   }),
   createAttachment: adminMutation
     .input(
@@ -1340,6 +1337,7 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { Attachment } = await getMainModels();
       const created = await Attachment.create(input);
+      invalidateCache("cms:attachments");
       await createImmutableAuditLog({
         action: "CREATE_ATTACHMENT",
         module: "Circulars",
@@ -1366,6 +1364,7 @@ export const cmsRouter = createRouter({
         }).catch(() => null);
       }
 
+      invalidateCache("cms:attachments");
       await createImmutableAuditLog({
         action: "DELETE_ATTACHMENT",
         module: "Circulars",
@@ -1378,8 +1377,10 @@ export const cmsRouter = createRouter({
 
   // --- 10. IMAGE GALLERY (dpsi_gallery DB) ---
   listGalleryCategories: publicQuery.query(async () => {
-    const { GalleryCategory } = await getGalleryModels();
-    return GalleryCategory.find({ isDeleted: false });
+    return withCache("cms:galleryCategories", 60, async () => {
+      const { GalleryCategory } = await getGalleryModels();
+      return GalleryCategory.find({ isDeleted: false });
+    });
   }),
   createGalleryCategory: adminMutation
     .input(
@@ -1392,17 +1393,24 @@ export const cmsRouter = createRouter({
     )
     .mutation(async ({ input }) => {
       const { GalleryCategory } = await getGalleryModels();
-      return GalleryCategory.create(input);
+      const created = await GalleryCategory.create(input);
+      invalidateCache("cms:galleryCategories");
+      return created;
     }),
   listGalleryImages: publicQuery
     .input(z.object({ category: z.string().optional() }).optional())
     .query(async ({ input }) => {
-      const { GalleryImage } = await getGalleryModels();
-      const filter: any = { isDeleted: { $ne: true } };
-      if (input?.category && input.category !== "All") {
-        filter.category = input.category;
-      }
-      return GalleryImage.find(filter).sort({ createdAt: -1 });
+      const cacheKey = input?.category && input.category !== "All"
+        ? `cms:galleryImages:${input.category}`
+        : "cms:galleryImages:all";
+      return withCache(cacheKey, 60, async () => {
+        const { GalleryImage } = await getGalleryModels();
+        const filter: any = { isDeleted: { $ne: true } };
+        if (input?.category && input.category !== "All") {
+          filter.category = input.category;
+        }
+        return GalleryImage.find(filter).sort({ createdAt: -1 });
+      });
     }),
   createGalleryImage: adminMutation
     .input(
@@ -1418,7 +1426,9 @@ export const cmsRouter = createRouter({
     )
     .mutation(async ({ input }) => {
       const { GalleryImage } = await getGalleryModels();
-      return GalleryImage.create(input);
+      const created = await GalleryImage.create(input);
+      invalidateCache("cms:galleryImages");
+      return created;
     }),
   deleteGalleryImage: adminMutation
     .input(z.object({ id: z.union([z.string(), z.any()]) }))
@@ -1444,6 +1454,7 @@ export const cmsRouter = createRouter({
         ).catch(() => null);
       }
 
+      invalidateCache("cms:galleryImages");
       await createImmutableAuditLog({
         action: "DELETE_GALLERY_IMAGE",
         module: "Gallery",
@@ -1456,8 +1467,10 @@ export const cmsRouter = createRouter({
 
   // --- 11. VIDEO GALLERY (dpsi_gallery DB) ---
   listVideos: publicQuery.query(async () => {
-    const { VideoGallery } = await getGalleryModels();
-    return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    return withCache("cms:videos", 60, async () => {
+      const { VideoGallery } = await getGalleryModels();
+      return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    });
   }),
   createVideo: adminMutation
     .input(
@@ -1493,6 +1506,7 @@ export const cmsRouter = createRouter({
       }
 
       const created = await VideoGallery.create(payload);
+      invalidateCache("cms:videos");
       await createImmutableAuditLog({
         action: "CREATE_VIDEO",
         module: "Videos",
@@ -1526,6 +1540,7 @@ export const cmsRouter = createRouter({
         ).catch(() => null);
       }
 
+      invalidateCache("cms:videos");
       await createImmutableAuditLog({
         action: "DELETE_VIDEO",
         module: "Videos",
@@ -1542,23 +1557,32 @@ export const cmsRouter = createRouter({
       z.object({
         search: z.string().optional(),
         showTrash: z.boolean().default(false),
+        limit: z.number().min(1).max(200).default(100),
       }).optional()
     )
-    .query(async ({ input }) => {
-      const { TransferCertificate } = await getTcModels();
-      const filter: any = { isDeleted: input?.showTrash ?? false };
+    .query(async ({ input, ctx }) => {
+      try {
+        const { TransferCertificate } = await getTcModels();
+        const isAdmin = !!ctx.user;
+        // Only authenticated admins are allowed to inspect deleted/trashed certificates
+        const isDeleted = isAdmin ? (input?.showTrash ?? false) : false;
+        const filter: any = { isDeleted };
 
-      if (input?.search && input.search.trim() !== "") {
-        const safeSearch = escapeRegex(input.search.trim());
-        const regex = new RegExp(safeSearch, "i");
-        filter.$or = [
-          { admissionNumber: regex },
-          { studentName: regex },
-          { fatherName: regex },
-        ];
+        if (input?.search && input.search.trim() !== "") {
+          const safeSearch = escapeRegex(input.search.trim());
+          const regex = new RegExp(safeSearch, "i");
+          filter.$or = [
+            { admissionNumber: regex },
+            { studentName: regex },
+            { fatherName: regex },
+          ];
+        }
+
+        const queryLimit = input?.limit || 100;
+        return await TransferCertificate.find(filter).sort({ dateOfIssue: -1 }).limit(queryLimit);
+      } catch {
+        return [];
       }
-
-      return TransferCertificate.find(filter).sort({ dateOfIssue: -1 });
     }),
   createTc: adminMutation
     .input(
@@ -1609,7 +1633,7 @@ export const cmsRouter = createRouter({
     }),
 
   // --- 13. MUN REGISTRATIONS ---
-  listMunRegistrations: publicQuery.query(async () => {
+  listMunRegistrations: adminQuery.query(async () => {
     const { MunRegistration } = await getMainModels();
     return MunRegistration.find({ isDeleted: false }).sort({ createdAt: -1 });
   }),
@@ -1879,10 +1903,24 @@ export const cmsRouter = createRouter({
     }),
 
   // --- 23. AI CONFIG ---
-  getAiConfig: publicQuery.query(async () => {
+  getAiConfig: adminQuery.query(async () => {
     const { AiConfig } = await getMainModels();
     const config = await AiConfig.findOne({}).sort({ updatedAt: -1 });
-    return config || null;
+    if (!config) return null;
+    return {
+      _id: config._id?.toString(),
+      systemPrompt: config.systemPrompt,
+      modelId: config.modelId,
+      temperature: config.temperature,
+      maxTokens: config.maxTokens,
+      elevenlabsVoiceId: config.elevenlabsVoiceId,
+      ttsProvider: config.ttsProvider,
+      googleTtsVoice: config.googleTtsVoice,
+      apiKey: config.apiKey ? "configured" : undefined,
+      elevenlabsApiKey: config.elevenlabsApiKey ? "configured" : undefined,
+      googleTtsApiKey: config.googleTtsApiKey ? "configured" : undefined,
+      updatedAt: (config as any).updatedAt,
+    };
   }),
   updateAiConfig: adminMutation
     .input(
@@ -1902,10 +1940,26 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { AiConfig } = await getMainModels(ctx.tenantId);
       const existing = await AiConfig.findOne({});
+      const updateData: any = { ...input };
+
+      // Preserve existing credentials if placeholder or empty string is submitted
+      if (!input.apiKey || input.apiKey === "configured" || input.apiKey.trim() === "") {
+        if (existing?.apiKey) updateData.apiKey = existing.apiKey;
+        else delete updateData.apiKey;
+      }
+      if (!input.elevenlabsApiKey || input.elevenlabsApiKey === "configured" || input.elevenlabsApiKey.trim() === "") {
+        if (existing?.elevenlabsApiKey) updateData.elevenlabsApiKey = existing.elevenlabsApiKey;
+        else delete updateData.elevenlabsApiKey;
+      }
+      if (!input.googleTtsApiKey || input.googleTtsApiKey === "configured" || input.googleTtsApiKey.trim() === "") {
+        if (existing?.googleTtsApiKey) updateData.googleTtsApiKey = existing.googleTtsApiKey;
+        else delete updateData.googleTtsApiKey;
+      }
+
       if (existing) {
-        await AiConfig.findByIdAndUpdate(existing._id, input);
+        await AiConfig.findByIdAndUpdate(existing._id, updateData);
       } else {
-        await AiConfig.create(input);
+        await AiConfig.create(updateData);
       }
       return { success: true };
     }),

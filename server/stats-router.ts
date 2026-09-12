@@ -2,24 +2,27 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, adminMutation, adminQuery } from "./middleware";
 import { getMainModels, createImmutableAuditLog } from "./models/cmsSchemas";
+import { withCache, invalidateCache } from "./lib/cache";
 
 export const statsRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { QuickStat } = await getMainModels();
-      const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });
-      return docs.map((d: any) => ({
-        id: d._id.toString(),
-        _id: d._id.toString(),
-        label: d.label,
-        value: d.value,
-        icon: d.icon || "GraduationCap",
-        order: d.order,
-        active: d.isActive,
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("stats:list", 120, async () => {
+      try {
+        const { QuickStat } = await getMainModels();
+        const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });
+        return docs.map((d: any) => ({
+          id: d._id.toString(),
+          _id: d._id.toString(),
+          label: d.label,
+          value: d.value,
+          icon: d.icon || "GraduationCap",
+          order: d.order,
+          active: d.isActive,
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   adminList: adminQuery.query(async () => {
@@ -59,6 +62,7 @@ export const statsRouter = createRouter({
         order: input.order,
         isActive: input.active,
       });
+      invalidateCache("stats:");
       await createImmutableAuditLog({
         action: "CREATE_STAT",
         module: "Stats",
@@ -95,6 +99,7 @@ export const statsRouter = createRouter({
         },
         { new: true }
       );
+      invalidateCache("stats:");
       await createImmutableAuditLog({
         action: "UPDATE_STAT",
         module: "Stats",
@@ -122,6 +127,7 @@ export const statsRouter = createRouter({
         }).catch(() => null);
       }
 
+      invalidateCache("stats:");
       await createImmutableAuditLog({
         action: "DELETE_STAT",
         module: "Stats",

@@ -21,8 +21,8 @@ export default function Home() {
         <AnnouncementsBar />
         <QuickStats />
         
-        {/* Below-the-fold sections with deferred rendering for butter-smooth 60/120fps scrolling */}
-        <div className="content-visibility-auto">
+        {/* Below-the-fold sections: Interactive Facilities with GSAP pin support */}
+        <div>
           <InteractiveFacilitiesSection />
         </div>
         <div className="content-visibility-auto">

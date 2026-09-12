@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation } from "react-router";
+import { motion } from "framer-motion";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SmoothScroll from "./SmoothScroll";
@@ -52,6 +53,7 @@ function ScrollToHash() {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const { pathname } = useLocation();
   const [isIdleReady, setIsIdleReady] = useState(false);
 
   useEffect(() => {
@@ -76,7 +78,15 @@ export default function Layout({ children }: LayoutProps) {
         <ScrollProgress />
       </Suspense>
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <motion.main
+        key={pathname}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="flex-1"
+      >
+        {children}
+      </motion.main>
       <Footer />
       {isIdleReady && (
         <Suspense fallback={null}>

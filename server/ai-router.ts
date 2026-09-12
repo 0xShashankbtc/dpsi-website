@@ -198,11 +198,11 @@ export const aiRouter = createRouter({
         return { answer: cached };
       }
 
-      let apiKey =
+      let apiKey = (
         process.env.GROQ_API_KEY ||
-        process.env.VITE_GROQ_API_KEY ||
         process.env.DOPPLER_GROQ_API_KEY ||
-        "";
+        ""
+      ).trim();
       let configuredModel: string | undefined;
 
       // Load admin-configured system prompt and custom key from MongoDB if available
@@ -362,14 +362,12 @@ export const aiRouter = createRouter({
         process.env.GOOGLE_TTS_API_KEY ||
         process.env.GOOGLE_CLOUD_API_KEY ||
         process.env.GOOGLE_API_KEY ||
-        process.env.VITE_GOOGLE_TTS_API_KEY ||
         ""
       ).trim();
       let googleVoice = "en-IN-Journey-F";
 
       let elevenlabsApiKey = (
         process.env.ELEVENLABS_API_KEY ||
-        process.env.VITE_ELEVENLABS_API_KEY ||
         process.env.DOPPLER_ELEVENLABS_API_KEY ||
         ""
       ).trim();

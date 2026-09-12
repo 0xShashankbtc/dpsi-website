@@ -2,46 +2,51 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, adminMutation } from "./middleware";
 import { getMainModels, createImmutableAuditLog } from "./models/cmsSchemas";
+import { withCache, invalidateCache } from "./lib/cache";
 
 export const eventsRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
-      return acts.map((a: any) => ({
-        id: a._id.toString(),
-        _id: a._id.toString(),
-        title: a.title,
-        description: a.description,
-        image: a.imageUrl || "",
-        imageUrl: a.imageUrl || "",
-        eventDate: a.eventDate || new Date(),
-        location: "DPSI Campus",
-        category: a.category || "Events",
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("events:list", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        return acts.map((a: any) => ({
+          id: a._id.toString(),
+          _id: a._id.toString(),
+          title: a.title,
+          description: a.description,
+          image: a.imageUrl || "",
+          imageUrl: a.imageUrl || "",
+          eventDate: a.eventDate || new Date(),
+          location: "DPSI Campus",
+          category: a.category || "Events",
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   all: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
-      return acts.map((a: any) => ({
-        id: a._id.toString(),
-        _id: a._id.toString(),
-        title: a.title,
-        description: a.description,
-        image: a.imageUrl || "",
-        imageUrl: a.imageUrl || "",
-        eventDate: a.eventDate || new Date(),
-        location: "DPSI Campus",
-        category: a.category || "Events",
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("events:all", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        return acts.map((a: any) => ({
+          id: a._id.toString(),
+          _id: a._id.toString(),
+          title: a.title,
+          description: a.description,
+          image: a.imageUrl || "",
+          imageUrl: a.imageUrl || "",
+          eventDate: a.eventDate || new Date(),
+          location: "DPSI Campus",
+          category: a.category || "Events",
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   create: adminMutation
@@ -64,6 +69,8 @@ export const eventsRouter = createRouter({
         category: input.category,
         isPublished: true,
       });
+      invalidateCache("events:");
+      invalidateCache("news:");
       await createImmutableAuditLog({
         action: "CREATE_ACTIVITY",
         module: "Events",
@@ -100,6 +107,8 @@ export const eventsRouter = createRouter({
         },
         { new: true }
       );
+      invalidateCache("events:");
+      invalidateCache("news:");
       await createImmutableAuditLog({
         action: "UPDATE_ACTIVITY",
         module: "Events",
@@ -127,6 +136,8 @@ export const eventsRouter = createRouter({
         }).catch(() => null);
       }
 
+      invalidateCache("events:");
+      invalidateCache("news:");
       await createImmutableAuditLog({
         action: "DELETE_ACTIVITY",
         module: "Events",

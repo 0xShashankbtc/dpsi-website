@@ -10,11 +10,16 @@ import { appRouter } from "./router";
 import { createContext } from "./context";
 import { getDbConnection, resolveDbName } from "./lib/mongodb";
 
-// Eager non-blocking database pre-warm on boot so connection is instant on first request
+// Eager non-blocking database pre-warm & critical index verification on boot
 if (process.env.MONGODB_URI) {
-  getDbConnection(resolveDbName("dpsi", "main")).catch((err) => {
-    console.warn("[Boot] Background DB pre-warm notice:", err.message);
-  });
+  getDbConnection(resolveDbName("dpsi", "main"))
+    .then(async () => {
+      const { ensureCriticalIndexes } = await import("./models/cmsSchemas");
+      await ensureCriticalIndexes("dpsi");
+    })
+    .catch((err) => {
+      console.warn("[Boot] Background DB pre-warm notice:", err.message);
+    });
 }
 
 const app = new Hono<{ Bindings: HttpBindings }>();

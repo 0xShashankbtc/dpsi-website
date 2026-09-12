@@ -2,78 +2,102 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { createRouter, publicQuery, adminQuery, adminMutation } from "./middleware";
 import { getMainModels, createImmutableAuditLog } from "./models/cmsSchemas";
+import { withCache, invalidateCache } from "./lib/cache";
 
 export const newsRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
-      return acts.map((a: any, idx: number) => ({
-        id: a._id?.toString() || idx + 1,
-        title: a.title,
-        slug: a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-        excerpt: a.description,
-        content: a.description,
-        image: a.imageUrl || "",
-        category: a.category || "Campus",
-        published: a.isPublished,
-        featured: true,
-        createdAt: a.eventDate || a.createdAt || new Date(),
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("news:list", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
+        return acts.map((a: any, idx: number) => ({
+          id: a._id?.toString() || idx + 1,
+          title: a.title,
+          slug: a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+          excerpt: a.description,
+          content: a.description,
+          image: a.imageUrl || "",
+          category: a.category || "Campus",
+          published: a.isPublished,
+          featured: true,
+          createdAt: a.eventDate || a.createdAt || new Date(),
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   featured: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
-      return acts.map((a: any, idx: number) => ({
-        id: a._id?.toString() || idx + 1,
-        title: a.title,
-        slug: a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-        excerpt: a.description,
-        content: a.description,
-        image: a.imageUrl || "",
-        category: a.category || "Campus",
-        published: a.isPublished,
-        featured: true,
-        createdAt: a.eventDate || a.createdAt || new Date(),
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("news:featured", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
+        return acts.map((a: any, idx: number) => ({
+          id: a._id?.toString() || idx + 1,
+          title: a.title,
+          slug: a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+          excerpt: a.description,
+          content: a.description,
+          image: a.imageUrl || "",
+          category: a.category || "Campus",
+          published: a.isPublished,
+          featured: true,
+          createdAt: a.eventDate || a.createdAt || new Date(),
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
 
   getBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      try {
-        const { Activity } = await getMainModels();
-        const acts = await Activity.find({ isDeleted: false, isPublished: true });
-        const matched = acts.find((a: any) => {
-          const slug = a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-          return slug === input.slug;
-        });
-        if (matched) {
-          return {
-            id: matched._id?.toString(),
-            title: matched.title,
-            slug: input.slug,
-            excerpt: matched.description,
-            content: matched.description,
-            image: matched.imageUrl || "",
-            category: matched.category || "Campus",
-            published: matched.isPublished,
-            featured: true,
-            createdAt: matched.eventDate || matched.createdAt || new Date(),
-          };
+      return withCache(`news:slug:${input.slug}`, 120, async () => {
+        try {
+          const { Activity } = await getMainModels();
+          const safeSlug = input.slug.trim();
+          const words = safeSlug.split("-").filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+
+          let matched: any = null;
+          if (words.length > 0) {
+            const regexPattern = words.join("[^a-z0-9]+");
+            matched = await Activity.findOne({
+              isDeleted: false,
+              isPublished: true,
+              title: { $regex: new RegExp(`^${regexPattern}$`, "i") },
+            });
+          }
+
+          if (!matched) {
+            // Fallback check limited to top 50 recent published items
+            const recentActs = await Activity.find({ isDeleted: false, isPublished: true }).sort({ createdAt: -1 }).limit(50);
+            matched = recentActs.find((a: any) => {
+              const s = a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+              return s === safeSlug;
+            });
+          }
+
+          if (matched) {
+            return {
+              id: matched._id?.toString(),
+              title: matched.title,
+              slug: input.slug,
+              excerpt: matched.description,
+              content: matched.description,
+              image: matched.imageUrl || "",
+              category: matched.category || "Campus",
+              published: matched.isPublished,
+              featured: true,
+              createdAt: matched.eventDate || matched.createdAt || new Date(),
+            };
+          }
+          return null;
+        } catch {
+          return null;
         }
-        return null;
-      } catch {
-        return null;
-      }
+      });
     }),
 
   adminList: adminQuery.query(async () => {
@@ -117,6 +141,8 @@ export const newsRouter = createRouter({
         category: input.category || "News",
         isPublished: input.published,
       });
+      invalidateCache("news:");
+      invalidateCache("events:");
       await createImmutableAuditLog({
         action: "CREATE_ACTIVITY",
         module: "News",
@@ -156,6 +182,8 @@ export const newsRouter = createRouter({
         },
         { new: true }
       );
+      invalidateCache("news:");
+      invalidateCache("events:");
       await createImmutableAuditLog({
         action: "UPDATE_ACTIVITY",
         module: "News",
@@ -183,6 +211,8 @@ export const newsRouter = createRouter({
         }).catch(() => null);
       }
 
+      invalidateCache("news:");
+      invalidateCache("events:");
       await createImmutableAuditLog({
         action: "DELETE_ACTIVITY",
         module: "News",

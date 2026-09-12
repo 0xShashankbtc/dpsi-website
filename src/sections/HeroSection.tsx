@@ -37,13 +37,15 @@ export function optimizeMediaUrl(url?: string, _isMobile: boolean = false): stri
   return clean;
 }
 
+const CACHED_SLIDERS_KEY = "dpsi_cached_hero_sliders_v2";
+
 const DEFAULT_HERO_SLIDES = [
   {
     image: "/images/dps/slider_1.webp",
-    videoUrl: "",
-    mobileVideoUrl: "",
+    videoUrl: "/videos/campus_hero.mp4",
+    mobileVideoUrl: "/videos/campus_hero.mp4",
     useSeparateMobileVideo: false,
-    mediaType: "image" as const,
+    mediaType: "video" as const,
     title: "Delhi Public School Indirapuram",
     subtitle: "Premier CBSE Day School in Ghaziabad • Nursery to Class XII",
     badge: "Admissions Open 2026-27",
@@ -54,6 +56,25 @@ const DEFAULT_HERO_SLIDES = [
 
 export default function HeroSection() {
   const { data: cmsSliders } = trpc.cms.listSliders.useQuery();
+
+  const [cachedSliders, setCachedSliders] = useState<any[] | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(CACHED_SLIDERS_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (cmsSliders && cmsSliders.length > 0) {
+      try {
+        localStorage.setItem(CACHED_SLIDERS_KEY, JSON.stringify(cmsSliders));
+      } catch {}
+      setCachedSliders(cmsSliders);
+    }
+  }, [cmsSliders]);
 
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== "undefined") {
@@ -71,9 +92,16 @@ export default function HeroSection() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const activeSlides =
-    cmsSliders && cmsSliders.length > 0
+  const effectiveSliders =
+    (cmsSliders && cmsSliders.length > 0)
       ? cmsSliders
+      : (cachedSliders && cachedSliders.length > 0)
+      ? cachedSliders
+      : null;
+
+  const activeSlides =
+    effectiveSliders && effectiveSliders.length > 0
+      ? effectiveSliders
           .filter((s: any) => !s.isDeleted && s.isActive !== false)
           .map((s: any) => {
             const rawVid = (s.videoUrl || "").trim();
@@ -82,8 +110,8 @@ export default function HeroSection() {
             const isVideo = s.mediaType === "video" || Boolean(rawVid) || Boolean(rawMobileVid);
             return {
               image: rawImg || "/images/dps/slider_1.webp",
-              videoUrl: rawVid,
-              mobileVideoUrl: rawMobileVid,
+              videoUrl: rawVid || "/videos/campus_hero.mp4",
+              mobileVideoUrl: rawMobileVid || "/videos/campus_hero.mp4",
               useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo),
               mediaType: (isVideo ? "video" : "image") as "image" | "video",
               title: s.title,

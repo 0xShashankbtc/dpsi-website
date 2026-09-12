@@ -229,6 +229,70 @@ const MunRegistrationSchema = new Schema<IMunRegistration>(
   { timestamps: true }
 );
 
+export interface IContactMessage extends Document {
+  name: string;
+  email: string;
+  phone?: string;
+  subject?: string;
+  message: string;
+  isRead: boolean;
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const ContactMessageSchema = new Schema<IContactMessage>(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, index: true },
+    phone: { type: String },
+    subject: { type: String },
+    message: { type: String, required: true },
+    isRead: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+export interface IAdmissionInquiry extends Document {
+  studentName: string;
+  parentName: string;
+  email: string;
+  phone: string;
+  grade: string;
+  dob: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  previousSchool?: string;
+  message?: string;
+  status: "pending" | "reviewing" | "approved" | "rejected";
+  isDeleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AdmissionInquirySchema = new Schema<IAdmissionInquiry>(
+  {
+    studentName: { type: String, required: true, index: true },
+    parentName: { type: String, required: true },
+    email: { type: String, required: true, index: true },
+    phone: { type: String, required: true, index: true },
+    grade: { type: String, required: true },
+    dob: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+    previousSchool: { type: String },
+    message: { type: String },
+    status: { type: String, enum: ["pending", "reviewing", "approved", "rejected"], default: "pending" },
+    isDeleted: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
 // --- 2. GALLERY MODELS (dpsi_gallery) ---
 
 export interface IGalleryCategory extends Document {
@@ -716,10 +780,30 @@ export async function getMainModels(tenantId?: string) {
     FeatureCard: conn.models.FeatureCard || conn.model<IFeatureCard>("FeatureCard", FeatureCardSchema),
     RateLimit: conn.models.RateLimit || conn.model<IRateLimit>("RateLimit", RateLimitSchema),
     AuditLog: conn.models.AuditLog || conn.model<IAuditLog>("AuditLog", AuditLogSchema),
+    ContactMessage: conn.models.ContactMessage || conn.model<IContactMessage>("ContactMessage", ContactMessageSchema),
+    AdmissionInquiry: conn.models.AdmissionInquiry || conn.model<IAdmissionInquiry>("AdmissionInquiry", AdmissionInquirySchema),
   };
 
   modelsCache.set(dbName, { conn, models });
   return models;
+}
+
+/**
+ * Proactively builds critical database indexes in Atlas on boot (TTL for RateLimit, lookups for Inquiries).
+ */
+export async function ensureCriticalIndexes(tenantId?: string): Promise<void> {
+  try {
+    const { RateLimit, ContactMessage, AdmissionInquiry } = await getMainModels(tenantId);
+    await Promise.allSettled([
+      RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
+      RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
+      ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true }),
+    ]);
+  } catch (err: any) {
+    console.warn("[MongoDB] Background index initialization notice:", err?.message);
+  }
 }
 
 export interface IAuditLog extends Document {

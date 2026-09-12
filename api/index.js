@@ -63599,10 +63599,10 @@ var require_connection2 = __commonJS({
         });
       });
     };
-    async function _wrapUserTransaction(fn, session, mongoose11) {
+    async function _wrapUserTransaction(fn, session, mongoose13) {
       try {
-        const res = mongoose11.transactionAsyncLocalStorage == null ? await fn(session) : await new Promise((resolve2) => {
-          mongoose11.transactionAsyncLocalStorage.run(
+        const res = mongoose13.transactionAsyncLocalStorage == null ? await fn(session) : await new Promise((resolve2) => {
+          mongoose13.transactionAsyncLocalStorage.run(
             { session },
             () => resolve2(fn(session))
           );
@@ -76457,7 +76457,7 @@ var require_mongoose = __commonJS({
     Mongoose.prototype.ConnectionStates = STATES;
     Mongoose.prototype.driver = driver;
     Mongoose.prototype.setDriver = function setDriver(driver2) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       if (_mongoose.__driver === driver2) {
         return _mongoose;
       }
@@ -76475,7 +76475,7 @@ var require_mongoose = __commonJS({
         }
       }
       if (driver2.SchemaTypes != null) {
-        Object.assign(mongoose11.Schema.Types, driver2.SchemaTypes);
+        Object.assign(mongoose13.Schema.Types, driver2.SchemaTypes);
       }
       const Connection = driver2.Connection;
       const oldDefaultConnection = _mongoose.connections[0];
@@ -76493,7 +76493,7 @@ var require_mongoose = __commonJS({
       return _mongoose;
     };
     Mongoose.prototype.set = function getsetOptions(key, value) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       if (key == null) {
         const error51 = new SetOptionError();
         error51.addError(String(key), new SetOptionError.SetOptionInnerError(String(key)));
@@ -76575,7 +76575,7 @@ var require_mongoose = __commonJS({
     };
     Mongoose.prototype.get = Mongoose.prototype.set;
     Mongoose.prototype.createConnection = function createConnection(uri, options) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       const Connection = _mongoose.__driver.Connection;
       const conn = new Connection(_mongoose);
       _mongoose.connections.push(conn);
@@ -76590,7 +76590,7 @@ var require_mongoose = __commonJS({
       if (typeof options === "function" || arguments.length >= 3 && typeof arguments[2] === "function") {
         throw new MongooseError("Mongoose.prototype.connect() no longer accepts a callback");
       }
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       if (_mongoose.connection == null) {
         _createDefaultConnection(_mongoose);
       }
@@ -76601,7 +76601,7 @@ var require_mongoose = __commonJS({
       if (arguments.length >= 1 && typeof arguments[0] === "function") {
         throw new MongooseError("Mongoose.prototype.disconnect() no longer accepts a callback");
       }
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       const remaining = _mongoose.connections.length;
       if (remaining <= 0) {
         return;
@@ -76609,18 +76609,18 @@ var require_mongoose = __commonJS({
       await Promise.all(_mongoose.connections.map((conn) => conn.close()));
     };
     Mongoose.prototype.startSession = function startSession2() {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       return _mongoose.connection.startSession.apply(_mongoose.connection, arguments);
     };
     Mongoose.prototype.pluralize = function pluralize(fn) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       if (arguments.length > 0) {
         _mongoose._pluralize = fn;
       }
       return _mongoose._pluralize;
     };
     Mongoose.prototype.model = function model(name, schema, collection, options) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       if (typeof schema === "string") {
         collection = schema;
         schema = false;
@@ -76668,7 +76668,7 @@ var require_mongoose = __commonJS({
       return model2;
     };
     Mongoose.prototype._model = function _model(name, schema, collection, options) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       let model;
       if (typeof name === "function") {
         model = name;
@@ -76707,25 +76707,25 @@ var require_mongoose = __commonJS({
       return model;
     };
     Mongoose.prototype.deleteModel = function deleteModel(name) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       _mongoose.connection.deleteModel(name);
       delete _mongoose.models[name];
       return _mongoose;
     };
     Mongoose.prototype.modelNames = function modelNames() {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       const names = Object.keys(_mongoose.models);
       return names;
     };
     Mongoose.prototype._applyPlugins = function _applyPlugins(schema, options) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       options = options || {};
       options.applyPluginsToDiscriminators = _mongoose.options?.applyPluginsToDiscriminators || false;
       options.applyPluginsToChildSchemas = typeof _mongoose.options?.applyPluginsToChildSchemas === "boolean" ? _mongoose.options.applyPluginsToChildSchemas : true;
       applyPlugins(schema, _mongoose.plugins, options, "$globalPluginsApplied");
     };
     Mongoose.prototype.plugin = function plugin(fn, opts) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       _mongoose.plugins.push([fn, opts]);
       return _mongoose;
     };
@@ -76774,14 +76774,14 @@ var require_mongoose = __commonJS({
     Mongoose.prototype.Document = Document4;
     Mongoose.prototype.ObjectId = SchemaTypes.ObjectId;
     Mongoose.prototype.isValidObjectId = function isValidObjectId(v) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       return _mongoose.Types.ObjectId.isValid(v);
     };
     Mongoose.prototype.isObjectIdOrHexString = function isObjectIdOrHexString(v) {
       return isBsonType(v, "ObjectId") || typeof v === "string" && objectIdHexRegexp.test(v);
     };
     Mongoose.prototype.syncIndexes = function syncIndexes(options) {
-      const _mongoose = this instanceof Mongoose ? this : mongoose11;
+      const _mongoose = this instanceof Mongoose ? this : mongoose13;
       return _mongoose.connection.syncIndexes(options);
     };
     Mongoose.prototype.Decimal128 = SchemaTypes.Decimal128;
@@ -76802,15 +76802,15 @@ var require_mongoose = __commonJS({
     Mongoose.prototype.overwriteMiddlewareResult = Kareem.overwriteResult;
     Mongoose.prototype.overwriteMiddlewareArguments = Kareem.overwriteArguments;
     Mongoose.prototype.omitUndefined = require_omitUndefined();
-    function _createDefaultConnection(mongoose12) {
-      if (mongoose12.connection) {
+    function _createDefaultConnection(mongoose14) {
+      if (mongoose14.connection) {
         return;
       }
-      const conn = mongoose12.createConnection();
+      const conn = mongoose14.createConnection();
       conn[defaultConnectionSymbol] = true;
-      conn.models = mongoose12.models;
+      conn.models = mongoose14.models;
     }
-    var mongoose11 = module2.exports = exports = new Mongoose({
+    var mongoose13 = module2.exports = exports = new Mongoose({
       [defaultMongooseSymbol]: true
     });
   }
@@ -76822,10 +76822,10 @@ var require_lib6 = __commonJS({
     "use strict";
     var mongodbDriver = require_node_mongodb_native();
     require_driver().set(mongodbDriver);
-    var mongoose11 = require_mongoose();
-    mongoose11.setDriver(mongodbDriver);
-    mongoose11.Mongoose.prototype.mongo = require_lib3();
-    module2.exports = mongoose11;
+    var mongoose13 = require_mongoose();
+    mongoose13.setDriver(mongodbDriver);
+    mongoose13.Mongoose.prototype.mongo = require_lib3();
+    module2.exports = mongoose13;
   }
 });
 
@@ -76833,55 +76833,55 @@ var require_lib6 = __commonJS({
 var require_mongoose2 = __commonJS({
   "node_modules/mongoose/index.js"(exports, module2) {
     "use strict";
-    var mongoose11 = require_lib6();
-    module2.exports = mongoose11;
-    module2.exports.default = mongoose11;
-    module2.exports.mongoose = mongoose11;
-    module2.exports.cast = mongoose11.cast;
-    module2.exports.STATES = mongoose11.STATES;
-    module2.exports.setDriver = mongoose11.setDriver;
-    module2.exports.set = mongoose11.set;
-    module2.exports.get = mongoose11.get;
-    module2.exports.createConnection = mongoose11.createConnection;
-    module2.exports.connect = mongoose11.connect;
-    module2.exports.disconnect = mongoose11.disconnect;
-    module2.exports.startSession = mongoose11.startSession;
-    module2.exports.pluralize = mongoose11.pluralize;
-    module2.exports.model = mongoose11.model;
-    module2.exports.deleteModel = mongoose11.deleteModel;
-    module2.exports.modelNames = mongoose11.modelNames;
-    module2.exports.plugin = mongoose11.plugin;
-    module2.exports.connections = mongoose11.connections;
-    module2.exports.version = mongoose11.version;
-    module2.exports.Aggregate = mongoose11.Aggregate;
-    module2.exports.Mongoose = mongoose11.Mongoose;
-    module2.exports.Schema = mongoose11.Schema;
-    module2.exports.SchemaType = mongoose11.SchemaType;
-    module2.exports.SchemaTypes = mongoose11.SchemaTypes;
-    module2.exports.VirtualType = mongoose11.VirtualType;
-    module2.exports.Types = mongoose11.Types;
-    module2.exports.Query = mongoose11.Query;
-    module2.exports.Model = mongoose11.Model;
-    module2.exports.Document = mongoose11.Document;
-    module2.exports.ObjectId = mongoose11.ObjectId;
-    module2.exports.isValidObjectId = mongoose11.isValidObjectId;
-    module2.exports.isObjectIdOrHexString = mongoose11.isObjectIdOrHexString;
-    module2.exports.syncIndexes = mongoose11.syncIndexes;
-    module2.exports.Decimal128 = mongoose11.Decimal128;
-    module2.exports.Mixed = mongoose11.Mixed;
-    module2.exports.Date = mongoose11.Date;
-    module2.exports.Number = mongoose11.Number;
-    module2.exports.Error = mongoose11.Error;
-    module2.exports.MongooseError = mongoose11.MongooseError;
-    module2.exports.now = mongoose11.now;
-    module2.exports.CastError = mongoose11.CastError;
-    module2.exports.SchemaTypeOptions = mongoose11.SchemaTypeOptions;
-    module2.exports.mongo = mongoose11.mongo;
-    module2.exports.mquery = mongoose11.mquery;
-    module2.exports.sanitizeFilter = mongoose11.sanitizeFilter;
-    module2.exports.trusted = mongoose11.trusted;
-    module2.exports.skipMiddlewareFunction = mongoose11.skipMiddlewareFunction;
-    module2.exports.overwriteMiddlewareResult = mongoose11.overwriteMiddlewareResult;
+    var mongoose13 = require_lib6();
+    module2.exports = mongoose13;
+    module2.exports.default = mongoose13;
+    module2.exports.mongoose = mongoose13;
+    module2.exports.cast = mongoose13.cast;
+    module2.exports.STATES = mongoose13.STATES;
+    module2.exports.setDriver = mongoose13.setDriver;
+    module2.exports.set = mongoose13.set;
+    module2.exports.get = mongoose13.get;
+    module2.exports.createConnection = mongoose13.createConnection;
+    module2.exports.connect = mongoose13.connect;
+    module2.exports.disconnect = mongoose13.disconnect;
+    module2.exports.startSession = mongoose13.startSession;
+    module2.exports.pluralize = mongoose13.pluralize;
+    module2.exports.model = mongoose13.model;
+    module2.exports.deleteModel = mongoose13.deleteModel;
+    module2.exports.modelNames = mongoose13.modelNames;
+    module2.exports.plugin = mongoose13.plugin;
+    module2.exports.connections = mongoose13.connections;
+    module2.exports.version = mongoose13.version;
+    module2.exports.Aggregate = mongoose13.Aggregate;
+    module2.exports.Mongoose = mongoose13.Mongoose;
+    module2.exports.Schema = mongoose13.Schema;
+    module2.exports.SchemaType = mongoose13.SchemaType;
+    module2.exports.SchemaTypes = mongoose13.SchemaTypes;
+    module2.exports.VirtualType = mongoose13.VirtualType;
+    module2.exports.Types = mongoose13.Types;
+    module2.exports.Query = mongoose13.Query;
+    module2.exports.Model = mongoose13.Model;
+    module2.exports.Document = mongoose13.Document;
+    module2.exports.ObjectId = mongoose13.ObjectId;
+    module2.exports.isValidObjectId = mongoose13.isValidObjectId;
+    module2.exports.isObjectIdOrHexString = mongoose13.isObjectIdOrHexString;
+    module2.exports.syncIndexes = mongoose13.syncIndexes;
+    module2.exports.Decimal128 = mongoose13.Decimal128;
+    module2.exports.Mixed = mongoose13.Mixed;
+    module2.exports.Date = mongoose13.Date;
+    module2.exports.Number = mongoose13.Number;
+    module2.exports.Error = mongoose13.Error;
+    module2.exports.MongooseError = mongoose13.MongooseError;
+    module2.exports.now = mongoose13.now;
+    module2.exports.CastError = mongoose13.CastError;
+    module2.exports.SchemaTypeOptions = mongoose13.SchemaTypeOptions;
+    module2.exports.mongo = mongoose13.mongo;
+    module2.exports.mquery = mongoose13.mquery;
+    module2.exports.sanitizeFilter = mongoose13.sanitizeFilter;
+    module2.exports.trusted = mongoose13.trusted;
+    module2.exports.skipMiddlewareFunction = mongoose13.skipMiddlewareFunction;
+    module2.exports.overwriteMiddlewareResult = mongoose13.overwriteMiddlewareResult;
   }
 });
 
@@ -76968,6 +76968,551 @@ var init_mongodb = __esm({
         });
       }, 0);
     }
+  }
+});
+
+// server/models/cmsSchemas.ts
+var cmsSchemas_exports = {};
+__export(cmsSchemas_exports, {
+  checkPersistentRateLimit: () => checkPersistentRateLimit,
+  createImmutableAuditLog: () => createImmutableAuditLog,
+  ensureCriticalIndexes: () => ensureCriticalIndexes,
+  getActiveTenantId: () => getActiveTenantId,
+  getGalleryModels: () => getGalleryModels,
+  getMainModels: () => getMainModels,
+  getTcModels: () => getTcModels,
+  tenantContextStorage: () => tenantContextStorage
+});
+import crypto2 from "crypto";
+import { AsyncLocalStorage as AsyncLocalStorage2 } from "async_hooks";
+function getActiveTenantId() {
+  return tenantContextStorage.getStore() || "dpsi";
+}
+async function getMainModels(tenantId) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "main");
+  const cached4 = modelsCache.get(dbName);
+  if (cached4 && cached4.conn?.readyState === 1) {
+    return cached4.models;
+  }
+  const conn = await getDbConnection(dbName);
+  const models = {
+    Page: conn.models.Page || conn.model("Page", PageSchema),
+    Menu: conn.models.Menu || conn.model("Menu", MenuSchema),
+    Popup: conn.models.Popup || conn.model("Popup", PopupSchema),
+    Marquee: conn.models.Marquee || conn.model("Marquee", MarqueeSchema),
+    Activity: conn.models.Activity || conn.model("Activity", ActivitySchema),
+    Slider: conn.models.Slider || conn.model("Slider", SliderSchema),
+    Attachment: conn.models.Attachment || conn.model("Attachment", AttachmentSchema),
+    MunRegistration: conn.models.MunRegistration || conn.model("MunRegistration", MunRegistrationSchema),
+    SiteSettings: conn.models.SiteSettings || conn.model("SiteSettings", SiteSettingsSchema),
+    AiConfig: conn.models.AiConfig || conn.model("AiConfig", AiConfigSchema),
+    Achievement: conn.models.Achievement || conn.model("Achievement", AchievementSchema),
+    Testimonial: conn.models.Testimonial || conn.model("Testimonial", TestimonialSchema),
+    Leadership: conn.models.Leadership || conn.model("Leadership", LeadershipSchema),
+    Facility: conn.models.Facility || conn.model("Facility", FacilitySchema),
+    Department: conn.models.Department || conn.model("Department", DepartmentSchema),
+    AdmissionStep: conn.models.AdmissionStep || conn.model("AdmissionStep", AdmissionStepSchema),
+    Faq: conn.models.Faq || conn.model("Faq", FaqSchema),
+    QuickStat: conn.models.QuickStat || conn.model("QuickStat", QuickStatSchema),
+    TimelineItem: conn.models.TimelineItem || conn.model("TimelineItem", TimelineItemSchema),
+    CoreValue: conn.models.CoreValue || conn.model("CoreValue", CoreValueSchema),
+    FeatureCard: conn.models.FeatureCard || conn.model("FeatureCard", FeatureCardSchema),
+    RateLimit: conn.models.RateLimit || conn.model("RateLimit", RateLimitSchema),
+    AuditLog: conn.models.AuditLog || conn.model("AuditLog", AuditLogSchema),
+    ContactMessage: conn.models.ContactMessage || conn.model("ContactMessage", ContactMessageSchema),
+    AdmissionInquiry: conn.models.AdmissionInquiry || conn.model("AdmissionInquiry", AdmissionInquirySchema)
+  };
+  modelsCache.set(dbName, { conn, models });
+  return models;
+}
+async function ensureCriticalIndexes(tenantId) {
+  try {
+    const { RateLimit, ContactMessage, AdmissionInquiry } = await getMainModels(tenantId);
+    await Promise.allSettled([
+      RateLimit.collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true }),
+      RateLimit.collection.createIndex({ key: 1 }, { unique: true, background: true }),
+      ContactMessage.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      AdmissionInquiry.collection.createIndex({ createdAt: -1, isDeleted: 1 }, { background: true }),
+      AdmissionInquiry.collection.createIndex({ email: 1, phone: 1 }, { background: true })
+    ]);
+  } catch (err) {
+    console.warn("[MongoDB] Background index initialization notice:", err?.message);
+  }
+}
+async function createImmutableAuditLog(data2, tenantId) {
+  try {
+    const targetTenant = tenantId || getActiveTenantId();
+    const { AuditLog } = await getMainModels(targetTenant);
+    const lastLog = await AuditLog.findOne().sort({ sequenceNumber: -1 });
+    const sequenceNumber = (lastLog?.sequenceNumber || 0) + 1;
+    const previousHash = lastLog?.currentHash || "GENESIS_BLOCK_00000000000000000000000000000000000000000000000000000000";
+    const timestamp = /* @__PURE__ */ new Date();
+    const hashPayload = `${sequenceNumber}:${data2.action}:${data2.module}:${data2.performedBy || "Admin"}:${data2.documentId || ""}:${data2.details || ""}:${previousHash}:${timestamp.toISOString()}`;
+    const currentHash = crypto2.createHash("sha256").update(hashPayload).digest("hex");
+    return await AuditLog.create({
+      sequenceNumber,
+      action: data2.action,
+      module: data2.module,
+      performedBy: data2.performedBy || "Admin",
+      documentId: data2.documentId,
+      details: data2.details,
+      ipAddress: data2.ipAddress,
+      previousHash,
+      currentHash,
+      timestamp
+    });
+  } catch (err) {
+    console.error("Failed to write immutable audit log:", err);
+  }
+}
+async function checkPersistentRateLimit(key, limit = 40, windowSeconds = 60, tenantId) {
+  try {
+    const targetTenant = tenantId || getActiveTenantId();
+    const { RateLimit } = await getMainModels(targetTenant);
+    const expiresAt = new Date(Date.now() + windowSeconds * 1e3);
+    const doc = await RateLimit.findOneAndUpdate(
+      { key },
+      {
+        $inc: { count: 1 },
+        $setOnInsert: { expiresAt }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    if (doc && doc.count > limit) {
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  }
+}
+async function getGalleryModels(tenantId) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "gallery");
+  const cached4 = modelsCache.get(dbName);
+  if (cached4 && cached4.conn?.readyState === 1) {
+    return cached4.models;
+  }
+  const conn = await getDbConnection(dbName);
+  const models = {
+    GalleryCategory: conn.models.GalleryCategory || conn.model("GalleryCategory", GalleryCategorySchema),
+    GalleryImage: conn.models.GalleryImage || conn.model("GalleryImage", GalleryImageSchema),
+    VideoGallery: conn.models.VideoGallery || conn.model("VideoGallery", VideoGallerySchema)
+  };
+  modelsCache.set(dbName, { conn, models });
+  return models;
+}
+async function getTcModels(tenantId) {
+  const targetTenant = tenantId || getActiveTenantId();
+  const dbName = resolveDbName(targetTenant, "tc");
+  const cached4 = modelsCache.get(dbName);
+  if (cached4 && cached4.conn?.readyState === 1) {
+    return cached4.models;
+  }
+  const conn = await getDbConnection(dbName);
+  const models = {
+    TransferCertificate: conn.models.TransferCertificate || conn.model("TransferCertificate", TransferCertificateSchema)
+  };
+  modelsCache.set(dbName, { conn, models });
+  return models;
+}
+var import_mongoose5, PageSchema, MenuSchema, PopupSchema, MarqueeSchema, ActivitySchema, SliderSchema, AttachmentSchema, MunRegistrationSchema, ContactMessageSchema, AdmissionInquirySchema, GalleryCategorySchema, GalleryImageSchema, VideoGallerySchema, TransferCertificateSchema, SiteSettingsSchema, AiConfigSchema, AchievementSchema, TestimonialSchema, LeadershipSchema, FacilitySchema, FeatureCardSchema, DepartmentSchema, AdmissionStepSchema, FaqSchema, QuickStatSchema, TimelineItemSchema, CoreValueSchema, RateLimitSchema, tenantContextStorage, modelsCache, AuditLogSchema;
+var init_cmsSchemas = __esm({
+  "server/models/cmsSchemas.ts"() {
+    import_mongoose5 = __toESM(require_mongoose2(), 1);
+    init_mongodb();
+    init_mongodb();
+    PageSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        slug: { type: String, required: true, unique: true },
+        content: { type: String, default: "" },
+        category: { type: String, default: "General" },
+        metaTitle: { type: String },
+        metaDescription: { type: String },
+        isPublished: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    MenuSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        url: { type: String, required: true },
+        location: { type: String, enum: ["header", "footer_quick", "footer_resources"], default: "header" },
+        parent: { type: String, default: null },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    PopupSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        content: { type: String },
+        imageUrl: { type: String },
+        linkUrl: { type: String },
+        badgeText: { type: String, default: "Official Announcement" },
+        buttonText: { type: String, default: "Learn More" },
+        showOnLoad: { type: Boolean, default: true },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false },
+        startDate: { type: Date },
+        endDate: { type: Date }
+      },
+      { timestamps: true }
+    );
+    MarqueeSchema = new import_mongoose5.Schema(
+      {
+        text: { type: String, required: true },
+        linkUrl: { type: String },
+        speed: { type: Number, default: 50 },
+        textColor: { type: String, default: "#10b981" },
+        bgColor: { type: String, default: "#047857" },
+        badgeText: { type: String, default: "Notice" },
+        isTransparent: { type: Boolean, default: false },
+        shape: { type: String, enum: ["rectangle", "rounded", "pill"], default: "rectangle" },
+        borderRadius: { type: String, enum: ["none", "md", "xl", "full"], default: "none" },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    ActivitySchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        category: { type: String, default: "General" },
+        description: { type: String, required: true },
+        eventDate: { type: Date, default: Date.now },
+        imageUrl: { type: String },
+        isPublished: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    SliderSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, default: "" },
+        subtitle: { type: String, default: "" },
+        imageUrl: { type: String, default: "" },
+        videoUrl: { type: String, default: "" },
+        mobileVideoUrl: { type: String, default: "" },
+        useSeparateMobileVideo: { type: Boolean, default: false },
+        mediaType: { type: String, enum: ["image", "video"], default: "image" },
+        buttonText: { type: String },
+        buttonLink: { type: String },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    AttachmentSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        category: { type: String, default: "Circulars" },
+        fileUrl: { type: String, required: true },
+        fileName: { type: String, required: true },
+        fileType: { type: String, default: "pdf" },
+        fileSize: { type: Number },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    MunRegistrationSchema = new import_mongoose5.Schema(
+      {
+        studentName: { type: String, required: true },
+        email: { type: String, required: true },
+        phone: { type: String, required: true },
+        schoolName: { type: String, required: true },
+        grade: { type: String, required: true },
+        committeePreference1: { type: String, required: true },
+        committeePreference2: { type: String },
+        portfolioPreference1: { type: String },
+        portfolioPreference2: { type: String },
+        status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+        paymentStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    ContactMessageSchema = new import_mongoose5.Schema(
+      {
+        name: { type: String, required: true },
+        email: { type: String, required: true, index: true },
+        phone: { type: String },
+        subject: { type: String },
+        message: { type: String, required: true },
+        isRead: { type: Boolean, default: false },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    AdmissionInquirySchema = new import_mongoose5.Schema(
+      {
+        studentName: { type: String, required: true, index: true },
+        parentName: { type: String, required: true },
+        email: { type: String, required: true, index: true },
+        phone: { type: String, required: true, index: true },
+        grade: { type: String, required: true },
+        dob: { type: String, required: true },
+        address: { type: String, required: true },
+        city: { type: String, required: true },
+        state: { type: String, required: true },
+        pincode: { type: String, required: true },
+        previousSchool: { type: String },
+        message: { type: String },
+        status: { type: String, enum: ["pending", "reviewing", "approved", "rejected"], default: "pending" },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    GalleryCategorySchema = new import_mongoose5.Schema(
+      {
+        name: { type: String, required: true },
+        slug: { type: String, required: true, unique: true },
+        description: { type: String },
+        coverImage: { type: String },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    GalleryImageSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        category: { type: String, default: "Campus" },
+        categoryId: { type: import_mongoose5.Schema.Types.ObjectId, ref: "GalleryCategory" },
+        imageUrl: { type: String, required: true },
+        originalUrl: { type: String },
+        width: { type: Number },
+        height: { type: Number },
+        isPublished: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    VideoGallerySchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        category: { type: String, default: "Events" },
+        youtubeUrl: { type: String },
+        videoUrl: { type: String },
+        thumbnailUrl: { type: String },
+        isPublished: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    TransferCertificateSchema = new import_mongoose5.Schema(
+      {
+        admissionNumber: { type: String, required: true, index: true },
+        studentName: { type: String, required: true, index: true },
+        fatherName: { type: String, required: true },
+        motherName: { type: String },
+        classLeaving: { type: String, required: true },
+        dateOfIssue: { type: Date, required: true },
+        certificatePdfUrl: { type: String, required: true },
+        status: { type: String, enum: ["Issued", "Pending", "Cancelled"], default: "Issued" },
+        remarks: { type: String },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    SiteSettingsSchema = new import_mongoose5.Schema(
+      {
+        key: { type: String, required: true, unique: true },
+        value: { type: String, default: "" },
+        label: { type: String, default: "" },
+        group: { type: String, default: "general" }
+      },
+      { timestamps: true }
+    );
+    AiConfigSchema = new import_mongoose5.Schema(
+      {
+        systemPrompt: { type: String, required: true },
+        modelId: { type: String, default: "llama-3.3-70b-versatile" },
+        temperature: { type: Number, default: 0.4 },
+        maxTokens: { type: Number, default: 700 },
+        apiKey: { type: String },
+        elevenlabsApiKey: { type: String },
+        elevenlabsVoiceId: { type: String, default: "EXAVITQu4vr4xnSDxMaL" },
+        ttsProvider: { type: String, enum: ["google", "elevenlabs", "auto"], default: "google" },
+        googleTtsApiKey: { type: String },
+        googleTtsVoice: { type: String, default: "en-IN-Journey-F" }
+      },
+      { timestamps: true }
+    );
+    AchievementSchema = new import_mongoose5.Schema(
+      {
+        studentName: { type: String, required: true },
+        className: { type: String, required: true },
+        score: { type: String, required: true },
+        exam: { type: String, required: true },
+        stream: { type: String },
+        rank: { type: String },
+        year: { type: String, default: "2025-26" },
+        imageUrl: { type: String },
+        featured: { type: Boolean, default: true },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    TestimonialSchema = new import_mongoose5.Schema(
+      {
+        name: { type: String, required: true },
+        role: { type: String, required: true },
+        content: { type: String, required: true },
+        avatarUrl: { type: String },
+        rating: { type: Number, default: 5 },
+        featured: { type: Boolean, default: true },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    LeadershipSchema = new import_mongoose5.Schema(
+      {
+        name: { type: String, required: true },
+        role: { type: String, required: true },
+        designation: { type: String },
+        bio: { type: String },
+        imageUrl: { type: String },
+        order: { type: Number, default: 0 },
+        category: { type: String, default: "Management" },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    FacilitySchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        category: { type: String, default: "Campus" },
+        description: { type: String, required: true },
+        icon: { type: String, default: "Microscope" },
+        imageUrl: { type: String },
+        geometry: { type: String, default: "torusKnot" },
+        color: { type: String, default: "#10b981" },
+        accent: { type: String, default: "#34d399" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    FeatureCardSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        icon: { type: String, default: "Bot" },
+        category: { type: String, default: "Innovation" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    DepartmentSchema = new import_mongoose5.Schema(
+      {
+        name: { type: String, required: true },
+        subjects: { type: String, required: true },
+        icon: { type: String, default: "BookOpen" },
+        color: { type: String, default: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    AdmissionStepSchema = new import_mongoose5.Schema(
+      {
+        stepNumber: { type: Number, required: true },
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        icon: { type: String, default: "FileText" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    FaqSchema = new import_mongoose5.Schema(
+      {
+        question: { type: String, required: true },
+        answer: { type: String, required: true },
+        category: { type: String, default: "Admissions" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    QuickStatSchema = new import_mongoose5.Schema(
+      {
+        label: { type: String, required: true },
+        value: { type: String, required: true },
+        icon: { type: String, default: "GraduationCap" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    TimelineItemSchema = new import_mongoose5.Schema(
+      {
+        year: { type: String, required: true },
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    CoreValueSchema = new import_mongoose5.Schema(
+      {
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        icon: { type: String, default: "Target" },
+        order: { type: Number, default: 0 },
+        isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false }
+      },
+      { timestamps: true }
+    );
+    RateLimitSchema = new import_mongoose5.Schema(
+      {
+        key: { type: String, required: true, unique: true, index: true },
+        count: { type: Number, default: 1 },
+        expiresAt: { type: Date, required: true, index: { expires: 0 } }
+      },
+      { timestamps: true }
+    );
+    tenantContextStorage = new AsyncLocalStorage2();
+    modelsCache = /* @__PURE__ */ new Map();
+    AuditLogSchema = new import_mongoose5.Schema(
+      {
+        sequenceNumber: { type: Number, required: true, index: true },
+        action: { type: String, required: true },
+        module: { type: String, required: true },
+        performedBy: { type: String, default: "Admin" },
+        documentId: { type: String },
+        details: { type: String },
+        ipAddress: { type: String },
+        previousHash: { type: String, required: true },
+        currentHash: { type: String, required: true, unique: true },
+        timestamp: { type: Date, default: Date.now }
+      },
+      { timestamps: false }
+    );
+    AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function() {
+      throw new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy.");
+    });
   }
 });
 
@@ -130157,8 +130702,8 @@ __export(cloudflareR2_exports, {
   uploadToR2: () => uploadToR2
 });
 async function uploadToR2(buffer, fileName, contentType, folder = "uploads", bucketName = R2_BUCKET_NAME) {
-  if (!R2_SECRET_ACCESS_KEY) {
-    throw new Error("CLOUDFLARE_R2_SECRET_ACCESS_KEY is required for Cloudflare R2 uploads.");
+  if (!R2_SECRET_ACCESS_KEY || !R2_ACCESS_KEY_ID || !R2_ACCOUNT_ID) {
+    throw new Error("Cloudflare R2 credentials (CLOUDFLARE_R2_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY_ID, CLOUDFLARE_R2_SECRET_ACCESS_KEY) are required for R2 uploads.");
   }
   const cleanFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
   const uniqueKey = `${folder}/${Date.now()}_${cleanFileName}`;
@@ -130198,17 +130743,17 @@ var init_cloudflareR2 = __esm({
     import_client_s3 = __toESM(require_dist_cjs71(), 1);
     import_dotenv2 = __toESM(require_main(), 1);
     import_dotenv2.default.config();
-    R2_ACCOUNT_ID = (process.env.CLOUDFLARE_R2_ACCOUNT_ID || "82ff39eb8fc02961ce32469aaad2f3fe").trim();
-    R2_ACCESS_KEY_ID = (process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "8020ab677123b74c36572afa90b4f24f").trim();
+    R2_ACCOUNT_ID = (process.env.CLOUDFLARE_R2_ACCOUNT_ID || "").trim();
+    R2_ACCESS_KEY_ID = (process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "").trim();
     R2_SECRET_ACCESS_KEY = (process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || "").trim();
     R2_BUCKET_NAME = (process.env.CLOUDFLARE_R2_BUCKET_NAME || "dpsi-media").trim();
     R2_PUBLIC_DOMAIN = (process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || "").trim();
     r2Client = new import_client_s3.S3Client({
       region: "auto",
-      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: R2_ACCOUNT_ID ? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : "https://r2.cloudflarestorage.com",
       credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID,
-        secretAccessKey: R2_SECRET_ACCESS_KEY
+        accessKeyId: R2_ACCESS_KEY_ID || "unconfigured",
+        secretAccessKey: R2_SECRET_ACCESS_KEY || "unconfigured"
       }
     });
   }
@@ -175394,6 +175939,9 @@ function date4(params) {
 // node_modules/zod/v4/classic/external.js
 config(en_default());
 
+// server/admission-router.ts
+var import_mongoose6 = __toESM(require_mongoose2(), 1);
+
 // node_modules/@trpc/server/dist/initTRPC-B1ggxyJl.mjs
 var import_objectSpread2$2 = __toESM2(require_objectSpread2(), 1);
 var middlewareMarker = "middlewareMarker";
@@ -176539,489 +177087,8 @@ var authedMutation = t.procedure.use(enforceAuth);
 var adminQuery = t.procedure.use(enforceAdmin);
 var adminMutation = t.procedure.use(enforceAdmin);
 
-// server/models/cmsSchemas.ts
-var import_mongoose5 = __toESM(require_mongoose2(), 1);
-init_mongodb();
-init_mongodb();
-import crypto2 from "crypto";
-import { AsyncLocalStorage as AsyncLocalStorage2 } from "async_hooks";
-var PageSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    content: { type: String, default: "" },
-    category: { type: String, default: "General" },
-    metaTitle: { type: String },
-    metaDescription: { type: String },
-    isPublished: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var MenuSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    url: { type: String, required: true },
-    location: { type: String, enum: ["header", "footer_quick", "footer_resources"], default: "header" },
-    parent: { type: String, default: null },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var PopupSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    content: { type: String },
-    imageUrl: { type: String },
-    linkUrl: { type: String },
-    badgeText: { type: String, default: "Official Announcement" },
-    buttonText: { type: String, default: "Learn More" },
-    showOnLoad: { type: Boolean, default: true },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false },
-    startDate: { type: Date },
-    endDate: { type: Date }
-  },
-  { timestamps: true }
-);
-var MarqueeSchema = new import_mongoose5.Schema(
-  {
-    text: { type: String, required: true },
-    linkUrl: { type: String },
-    speed: { type: Number, default: 50 },
-    textColor: { type: String, default: "#10b981" },
-    bgColor: { type: String, default: "#047857" },
-    badgeText: { type: String, default: "Notice" },
-    isTransparent: { type: Boolean, default: false },
-    shape: { type: String, enum: ["rectangle", "rounded", "pill"], default: "rectangle" },
-    borderRadius: { type: String, enum: ["none", "md", "xl", "full"], default: "none" },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var ActivitySchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    category: { type: String, default: "General" },
-    description: { type: String, required: true },
-    eventDate: { type: Date, default: Date.now },
-    imageUrl: { type: String },
-    isPublished: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var SliderSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, default: "" },
-    subtitle: { type: String, default: "" },
-    imageUrl: { type: String, default: "" },
-    videoUrl: { type: String, default: "" },
-    mobileVideoUrl: { type: String, default: "" },
-    useSeparateMobileVideo: { type: Boolean, default: false },
-    mediaType: { type: String, enum: ["image", "video"], default: "image" },
-    buttonText: { type: String },
-    buttonLink: { type: String },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var AttachmentSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    category: { type: String, default: "Circulars" },
-    fileUrl: { type: String, required: true },
-    fileName: { type: String, required: true },
-    fileType: { type: String, default: "pdf" },
-    fileSize: { type: Number },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var MunRegistrationSchema = new import_mongoose5.Schema(
-  {
-    studentName: { type: String, required: true },
-    email: { type: String, required: true },
-    phone: { type: String, required: true },
-    schoolName: { type: String, required: true },
-    grade: { type: String, required: true },
-    committeePreference1: { type: String, required: true },
-    committeePreference2: { type: String },
-    portfolioPreference1: { type: String },
-    portfolioPreference2: { type: String },
-    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
-    paymentStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var GalleryCategorySchema = new import_mongoose5.Schema(
-  {
-    name: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
-    description: { type: String },
-    coverImage: { type: String },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var GalleryImageSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    category: { type: String, default: "Campus" },
-    categoryId: { type: import_mongoose5.Schema.Types.ObjectId, ref: "GalleryCategory" },
-    imageUrl: { type: String, required: true },
-    originalUrl: { type: String },
-    width: { type: Number },
-    height: { type: Number },
-    isPublished: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var VideoGallerySchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    category: { type: String, default: "Events" },
-    youtubeUrl: { type: String },
-    videoUrl: { type: String },
-    thumbnailUrl: { type: String },
-    isPublished: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var TransferCertificateSchema = new import_mongoose5.Schema(
-  {
-    admissionNumber: { type: String, required: true, index: true },
-    studentName: { type: String, required: true, index: true },
-    fatherName: { type: String, required: true },
-    motherName: { type: String },
-    classLeaving: { type: String, required: true },
-    dateOfIssue: { type: Date, required: true },
-    certificatePdfUrl: { type: String, required: true },
-    status: { type: String, enum: ["Issued", "Pending", "Cancelled"], default: "Issued" },
-    remarks: { type: String },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var SiteSettingsSchema = new import_mongoose5.Schema(
-  {
-    key: { type: String, required: true, unique: true },
-    value: { type: String, default: "" },
-    label: { type: String, default: "" },
-    group: { type: String, default: "general" }
-  },
-  { timestamps: true }
-);
-var AiConfigSchema = new import_mongoose5.Schema(
-  {
-    systemPrompt: { type: String, required: true },
-    modelId: { type: String, default: "llama-3.3-70b-versatile" },
-    temperature: { type: Number, default: 0.4 },
-    maxTokens: { type: Number, default: 700 },
-    apiKey: { type: String },
-    elevenlabsApiKey: { type: String },
-    elevenlabsVoiceId: { type: String, default: "EXAVITQu4vr4xnSDxMaL" },
-    ttsProvider: { type: String, enum: ["google", "elevenlabs", "auto"], default: "google" },
-    googleTtsApiKey: { type: String },
-    googleTtsVoice: { type: String, default: "en-IN-Journey-F" }
-  },
-  { timestamps: true }
-);
-var AchievementSchema = new import_mongoose5.Schema(
-  {
-    studentName: { type: String, required: true },
-    className: { type: String, required: true },
-    score: { type: String, required: true },
-    exam: { type: String, required: true },
-    stream: { type: String },
-    rank: { type: String },
-    year: { type: String, default: "2025-26" },
-    imageUrl: { type: String },
-    featured: { type: Boolean, default: true },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var TestimonialSchema = new import_mongoose5.Schema(
-  {
-    name: { type: String, required: true },
-    role: { type: String, required: true },
-    content: { type: String, required: true },
-    avatarUrl: { type: String },
-    rating: { type: Number, default: 5 },
-    featured: { type: Boolean, default: true },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var LeadershipSchema = new import_mongoose5.Schema(
-  {
-    name: { type: String, required: true },
-    role: { type: String, required: true },
-    designation: { type: String },
-    bio: { type: String },
-    imageUrl: { type: String },
-    order: { type: Number, default: 0 },
-    category: { type: String, default: "Management" },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var FacilitySchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    category: { type: String, default: "Campus" },
-    description: { type: String, required: true },
-    icon: { type: String, default: "Microscope" },
-    imageUrl: { type: String },
-    geometry: { type: String, default: "torusKnot" },
-    color: { type: String, default: "#10b981" },
-    accent: { type: String, default: "#34d399" },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var FeatureCardSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    icon: { type: String, default: "Bot" },
-    category: { type: String, default: "Innovation" },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var DepartmentSchema = new import_mongoose5.Schema(
-  {
-    name: { type: String, required: true },
-    subjects: { type: String, required: true },
-    icon: { type: String, default: "BookOpen" },
-    color: { type: String, default: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400" },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var AdmissionStepSchema = new import_mongoose5.Schema(
-  {
-    stepNumber: { type: Number, required: true },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    icon: { type: String, default: "FileText" },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var FaqSchema = new import_mongoose5.Schema(
-  {
-    question: { type: String, required: true },
-    answer: { type: String, required: true },
-    category: { type: String, default: "Admissions" },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var QuickStatSchema = new import_mongoose5.Schema(
-  {
-    label: { type: String, required: true },
-    value: { type: String, required: true },
-    icon: { type: String, default: "GraduationCap" },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var TimelineItemSchema = new import_mongoose5.Schema(
-  {
-    year: { type: String, required: true },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var CoreValueSchema = new import_mongoose5.Schema(
-  {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    icon: { type: String, default: "Target" },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false }
-  },
-  { timestamps: true }
-);
-var RateLimitSchema = new import_mongoose5.Schema(
-  {
-    key: { type: String, required: true, unique: true, index: true },
-    count: { type: Number, default: 1 },
-    expiresAt: { type: Date, required: true, index: { expires: 0 } }
-  },
-  { timestamps: true }
-);
-var tenantContextStorage = new AsyncLocalStorage2();
-function getActiveTenantId() {
-  return tenantContextStorage.getStore() || "dpsi";
-}
-var modelsCache = /* @__PURE__ */ new Map();
-async function getMainModels(tenantId) {
-  const targetTenant = tenantId || getActiveTenantId();
-  const dbName = resolveDbName(targetTenant, "main");
-  const cached4 = modelsCache.get(dbName);
-  if (cached4 && cached4.conn?.readyState === 1) {
-    return cached4.models;
-  }
-  const conn = await getDbConnection(dbName);
-  const models = {
-    Page: conn.models.Page || conn.model("Page", PageSchema),
-    Menu: conn.models.Menu || conn.model("Menu", MenuSchema),
-    Popup: conn.models.Popup || conn.model("Popup", PopupSchema),
-    Marquee: conn.models.Marquee || conn.model("Marquee", MarqueeSchema),
-    Activity: conn.models.Activity || conn.model("Activity", ActivitySchema),
-    Slider: conn.models.Slider || conn.model("Slider", SliderSchema),
-    Attachment: conn.models.Attachment || conn.model("Attachment", AttachmentSchema),
-    MunRegistration: conn.models.MunRegistration || conn.model("MunRegistration", MunRegistrationSchema),
-    SiteSettings: conn.models.SiteSettings || conn.model("SiteSettings", SiteSettingsSchema),
-    AiConfig: conn.models.AiConfig || conn.model("AiConfig", AiConfigSchema),
-    Achievement: conn.models.Achievement || conn.model("Achievement", AchievementSchema),
-    Testimonial: conn.models.Testimonial || conn.model("Testimonial", TestimonialSchema),
-    Leadership: conn.models.Leadership || conn.model("Leadership", LeadershipSchema),
-    Facility: conn.models.Facility || conn.model("Facility", FacilitySchema),
-    Department: conn.models.Department || conn.model("Department", DepartmentSchema),
-    AdmissionStep: conn.models.AdmissionStep || conn.model("AdmissionStep", AdmissionStepSchema),
-    Faq: conn.models.Faq || conn.model("Faq", FaqSchema),
-    QuickStat: conn.models.QuickStat || conn.model("QuickStat", QuickStatSchema),
-    TimelineItem: conn.models.TimelineItem || conn.model("TimelineItem", TimelineItemSchema),
-    CoreValue: conn.models.CoreValue || conn.model("CoreValue", CoreValueSchema),
-    FeatureCard: conn.models.FeatureCard || conn.model("FeatureCard", FeatureCardSchema),
-    RateLimit: conn.models.RateLimit || conn.model("RateLimit", RateLimitSchema),
-    AuditLog: conn.models.AuditLog || conn.model("AuditLog", AuditLogSchema)
-  };
-  modelsCache.set(dbName, { conn, models });
-  return models;
-}
-var AuditLogSchema = new import_mongoose5.Schema(
-  {
-    sequenceNumber: { type: Number, required: true, index: true },
-    action: { type: String, required: true },
-    module: { type: String, required: true },
-    performedBy: { type: String, default: "Admin" },
-    documentId: { type: String },
-    details: { type: String },
-    ipAddress: { type: String },
-    previousHash: { type: String, required: true },
-    currentHash: { type: String, required: true, unique: true },
-    timestamp: { type: Date, default: Date.now }
-  },
-  { timestamps: false }
-);
-AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function() {
-  throw new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy.");
-});
-async function createImmutableAuditLog(data2, tenantId) {
-  try {
-    const targetTenant = tenantId || getActiveTenantId();
-    const { AuditLog } = await getMainModels(targetTenant);
-    const lastLog = await AuditLog.findOne().sort({ sequenceNumber: -1 });
-    const sequenceNumber = (lastLog?.sequenceNumber || 0) + 1;
-    const previousHash = lastLog?.currentHash || "GENESIS_BLOCK_00000000000000000000000000000000000000000000000000000000";
-    const timestamp = /* @__PURE__ */ new Date();
-    const hashPayload = `${sequenceNumber}:${data2.action}:${data2.module}:${data2.performedBy || "Admin"}:${data2.documentId || ""}:${data2.details || ""}:${previousHash}:${timestamp.toISOString()}`;
-    const currentHash = crypto2.createHash("sha256").update(hashPayload).digest("hex");
-    return await AuditLog.create({
-      sequenceNumber,
-      action: data2.action,
-      module: data2.module,
-      performedBy: data2.performedBy || "Admin",
-      documentId: data2.documentId,
-      details: data2.details,
-      ipAddress: data2.ipAddress,
-      previousHash,
-      currentHash,
-      timestamp
-    });
-  } catch (err) {
-    console.error("Failed to write immutable audit log:", err);
-  }
-}
-async function checkPersistentRateLimit(key, limit = 40, windowSeconds = 60, tenantId) {
-  try {
-    const targetTenant = tenantId || getActiveTenantId();
-    const { RateLimit } = await getMainModels(targetTenant);
-    const expiresAt = new Date(Date.now() + windowSeconds * 1e3);
-    const doc = await RateLimit.findOneAndUpdate(
-      { key },
-      {
-        $inc: { count: 1 },
-        $setOnInsert: { expiresAt }
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    if (doc && doc.count > limit) {
-      return false;
-    }
-    return true;
-  } catch {
-    return true;
-  }
-}
-async function getGalleryModels(tenantId) {
-  const targetTenant = tenantId || getActiveTenantId();
-  const dbName = resolveDbName(targetTenant, "gallery");
-  const cached4 = modelsCache.get(dbName);
-  if (cached4 && cached4.conn?.readyState === 1) {
-    return cached4.models;
-  }
-  const conn = await getDbConnection(dbName);
-  const models = {
-    GalleryCategory: conn.models.GalleryCategory || conn.model("GalleryCategory", GalleryCategorySchema),
-    GalleryImage: conn.models.GalleryImage || conn.model("GalleryImage", GalleryImageSchema),
-    VideoGallery: conn.models.VideoGallery || conn.model("VideoGallery", VideoGallerySchema)
-  };
-  modelsCache.set(dbName, { conn, models });
-  return models;
-}
-async function getTcModels(tenantId) {
-  const targetTenant = tenantId || getActiveTenantId();
-  const dbName = resolveDbName(targetTenant, "tc");
-  const cached4 = modelsCache.get(dbName);
-  if (cached4 && cached4.conn?.readyState === 1) {
-    return cached4.models;
-  }
-  const conn = await getDbConnection(dbName);
-  const models = {
-    TransferCertificate: conn.models.TransferCertificate || conn.model("TransferCertificate", TransferCertificateSchema)
-  };
-  modelsCache.set(dbName, { conn, models });
-  return models;
-}
-
 // server/admission-router.ts
+init_cmsSchemas();
 var admissionRouter = createRouter({
   create: publicMutation.input(
     external_exports.object({
@@ -177045,43 +177112,113 @@ var admissionRouter = createRouter({
       return { success: false, error: "Too many registration attempts. Please wait a moment before trying again." };
     }
     try {
-      const { MunRegistration } = await getMainModels();
-      const doc = await MunRegistration.create({
-        delegateName: input.studentName,
-        email: input.email,
-        phone: input.phone,
-        institution: input.previousSchool || "DPSI Admissions",
-        committee: `Grade: ${input.grade}`,
-        experience: `Parent: ${input.parentName}, Address: ${input.address}, City: ${input.city}`
+      const { AdmissionInquiry } = await getMainModels();
+      const doc = await AdmissionInquiry.create({
+        studentName: input.studentName.trim(),
+        parentName: input.parentName.trim(),
+        email: input.email.trim().toLowerCase(),
+        phone: input.phone.trim(),
+        grade: input.grade.trim(),
+        dob: input.dob.trim(),
+        address: input.address.trim(),
+        city: input.city.trim(),
+        state: input.state.trim(),
+        pincode: input.pincode.trim(),
+        previousSchool: input.previousSchool?.trim() || "",
+        message: input.message?.trim() || "",
+        status: "pending",
+        isDeleted: false
       });
       return { success: true, id: doc._id.toString() };
     } catch (err) {
-      return { success: true, id: "local-adm-1" };
+      console.error("[Admission] Failed to save admission application:", err?.message);
+      return { success: false, error: "Failed to submit admission application. Please try again or contact the admissions desk." };
     }
   }),
   list: adminQuery.query(async () => {
-    return [];
+    try {
+      const { AdmissionInquiry } = await getMainModels();
+      const docs = await AdmissionInquiry.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200);
+      return docs.map((doc) => ({
+        id: doc._id.toString(),
+        _id: doc._id.toString(),
+        studentName: doc.studentName,
+        parentName: doc.parentName,
+        email: doc.email,
+        phone: doc.phone,
+        grade: doc.grade,
+        dob: doc.dob,
+        address: doc.address,
+        city: doc.city,
+        state: doc.state,
+        pincode: doc.pincode,
+        previousSchool: doc.previousSchool || "",
+        message: doc.message || "",
+        status: doc.status,
+        createdAt: doc.createdAt
+      }));
+    } catch {
+      return [];
+    }
   }),
-  getById: adminQuery.input(external_exports.object({ id: external_exports.any() })).query(async () => {
-    return null;
+  getById: adminQuery.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).query(async ({ input }) => {
+    const { AdmissionInquiry } = await getMainModels();
+    const rawId = input.id?._id || input.id;
+    const targetId = String(rawId);
+    if (import_mongoose6.default.Types.ObjectId.isValid(targetId)) {
+      return AdmissionInquiry.findById(targetId);
+    }
+    return AdmissionInquiry.findOne({ _id: targetId });
   }),
   updateStatus: adminMutation.input(
     external_exports.object({
-      id: external_exports.any(),
+      id: external_exports.union([external_exports.string(), external_exports.any()]),
       status: external_exports.enum(["pending", "reviewing", "approved", "rejected"])
     })
-  ).mutation(async () => {
-    return { success: true };
+  ).mutation(async ({ input, ctx }) => {
+    const { AdmissionInquiry } = await getMainModels();
+    const rawId = input.id?._id || input.id;
+    const targetId = String(rawId);
+    const updated = import_mongoose6.default.Types.ObjectId.isValid(targetId) ? await AdmissionInquiry.findByIdAndUpdate(targetId, { status: input.status }, { new: true }) : await AdmissionInquiry.findOneAndUpdate({ _id: targetId }, { status: input.status }, { new: true });
+    await createImmutableAuditLog({
+      action: "UPDATE_ADMISSION_STATUS",
+      module: "Admissions",
+      performedBy: ctx.user?.username || "Admin",
+      documentId: targetId,
+      details: `Updated admission inquiry status to ${input.status}`
+    });
+    return { success: true, updated };
   }),
-  delete: adminMutation.input(external_exports.object({ id: external_exports.any() })).mutation(async () => {
+  delete: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
+    const { AdmissionInquiry } = await getMainModels();
+    const rawId = input.id?._id || input.id;
+    const targetId = String(rawId);
+    if (import_mongoose6.default.Types.ObjectId.isValid(targetId)) {
+      await AdmissionInquiry.findByIdAndUpdate(targetId, { isDeleted: true });
+    } else {
+      await AdmissionInquiry.findOneAndUpdate({ _id: targetId }, { isDeleted: true });
+    }
+    await createImmutableAuditLog({
+      action: "DELETE_ADMISSION_INQUIRY",
+      module: "Admissions",
+      performedBy: ctx.user?.username || "Admin",
+      documentId: targetId,
+      details: `Soft-deleted admission inquiry ${targetId}`
+    });
     return { success: true };
   }),
   stats: publicQuery.query(async () => {
-    return {
-      total: 120,
-      pending: 15,
-      approved: 105
-    };
+    try {
+      const { AdmissionInquiry } = await getMainModels();
+      const [total, pending, approved] = await Promise.all([
+        AdmissionInquiry.countDocuments({ isDeleted: false }),
+        AdmissionInquiry.countDocuments({ isDeleted: false, status: "pending" }),
+        AdmissionInquiry.countDocuments({ isDeleted: false, status: "approved" })
+      ]);
+      return { total, pending, approved };
+    } catch {
+      return { total: 0, pending: 0, approved: 0 };
+    }
   })
 });
 
@@ -177094,74 +177231,119 @@ var authRouter = createRouter({
 });
 
 // server/news-router.ts
-var import_mongoose6 = __toESM(require_mongoose2(), 1);
+var import_mongoose7 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
+
+// server/lib/cache.ts
+var memoryCache = /* @__PURE__ */ new Map();
+async function withCache(key, ttlSeconds, fetcher) {
+  const now = Date.now();
+  const cached4 = memoryCache.get(key);
+  if (cached4 && cached4.expiresAt > now) {
+    return cached4.data;
+  }
+  const freshData = await fetcher();
+  memoryCache.set(key, {
+    data: freshData,
+    expiresAt: now + ttlSeconds * 1e3
+  });
+  return freshData;
+}
+function invalidateCache(keyOrPrefix) {
+  for (const key of memoryCache.keys()) {
+    if (key === keyOrPrefix || key.startsWith(keyOrPrefix)) {
+      memoryCache.delete(key);
+    }
+  }
+}
+
+// server/news-router.ts
 var newsRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
-      return acts.map((a5, idx) => ({
-        id: a5._id?.toString() || idx + 1,
-        title: a5.title,
-        slug: a5.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-        excerpt: a5.description,
-        content: a5.description,
-        image: a5.imageUrl || "",
-        category: a5.category || "Campus",
-        published: a5.isPublished,
-        featured: true,
-        createdAt: a5.eventDate || a5.createdAt || /* @__PURE__ */ new Date()
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("news:list", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
+        return acts.map((a5, idx) => ({
+          id: a5._id?.toString() || idx + 1,
+          title: a5.title,
+          slug: a5.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+          excerpt: a5.description,
+          content: a5.description,
+          image: a5.imageUrl || "",
+          category: a5.category || "Campus",
+          published: a5.isPublished,
+          featured: true,
+          createdAt: a5.eventDate || a5.createdAt || /* @__PURE__ */ new Date()
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   featured: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
-      return acts.map((a5, idx) => ({
-        id: a5._id?.toString() || idx + 1,
-        title: a5.title,
-        slug: a5.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-        excerpt: a5.description,
-        content: a5.description,
-        image: a5.imageUrl || "",
-        category: a5.category || "Campus",
-        published: a5.isPublished,
-        featured: true,
-        createdAt: a5.eventDate || a5.createdAt || /* @__PURE__ */ new Date()
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("news:featured", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
+        return acts.map((a5, idx) => ({
+          id: a5._id?.toString() || idx + 1,
+          title: a5.title,
+          slug: a5.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+          excerpt: a5.description,
+          content: a5.description,
+          image: a5.imageUrl || "",
+          category: a5.category || "Campus",
+          published: a5.isPublished,
+          featured: true,
+          createdAt: a5.eventDate || a5.createdAt || /* @__PURE__ */ new Date()
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   getBySlug: publicQuery.input(external_exports.object({ slug: external_exports.string() })).query(async ({ input }) => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: false, isPublished: true });
-      const matched = acts.find((a5) => {
-        const slug = a5.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-        return slug === input.slug;
-      });
-      if (matched) {
-        return {
-          id: matched._id?.toString(),
-          title: matched.title,
-          slug: input.slug,
-          excerpt: matched.description,
-          content: matched.description,
-          image: matched.imageUrl || "",
-          category: matched.category || "Campus",
-          published: matched.isPublished,
-          featured: true,
-          createdAt: matched.eventDate || matched.createdAt || /* @__PURE__ */ new Date()
-        };
+    return withCache(`news:slug:${input.slug}`, 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const safeSlug = input.slug.trim();
+        const words = safeSlug.split("-").filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+        let matched = null;
+        if (words.length > 0) {
+          const regexPattern = words.join("[^a-z0-9]+");
+          matched = await Activity.findOne({
+            isDeleted: false,
+            isPublished: true,
+            title: { $regex: new RegExp(`^${regexPattern}$`, "i") }
+          });
+        }
+        if (!matched) {
+          const recentActs = await Activity.find({ isDeleted: false, isPublished: true }).sort({ createdAt: -1 }).limit(50);
+          matched = recentActs.find((a5) => {
+            const s = a5.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+            return s === safeSlug;
+          });
+        }
+        if (matched) {
+          return {
+            id: matched._id?.toString(),
+            title: matched.title,
+            slug: input.slug,
+            excerpt: matched.description,
+            content: matched.description,
+            image: matched.imageUrl || "",
+            category: matched.category || "Campus",
+            published: matched.isPublished,
+            featured: true,
+            createdAt: matched.eventDate || matched.createdAt || /* @__PURE__ */ new Date()
+          };
+        }
+        return null;
+      } catch {
+        return null;
       }
-      return null;
-    } catch {
-      return null;
-    }
+    });
   }),
   adminList: adminQuery.query(async () => {
     try {
@@ -177201,6 +177383,8 @@ var newsRouter = createRouter({
       category: input.category || "News",
       isPublished: input.published
     });
+    invalidateCache("news:");
+    invalidateCache("events:");
     await createImmutableAuditLog({
       action: "CREATE_ACTIVITY",
       module: "News",
@@ -177237,6 +177421,8 @@ var newsRouter = createRouter({
       },
       { new: true }
     );
+    invalidateCache("news:");
+    invalidateCache("events:");
     await createImmutableAuditLog({
       action: "UPDATE_ACTIVITY",
       module: "News",
@@ -177251,7 +177437,7 @@ var newsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const newsId = String(rawId);
     let deleted = null;
-    if (import_mongoose6.default.Types.ObjectId.isValid(newsId)) {
+    if (import_mongoose7.default.Types.ObjectId.isValid(newsId)) {
       deleted = await Activity.findByIdAndDelete(newsId).catch(() => null);
     }
     if (!deleted) {
@@ -177259,6 +177445,8 @@ var newsRouter = createRouter({
         $or: [{ _id: newsId }, { id: newsId }, { title: newsId }]
       }).catch(() => null);
     }
+    invalidateCache("news:");
+    invalidateCache("events:");
     await createImmutableAuditLog({
       action: "DELETE_ACTIVITY",
       module: "News",
@@ -177271,45 +177459,50 @@ var newsRouter = createRouter({
 });
 
 // server/events-router.ts
-var import_mongoose7 = __toESM(require_mongoose2(), 1);
+var import_mongoose8 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
 var eventsRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
-      return acts.map((a5) => ({
-        id: a5._id.toString(),
-        _id: a5._id.toString(),
-        title: a5.title,
-        description: a5.description,
-        image: a5.imageUrl || "",
-        imageUrl: a5.imageUrl || "",
-        eventDate: a5.eventDate || /* @__PURE__ */ new Date(),
-        location: "DPSI Campus",
-        category: a5.category || "Events"
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("events:list", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        return acts.map((a5) => ({
+          id: a5._id.toString(),
+          _id: a5._id.toString(),
+          title: a5.title,
+          description: a5.description,
+          image: a5.imageUrl || "",
+          imageUrl: a5.imageUrl || "",
+          eventDate: a5.eventDate || /* @__PURE__ */ new Date(),
+          location: "DPSI Campus",
+          category: a5.category || "Events"
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   all: publicQuery.query(async () => {
-    try {
-      const { Activity } = await getMainModels();
-      const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
-      return acts.map((a5) => ({
-        id: a5._id.toString(),
-        _id: a5._id.toString(),
-        title: a5.title,
-        description: a5.description,
-        image: a5.imageUrl || "",
-        imageUrl: a5.imageUrl || "",
-        eventDate: a5.eventDate || /* @__PURE__ */ new Date(),
-        location: "DPSI Campus",
-        category: a5.category || "Events"
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("events:all", 120, async () => {
+      try {
+        const { Activity } = await getMainModels();
+        const acts = await Activity.find({ isDeleted: { $ne: true }, isPublished: true }).sort({ eventDate: -1 });
+        return acts.map((a5) => ({
+          id: a5._id.toString(),
+          _id: a5._id.toString(),
+          title: a5.title,
+          description: a5.description,
+          image: a5.imageUrl || "",
+          imageUrl: a5.imageUrl || "",
+          eventDate: a5.eventDate || /* @__PURE__ */ new Date(),
+          location: "DPSI Campus",
+          category: a5.category || "Events"
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   create: adminMutation.input(
     external_exports.object({
@@ -177329,6 +177522,8 @@ var eventsRouter = createRouter({
       category: input.category,
       isPublished: true
     });
+    invalidateCache("events:");
+    invalidateCache("news:");
     await createImmutableAuditLog({
       action: "CREATE_ACTIVITY",
       module: "Events",
@@ -177362,6 +177557,8 @@ var eventsRouter = createRouter({
       },
       { new: true }
     );
+    invalidateCache("events:");
+    invalidateCache("news:");
     await createImmutableAuditLog({
       action: "UPDATE_ACTIVITY",
       module: "Events",
@@ -177376,7 +177573,7 @@ var eventsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const eventId = String(rawId);
     let deleted = null;
-    if (import_mongoose7.default.Types.ObjectId.isValid(eventId)) {
+    if (import_mongoose8.default.Types.ObjectId.isValid(eventId)) {
       deleted = await Activity.findByIdAndDelete(eventId).catch(() => null);
     }
     if (!deleted) {
@@ -177384,6 +177581,8 @@ var eventsRouter = createRouter({
         $or: [{ _id: eventId }, { id: eventId }, { title: eventId }]
       }).catch(() => null);
     }
+    invalidateCache("events:");
+    invalidateCache("news:");
     await createImmutableAuditLog({
       action: "DELETE_ACTIVITY",
       module: "Events",
@@ -177396,61 +177595,68 @@ var eventsRouter = createRouter({
 });
 
 // server/gallery-router.ts
-var import_mongoose8 = __toESM(require_mongoose2(), 1);
+var import_mongoose9 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
 function escapeRegex2(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 var galleryRouter = createRouter({
   list: publicQuery.query(async ({ ctx }) => {
-    try {
-      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
-      const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 });
-      return images.map((img, idx) => ({
-        id: img._id?.toString() || idx + 1,
-        title: img.title,
-        category: img.category,
-        imageUrl: img.imageUrl,
-        featured: img.featured ?? true
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("gallery:list", 120, async () => {
+      try {
+        const { GalleryImage } = await getGalleryModels(ctx.tenantId);
+        const images = await GalleryImage.find({ isDeleted: false }).sort({ createdAt: -1 });
+        return images.map((img, idx) => ({
+          id: img._id?.toString() || idx + 1,
+          title: img.title,
+          category: img.category,
+          imageUrl: img.imageUrl,
+          featured: img.featured ?? true
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   byCategory: publicQuery.input(external_exports.object({ category: external_exports.string() })).query(async ({ input, ctx }) => {
-    try {
-      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
-      const safeCat = escapeRegex2(input.category.trim());
-      const query = { isDeleted: false };
-      if (safeCat.toLowerCase() !== "all") {
-        query.category = { $regex: new RegExp(`^${safeCat}$`, "i") };
+    const safeCat = escapeRegex2(input.category.trim());
+    return withCache(`gallery:cat:${safeCat.toLowerCase()}`, 120, async () => {
+      try {
+        const { GalleryImage } = await getGalleryModels(ctx.tenantId);
+        const query = { isDeleted: false };
+        if (safeCat.toLowerCase() !== "all") {
+          query.category = { $regex: new RegExp(`^${safeCat}$`, "i") };
+        }
+        const images = await GalleryImage.find(query).sort({ createdAt: -1 });
+        return images.map((img, idx) => ({
+          id: img._id?.toString() || idx + 1,
+          title: img.title,
+          category: img.category,
+          imageUrl: img.imageUrl,
+          featured: img.featured ?? true
+        }));
+      } catch {
+        return [];
       }
-      const images = await GalleryImage.find(query).sort({ createdAt: -1 });
-      return images.map((img, idx) => ({
-        id: img._id?.toString() || idx + 1,
-        title: img.title,
-        category: img.category,
-        imageUrl: img.imageUrl,
-        featured: img.featured ?? true
-      }));
-    } catch {
-      return [];
-    }
+    });
   }),
   featured: publicQuery.query(async ({ ctx }) => {
-    try {
-      const { GalleryImage } = await getGalleryModels(ctx.tenantId);
-      const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8);
-      const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8);
-      return docs.map((img, idx) => ({
-        id: img._id?.toString() || idx + 1,
-        title: img.title,
-        category: img.category,
-        imageUrl: img.imageUrl,
-        featured: true
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("gallery:featured", 120, async () => {
+      try {
+        const { GalleryImage } = await getGalleryModels(ctx.tenantId);
+        const images = await GalleryImage.find({ isDeleted: false, featured: true }).limit(8);
+        const docs = images.length > 0 ? images : await GalleryImage.find({ isDeleted: false }).limit(8);
+        return docs.map((img, idx) => ({
+          id: img._id?.toString() || idx + 1,
+          title: img.title,
+          category: img.category,
+          imageUrl: img.imageUrl,
+          featured: true
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   create: adminMutation.input(
     external_exports.object({
@@ -177464,6 +177670,8 @@ var galleryRouter = createRouter({
   ).mutation(async ({ input, ctx }) => {
     const { GalleryImage } = await getGalleryModels(ctx.tenantId);
     const doc = await GalleryImage.create(input);
+    invalidateCache("gallery:");
+    invalidateCache("cms:galleryImages");
     return { success: true, id: doc._id.toString() };
   }),
   update: adminMutation.input(
@@ -177480,6 +177688,8 @@ var galleryRouter = createRouter({
     const { id, ...data2 } = input;
     const { GalleryImage } = await getGalleryModels(ctx.tenantId);
     await GalleryImage.findByIdAndUpdate(id, data2);
+    invalidateCache("gallery:");
+    invalidateCache("cms:galleryImages");
     return { success: true };
   }),
   delete: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
@@ -177487,7 +177697,7 @@ var galleryRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const imageId = String(rawId);
     let deleted = null;
-    if (import_mongoose8.default.Types.ObjectId.isValid(imageId)) {
+    if (import_mongoose9.default.Types.ObjectId.isValid(imageId)) {
       deleted = await GalleryImage.findByIdAndDelete(imageId).catch(() => null);
     }
     if (!deleted) {
@@ -177495,11 +177705,15 @@ var galleryRouter = createRouter({
         $or: [{ _id: imageId }, { id: imageId }, { imageUrl: imageId }, { title: imageId }]
       }).catch(() => null);
     }
+    invalidateCache("gallery:");
+    invalidateCache("cms:galleryImages");
     return { success: true, deleted };
   })
 });
 
 // server/contact-router.ts
+var import_mongoose10 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
 var contactRouter = createRouter({
   create: publicMutation.input(
     external_exports.object({
@@ -177509,68 +177723,134 @@ var contactRouter = createRouter({
       subject: external_exports.string().max(255).optional(),
       message: external_exports.string().min(5)
     })
-  ).mutation(async ({ ctx }) => {
+  ).mutation(async ({ input, ctx }) => {
     const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
     const allowed = await checkPersistentRateLimit(`contact:${clientIp}`, 10, 60);
     if (!allowed) {
       return { success: false, error: "Too many submissions. Please wait a moment before sending another message." };
     }
-    return { success: true, id: 1 };
+    try {
+      const { ContactMessage } = await getMainModels();
+      const doc = await ContactMessage.create({
+        name: input.name.trim(),
+        email: input.email.trim().toLowerCase(),
+        phone: input.phone?.trim() || "",
+        subject: input.subject?.trim() || "Website Contact Form Inquiry",
+        message: input.message.trim(),
+        isRead: false,
+        isDeleted: false
+      });
+      return { success: true, id: doc._id.toString() };
+    } catch (err) {
+      console.error("[Contact Form] Failed to save contact submission:", err?.message);
+      return { success: false, error: "Failed to send your message. Please try again or call the school office directly." };
+    }
   }),
   list: adminQuery.query(async () => {
-    return [];
+    try {
+      const { ContactMessage } = await getMainModels();
+      const docs = await ContactMessage.find({ isDeleted: false }).sort({ createdAt: -1 }).limit(200);
+      return docs.map((doc) => ({
+        id: doc._id.toString(),
+        _id: doc._id.toString(),
+        name: doc.name,
+        email: doc.email,
+        phone: doc.phone || "",
+        subject: doc.subject || "",
+        message: doc.message,
+        isRead: doc.isRead,
+        createdAt: doc.createdAt
+      }));
+    } catch {
+      return [];
+    }
   }),
-  markRead: adminMutation.input(external_exports.object({ id: external_exports.any() })).mutation(async () => {
+  markRead: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
+    const { ContactMessage } = await getMainModels();
+    const rawId = input.id?._id || input.id;
+    const targetId = String(rawId);
+    if (import_mongoose10.default.Types.ObjectId.isValid(targetId)) {
+      await ContactMessage.findByIdAndUpdate(targetId, { isRead: true });
+    } else {
+      await ContactMessage.findOneAndUpdate({ _id: targetId }, { isRead: true });
+    }
+    await createImmutableAuditLog({
+      action: "MARK_CONTACT_READ",
+      module: "Contact",
+      performedBy: ctx.user?.username || "Admin",
+      documentId: targetId,
+      details: `Marked contact inquiry ${targetId} as read`
+    });
     return { success: true };
   }),
-  delete: adminMutation.input(external_exports.object({ id: external_exports.any() })).mutation(async () => {
+  delete: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
+    const { ContactMessage } = await getMainModels();
+    const rawId = input.id?._id || input.id;
+    const targetId = String(rawId);
+    if (import_mongoose10.default.Types.ObjectId.isValid(targetId)) {
+      await ContactMessage.findByIdAndUpdate(targetId, { isDeleted: true });
+    } else {
+      await ContactMessage.findOneAndUpdate({ _id: targetId }, { isDeleted: true });
+    }
+    await createImmutableAuditLog({
+      action: "DELETE_CONTACT_MESSAGE",
+      module: "Contact",
+      performedBy: ctx.user?.username || "Admin",
+      documentId: targetId,
+      details: `Soft-deleted contact inquiry ${targetId}`
+    });
     return { success: true };
   })
 });
 
 // server/testimonial-router.ts
-var import_mongoose9 = __toESM(require_mongoose2(), 1);
+var import_mongoose11 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
 var testimonialRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Testimonial } = await getMainModels();
-      const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
-      return docs.map((d5) => ({
-        id: d5._id.toString(),
-        _id: d5._id.toString(),
-        name: d5.name,
-        role: d5.role,
-        content: d5.content,
-        avatar: d5.avatarUrl || "",
-        avatarUrl: d5.avatarUrl || "",
-        rating: d5.rating || 5,
-        featured: d5.featured,
-        order: d5.order,
-        isActive: d5.isActive
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("testimonials:list", 120, async () => {
+      try {
+        const { Testimonial } = await getMainModels();
+        const docs = await Testimonial.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        return docs.map((d5) => ({
+          id: d5._id.toString(),
+          _id: d5._id.toString(),
+          name: d5.name,
+          role: d5.role,
+          content: d5.content,
+          avatar: d5.avatarUrl || "",
+          avatarUrl: d5.avatarUrl || "",
+          rating: d5.rating || 5,
+          featured: d5.featured,
+          order: d5.order,
+          isActive: d5.isActive
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   featured: publicQuery.query(async () => {
-    try {
-      const { Testimonial } = await getMainModels();
-      const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
-      return docs.map((d5) => ({
-        id: d5._id.toString(),
-        _id: d5._id.toString(),
-        name: d5.name,
-        role: d5.role,
-        content: d5.content,
-        avatar: d5.avatarUrl || "",
-        avatarUrl: d5.avatarUrl || "",
-        rating: d5.rating || 5,
-        featured: d5.featured,
-        order: d5.order
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("testimonials:featured", 120, async () => {
+      try {
+        const { Testimonial } = await getMainModels();
+        const docs = await Testimonial.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        return docs.map((d5) => ({
+          id: d5._id.toString(),
+          _id: d5._id.toString(),
+          name: d5.name,
+          role: d5.role,
+          content: d5.content,
+          avatar: d5.avatarUrl || "",
+          avatarUrl: d5.avatarUrl || "",
+          rating: d5.rating || 5,
+          featured: d5.featured,
+          order: d5.order
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   create: adminMutation.input(
     external_exports.object({
@@ -177585,6 +177865,7 @@ var testimonialRouter = createRouter({
   ).mutation(async ({ input, ctx }) => {
     const { Testimonial } = await getMainModels();
     const doc = await Testimonial.create(input);
+    invalidateCache("testimonials:");
     await createImmutableAuditLog({
       action: "CREATE_TESTIMONIAL",
       module: "Testimonials",
@@ -177611,6 +177892,7 @@ var testimonialRouter = createRouter({
     const testId = String(id?._id || id);
     const { Testimonial } = await getMainModels();
     const updated = await Testimonial.findByIdAndUpdate(testId, data2, { new: true });
+    invalidateCache("testimonials:");
     await createImmutableAuditLog({
       action: "UPDATE_TESTIMONIAL",
       module: "Testimonials",
@@ -177625,7 +177907,7 @@ var testimonialRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const testId = String(rawId);
     let deleted = null;
-    if (import_mongoose9.default.Types.ObjectId.isValid(testId)) {
+    if (import_mongoose11.default.Types.ObjectId.isValid(testId)) {
       deleted = await Testimonial.findByIdAndDelete(testId).catch(() => null);
     }
     if (!deleted) {
@@ -177633,6 +177915,7 @@ var testimonialRouter = createRouter({
         $or: [{ _id: testId }, { id: testId }, { name: testId }]
       }).catch(() => null);
     }
+    invalidateCache("testimonials:");
     await createImmutableAuditLog({
       action: "DELETE_TESTIMONIAL",
       module: "Testimonials",
@@ -177645,56 +177928,61 @@ var testimonialRouter = createRouter({
 });
 
 // server/achievement-router.ts
-var import_mongoose10 = __toESM(require_mongoose2(), 1);
+var import_mongoose12 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
 var achievementRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Achievement } = await getMainModels();
-      const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
-      return docs.map((d5) => ({
-        id: d5._id.toString(),
-        _id: d5._id.toString(),
-        studentName: d5.studentName,
-        class: d5.className,
-        className: d5.className,
-        score: d5.score,
-        exam: d5.exam,
-        stream: d5.stream || "",
-        rank: d5.rank || "",
-        year: d5.year,
-        image: d5.imageUrl || "",
-        imageUrl: d5.imageUrl || "",
-        featured: d5.featured,
-        order: d5.order,
-        isActive: d5.isActive
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("achievements:list", 120, async () => {
+      try {
+        const { Achievement } = await getMainModels();
+        const docs = await Achievement.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 });
+        return docs.map((d5) => ({
+          id: d5._id.toString(),
+          _id: d5._id.toString(),
+          studentName: d5.studentName,
+          class: d5.className,
+          className: d5.className,
+          score: d5.score,
+          exam: d5.exam,
+          stream: d5.stream || "",
+          rank: d5.rank || "",
+          year: d5.year,
+          image: d5.imageUrl || "",
+          imageUrl: d5.imageUrl || "",
+          featured: d5.featured,
+          order: d5.order,
+          isActive: d5.isActive
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   featured: publicQuery.query(async () => {
-    try {
-      const { Achievement } = await getMainModels();
-      const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
-      return docs.map((d5) => ({
-        id: d5._id.toString(),
-        _id: d5._id.toString(),
-        studentName: d5.studentName,
-        class: d5.className,
-        className: d5.className,
-        score: d5.score,
-        exam: d5.exam,
-        stream: d5.stream || "",
-        rank: d5.rank || "",
-        year: d5.year,
-        image: d5.imageUrl || "",
-        imageUrl: d5.imageUrl || "",
-        featured: d5.featured,
-        order: d5.order
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("achievements:featured", 120, async () => {
+      try {
+        const { Achievement } = await getMainModels();
+        const docs = await Achievement.find({ isDeleted: { $ne: true }, isActive: true, featured: true }).sort({ order: 1 });
+        return docs.map((d5) => ({
+          id: d5._id.toString(),
+          _id: d5._id.toString(),
+          studentName: d5.studentName,
+          class: d5.className,
+          className: d5.className,
+          score: d5.score,
+          exam: d5.exam,
+          stream: d5.stream || "",
+          rank: d5.rank || "",
+          year: d5.year,
+          image: d5.imageUrl || "",
+          imageUrl: d5.imageUrl || "",
+          featured: d5.featured,
+          order: d5.order
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   create: adminMutation.input(
     external_exports.object({
@@ -177712,6 +178000,7 @@ var achievementRouter = createRouter({
   ).mutation(async ({ input, ctx }) => {
     const { Achievement } = await getMainModels();
     const doc = await Achievement.create(input);
+    invalidateCache("achievements:");
     await createImmutableAuditLog({
       action: "CREATE_ACHIEVEMENT",
       module: "Academics",
@@ -177741,6 +178030,7 @@ var achievementRouter = createRouter({
     const achId = String(id?._id || id);
     const { Achievement } = await getMainModels();
     const updated = await Achievement.findByIdAndUpdate(achId, data2, { new: true });
+    invalidateCache("achievements:");
     await createImmutableAuditLog({
       action: "UPDATE_ACHIEVEMENT",
       module: "Academics",
@@ -177755,7 +178045,7 @@ var achievementRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const achId = String(rawId);
     let deleted = null;
-    if (import_mongoose10.default.Types.ObjectId.isValid(achId)) {
+    if (import_mongoose12.default.Types.ObjectId.isValid(achId)) {
       deleted = await Achievement.findByIdAndDelete(achId).catch(() => null);
     }
     if (!deleted) {
@@ -177763,6 +178053,7 @@ var achievementRouter = createRouter({
         $or: [{ _id: achId }, { id: achId }, { studentName: achId }]
       }).catch(() => null);
     }
+    invalidateCache("achievements:");
     await createImmutableAuditLog({
       action: "DELETE_ACHIEVEMENT",
       module: "Academics",
@@ -177775,22 +178066,25 @@ var achievementRouter = createRouter({
 });
 
 // server/announcement-router.ts
-var import_mongoose11 = __toESM(require_mongoose2(), 1);
+var import_mongoose13 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
 var announcementRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { Marquee } = await getMainModels();
-      const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
-      return marquees.map((m3, idx) => ({
-        id: m3._id?.toString() || idx + 1,
-        title: m3.text,
-        link: m3.linkUrl || "/admissions",
-        active: m3.isActive,
-        priority: m3.speed || 50
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("announcements:list", 120, async () => {
+      try {
+        const { Marquee } = await getMainModels();
+        const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
+        return marquees.map((m3, idx) => ({
+          id: m3._id?.toString() || idx + 1,
+          title: m3.text,
+          link: m3.linkUrl || "/admissions",
+          active: m3.isActive,
+          priority: m3.speed || 50
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   adminList: adminQuery.query(async () => {
     try {
@@ -177822,6 +178116,8 @@ var announcementRouter = createRouter({
       isActive: input.active,
       speed: input.priority
     });
+    invalidateCache("announcements:");
+    invalidateCache("cms:marquees");
     await createImmutableAuditLog({
       action: "CREATE_MARQUEE",
       module: "Marquee",
@@ -177853,6 +178149,8 @@ var announcementRouter = createRouter({
       },
       { new: true }
     );
+    invalidateCache("announcements:");
+    invalidateCache("cms:marquees");
     await createImmutableAuditLog({
       action: "UPDATE_MARQUEE",
       module: "Marquee",
@@ -177867,7 +178165,7 @@ var announcementRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const annId = String(rawId);
     let deleted = null;
-    if (import_mongoose11.default.Types.ObjectId.isValid(annId)) {
+    if (import_mongoose13.default.Types.ObjectId.isValid(annId)) {
       deleted = await Marquee.findByIdAndDelete(annId).catch(() => null);
     }
     if (!deleted) {
@@ -177875,6 +178173,8 @@ var announcementRouter = createRouter({
         $or: [{ _id: annId }, { id: annId }, { text: annId }]
       }).catch(() => null);
     }
+    invalidateCache("announcements:");
+    invalidateCache("cms:marquees");
     await createImmutableAuditLog({
       action: "DELETE_MARQUEE",
       module: "Marquee",
@@ -177887,24 +178187,27 @@ var announcementRouter = createRouter({
 });
 
 // server/stats-router.ts
-var import_mongoose12 = __toESM(require_mongoose2(), 1);
+var import_mongoose14 = __toESM(require_mongoose2(), 1);
+init_cmsSchemas();
 var statsRouter = createRouter({
   list: publicQuery.query(async () => {
-    try {
-      const { QuickStat } = await getMainModels();
-      const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });
-      return docs.map((d5) => ({
-        id: d5._id.toString(),
-        _id: d5._id.toString(),
-        label: d5.label,
-        value: d5.value,
-        icon: d5.icon || "GraduationCap",
-        order: d5.order,
-        active: d5.isActive
-      }));
-    } catch {
-      return [];
-    }
+    return withCache("stats:list", 120, async () => {
+      try {
+        const { QuickStat } = await getMainModels();
+        const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });
+        return docs.map((d5) => ({
+          id: d5._id.toString(),
+          _id: d5._id.toString(),
+          label: d5.label,
+          value: d5.value,
+          icon: d5.icon || "GraduationCap",
+          order: d5.order,
+          active: d5.isActive
+        }));
+      } catch {
+        return [];
+      }
+    });
   }),
   adminList: adminQuery.query(async () => {
     try {
@@ -177940,6 +178243,7 @@ var statsRouter = createRouter({
       order: input.order,
       isActive: input.active
     });
+    invalidateCache("stats:");
     await createImmutableAuditLog({
       action: "CREATE_STAT",
       module: "Stats",
@@ -177973,6 +178277,7 @@ var statsRouter = createRouter({
       },
       { new: true }
     );
+    invalidateCache("stats:");
     await createImmutableAuditLog({
       action: "UPDATE_STAT",
       module: "Stats",
@@ -177987,7 +178292,7 @@ var statsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const statId = String(rawId);
     let deleted = null;
-    if (import_mongoose12.default.Types.ObjectId.isValid(statId)) {
+    if (import_mongoose14.default.Types.ObjectId.isValid(statId)) {
       deleted = await QuickStat.findByIdAndDelete(statId).catch(() => null);
     }
     if (!deleted) {
@@ -177995,6 +178300,7 @@ var statsRouter = createRouter({
         $or: [{ _id: statId }, { id: statId }, { label: statId }]
       }).catch(() => null);
     }
+    invalidateCache("stats:");
     await createImmutableAuditLog({
       action: "DELETE_STAT",
       module: "Stats",
@@ -178007,6 +178313,7 @@ var statsRouter = createRouter({
 });
 
 // server/ai-router.ts
+init_cmsSchemas();
 var MANDATORY_SANITIZATION_RULES = `
 CRITICAL FORMATTING & SANITIZATION RULES (MANDATORY & STRICT):
 - Output in clean, pure text ONLY.
@@ -178158,7 +178465,7 @@ var aiRouter = createRouter({
     if (cached4 && (!input.history || input.history.length === 0)) {
       return { answer: cached4 };
     }
-    let apiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || process.env.DOPPLER_GROQ_API_KEY || "";
+    let apiKey = (process.env.GROQ_API_KEY || process.env.DOPPLER_GROQ_API_KEY || "").trim();
     let configuredModel;
     let systemPrompt = DEFAULT_SYSTEM_PROMPT;
     try {
@@ -178267,9 +178574,9 @@ ${config2.systemPrompt}`;
       return { audioBase64: null };
     }
     let ttsProvider = "elevenlabs";
-    let googleApiKey = (process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_TTS_API_KEY || "").trim();
+    let googleApiKey = (process.env.GOOGLE_TTS_API_KEY || process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_API_KEY || "").trim();
     let googleVoice = "en-IN-Journey-F";
-    let elevenlabsApiKey = (process.env.ELEVENLABS_API_KEY || process.env.VITE_ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
+    let elevenlabsApiKey = (process.env.ELEVENLABS_API_KEY || process.env.DOPPLER_ELEVENLABS_API_KEY || "").trim();
     let elevenlabsVoiceId = input.voiceId || "EXAVITQu4vr4xnSDxMaL";
     try {
       const { AiConfig } = await getMainModels(ctx.tenantId);
@@ -178372,14 +178679,15 @@ ${config2.systemPrompt}`;
 });
 
 // server/cms-router.ts
-var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
-var import_mongoose15 = __toESM(require_mongoose2(), 1);
+var import_jsonwebtoken2 = __toESM(require_jsonwebtoken(), 1);
+var import_mongoose17 = __toESM(require_mongoose2(), 1);
 import bcrypt2 from "bcryptjs";
+init_cmsSchemas();
 
 // server/models/adminUserSchema.ts
-var import_mongoose13 = __toESM(require_mongoose2(), 1);
+var import_mongoose15 = __toESM(require_mongoose2(), 1);
 init_mongodb();
-var AdminUserSchema = new import_mongoose13.Schema(
+var AdminUserSchema = new import_mongoose15.Schema(
   {
     username: { type: String, required: true, unique: true },
     email: { type: String },
@@ -178397,9 +178705,9 @@ async function getAdminUserModel() {
 }
 
 // server/models/tenantSchema.ts
-var import_mongoose14 = __toESM(require_mongoose2(), 1);
+var import_mongoose16 = __toESM(require_mongoose2(), 1);
 init_mongodb();
-var TenantSchema = new import_mongoose14.Schema(
+var TenantSchema = new import_mongoose16.Schema(
   {
     tenantId: { type: String, required: true, unique: true, index: true },
     schoolName: { type: String, required: true },
@@ -178428,6 +178736,7 @@ async function getTenantModel() {
 }
 
 // server/lib/seedDatabase.ts
+init_cmsSchemas();
 import bcrypt from "bcryptjs";
 async function seedDatabase(tenantId = "dpsi", _options) {
   try {
@@ -179346,31 +179655,67 @@ async function convertImageToWebP(inputBuffer, quality = 80, maxWidth) {
   };
 }
 
-// server/lib/cache.ts
-var memoryCache = /* @__PURE__ */ new Map();
-async function withCache(key, ttlSeconds, fetcher) {
-  const now = Date.now();
-  const cached4 = memoryCache.get(key);
-  if (cached4 && cached4.expiresAt > now) {
-    return cached4.data;
+// server/context.ts
+var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
+function getJwtSecret() {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.trim().length > 0) {
+    return process.env.JWT_SECRET.trim();
   }
-  const freshData = await fetcher();
-  memoryCache.set(key, {
-    data: freshData,
-    expiresAt: now + ttlSeconds * 1e3
-  });
-  return freshData;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[Security FATAL] JWT_SECRET environment variable is mandatory in production.");
+  }
+  return "dpsi_cms_super_secret_jwt_key_2026_dev";
 }
-function invalidateCache(keyOrPrefix) {
-  for (const key of memoryCache.keys()) {
-    if (key === keyOrPrefix || key.startsWith(keyOrPrefix)) {
-      memoryCache.delete(key);
+var JWT_SECRET = process.env.JWT_SECRET && process.env.JWT_SECRET.trim() || (process.env.NODE_ENV === "production" ? "" : "dpsi_cms_super_secret_jwt_key_2026_dev");
+async function createContext(opts) {
+  let user = null;
+  const rawHeaderTenant = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") || "";
+  const authHeader = opts.req.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    try {
+      const secret = getJwtSecret();
+      const decoded = import_jsonwebtoken.default.verify(token, secret, { algorithms: ["HS256"] });
+      user = {
+        id: decoded.id,
+        username: decoded.username,
+        role: decoded.role,
+        tenantId: decoded.tenantId || "dpsi"
+      };
+    } catch {
     }
   }
+  const isDevEnvironment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+  if (!user && isDevEnvironment && process.env.ENABLE_DEV_ADMIN === "true") {
+    const adminHeader = opts.req.headers.get("x-admin-auth");
+    if (adminHeader === "true") {
+      user = {
+        id: "admin-master",
+        username: "Admin",
+        role: "superadmin",
+        tenantId: "all"
+      };
+    }
+  }
+  let resolvedTenantId = "dpsi";
+  if (user) {
+    if (user.role === "superadmin") {
+      resolvedTenantId = rawHeaderTenant && rawHeaderTenant !== "all" ? rawHeaderTenant : user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
+    } else {
+      resolvedTenantId = user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
+    }
+  } else {
+    resolvedTenantId = rawHeaderTenant || "dpsi";
+  }
+  return {
+    req: opts.req,
+    resHeaders: opts.resHeaders,
+    user,
+    tenantId: resolvedTenantId
+  };
 }
 
 // server/cms-router.ts
-var JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "dpsi_secure_prod_fallback_token_key_2026_verified");
 function escapeRegex3(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -179461,9 +179806,9 @@ var cmsRouter = createRouter({
           await AdminUser.findByIdAndUpdate(user._id, { lastLogin: /* @__PURE__ */ new Date() }).catch(() => {
           });
           const assignedTenantId = user.tenantId || targetTenantId || "dpsi";
-          const token = import_jsonwebtoken.default.sign(
+          const token = import_jsonwebtoken2.default.sign(
             { id: user._id.toString(), username: user.username, role: user.role || "superadmin", tenantId: assignedTenantId },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: "8h" }
           );
           const activeTenant = await Tenant.findOne({ tenantId: assignedTenantId }).catch(() => null);
@@ -179494,9 +179839,9 @@ var cmsRouter = createRouter({
           );
         } catch {
         }
-        const token = import_jsonwebtoken.default.sign(
+        const token = import_jsonwebtoken2.default.sign(
           { id: "master", username: "Admin", role: "superadmin", tenantId: "all" },
-          JWT_SECRET,
+          getJwtSecret(),
           { expiresIn: "8h" }
         );
         const defaultTenant = await Tenant.findOne({ tenantId: targetTenantId }).catch(() => null);
@@ -179521,9 +179866,9 @@ var cmsRouter = createRouter({
       console.warn("MongoDB connection check during auth:", errMsg);
       if (isBootstrapAdmin) {
         resetLoginAttempts(clientIp);
-        const token = import_jsonwebtoken.default.sign(
+        const token = import_jsonwebtoken2.default.sign(
           { id: "master", username: "Admin", role: "superadmin", tenantId: "all" },
-          JWT_SECRET,
+          getJwtSecret(),
           { expiresIn: "8h" }
         );
         return {
@@ -179606,9 +179951,9 @@ var cmsRouter = createRouter({
         });
       }
       const assignedTenantId = user.tenantId || "dpsi";
-      const token = import_jsonwebtoken.default.sign(
+      const token = import_jsonwebtoken2.default.sign(
         { id: user._id.toString(), username: user.username, role: user.role || "superadmin", tenantId: assignedTenantId },
-        JWT_SECRET,
+        getJwtSecret(),
         { expiresIn: "8h" }
       );
       const activeTenant = await Tenant.findOne({ tenantId: assignedTenantId }).catch(() => null);
@@ -180025,7 +180370,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id?.$oid || input.id?.id || input.id;
     const pageId = typeof rawId === "object" ? String(rawId._id || rawId) : String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(pageId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(pageId)) {
       deleted = await Page.findByIdAndDelete(pageId).catch(() => null);
     }
     if (!deleted) {
@@ -180129,7 +180474,7 @@ var cmsRouter = createRouter({
       updateData.isDeleted = false;
     }
     let updated = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(menuId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(menuId)) {
       updated = await Menu.findByIdAndUpdate(menuId, updateData, { new: true });
     }
     if (!updated) {
@@ -180154,7 +180499,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const menuId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(menuId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(menuId)) {
       deleted = await Menu.findByIdAndDelete(menuId).catch(() => null);
     }
     if (!deleted) {
@@ -180227,7 +180572,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const popupId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(popupId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(popupId)) {
       deleted = await Popup.findByIdAndDelete(popupId).catch(() => null);
     }
     if (!deleted) {
@@ -180319,7 +180664,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const marqueeId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(marqueeId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(marqueeId)) {
       deleted = await Marquee.findByIdAndDelete(marqueeId).catch(() => null);
     }
     if (!deleted) {
@@ -180374,7 +180719,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const activityId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(activityId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(activityId)) {
       deleted = await Activity.findByIdAndDelete(activityId).catch(() => null);
     }
     if (!deleted) {
@@ -180486,7 +180831,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const sliderId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(sliderId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(sliderId)) {
       deleted = await Slider.findByIdAndDelete(sliderId).catch(() => null);
     }
     if (!deleted) {
@@ -180506,8 +180851,10 @@ var cmsRouter = createRouter({
   }),
   // --- 9. ATTACHMENTS & CIRCULARS ---
   listAttachments: publicQuery.query(async () => {
-    const { Attachment } = await getMainModels();
-    return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    return withCache("cms:attachments", 60, async () => {
+      const { Attachment } = await getMainModels();
+      return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    });
   }),
   createAttachment: adminMutation.input(
     external_exports.object({
@@ -180521,6 +180868,7 @@ var cmsRouter = createRouter({
   ).mutation(async ({ input, ctx }) => {
     const { Attachment } = await getMainModels();
     const created = await Attachment.create(input);
+    invalidateCache("cms:attachments");
     await createImmutableAuditLog({
       action: "CREATE_ATTACHMENT",
       module: "Circulars",
@@ -180535,7 +180883,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const attachmentId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(attachmentId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(attachmentId)) {
       deleted = await Attachment.findByIdAndDelete(attachmentId).catch(() => null);
     }
     if (!deleted) {
@@ -180543,6 +180891,7 @@ var cmsRouter = createRouter({
         $or: [{ _id: attachmentId }, { id: attachmentId }, { title: attachmentId }, { fileUrl: attachmentId }]
       }).catch(() => null);
     }
+    invalidateCache("cms:attachments");
     await createImmutableAuditLog({
       action: "DELETE_ATTACHMENT",
       module: "Circulars",
@@ -180554,8 +180903,10 @@ var cmsRouter = createRouter({
   }),
   // --- 10. IMAGE GALLERY (dpsi_gallery DB) ---
   listGalleryCategories: publicQuery.query(async () => {
-    const { GalleryCategory } = await getGalleryModels();
-    return GalleryCategory.find({ isDeleted: false });
+    return withCache("cms:galleryCategories", 60, async () => {
+      const { GalleryCategory } = await getGalleryModels();
+      return GalleryCategory.find({ isDeleted: false });
+    });
   }),
   createGalleryCategory: adminMutation.input(
     external_exports.object({
@@ -180566,15 +180917,20 @@ var cmsRouter = createRouter({
     })
   ).mutation(async ({ input }) => {
     const { GalleryCategory } = await getGalleryModels();
-    return GalleryCategory.create(input);
+    const created = await GalleryCategory.create(input);
+    invalidateCache("cms:galleryCategories");
+    return created;
   }),
   listGalleryImages: publicQuery.input(external_exports.object({ category: external_exports.string().optional() }).optional()).query(async ({ input }) => {
-    const { GalleryImage } = await getGalleryModels();
-    const filter = { isDeleted: { $ne: true } };
-    if (input?.category && input.category !== "All") {
-      filter.category = input.category;
-    }
-    return GalleryImage.find(filter).sort({ createdAt: -1 });
+    const cacheKey = input?.category && input.category !== "All" ? `cms:galleryImages:${input.category}` : "cms:galleryImages:all";
+    return withCache(cacheKey, 60, async () => {
+      const { GalleryImage } = await getGalleryModels();
+      const filter = { isDeleted: { $ne: true } };
+      if (input?.category && input.category !== "All") {
+        filter.category = input.category;
+      }
+      return GalleryImage.find(filter).sort({ createdAt: -1 });
+    });
   }),
   createGalleryImage: adminMutation.input(
     external_exports.object({
@@ -180589,14 +180945,16 @@ var cmsRouter = createRouter({
     })
   ).mutation(async ({ input }) => {
     const { GalleryImage } = await getGalleryModels();
-    return GalleryImage.create(input);
+    const created = await GalleryImage.create(input);
+    invalidateCache("cms:galleryImages");
+    return created;
   }),
   deleteGalleryImage: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]) })).mutation(async ({ input, ctx }) => {
     const { GalleryImage } = await getGalleryModels();
     const rawId = input.id?._id || input.id;
     const imageId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(imageId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(imageId)) {
       deleted = await GalleryImage.findByIdAndDelete(imageId).catch(() => null);
     }
     if (!deleted) {
@@ -180611,6 +180969,7 @@ var cmsRouter = createRouter({
         { returnDocument: "after" }
       ).catch(() => null);
     }
+    invalidateCache("cms:galleryImages");
     await createImmutableAuditLog({
       action: "DELETE_GALLERY_IMAGE",
       module: "Gallery",
@@ -180622,8 +180981,10 @@ var cmsRouter = createRouter({
   }),
   // --- 11. VIDEO GALLERY (dpsi_gallery DB) ---
   listVideos: publicQuery.query(async () => {
-    const { VideoGallery } = await getGalleryModels();
-    return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    return withCache("cms:videos", 60, async () => {
+      const { VideoGallery } = await getGalleryModels();
+      return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    });
   }),
   createVideo: adminMutation.input(
     external_exports.object({
@@ -180654,6 +181015,7 @@ var cmsRouter = createRouter({
       }
     }
     const created = await VideoGallery.create(payload2);
+    invalidateCache("cms:videos");
     await createImmutableAuditLog({
       action: "CREATE_VIDEO",
       module: "Videos",
@@ -180668,7 +181030,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const videoId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(videoId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(videoId)) {
       deleted = await VideoGallery.findByIdAndDelete(videoId).catch(() => null);
     }
     if (!deleted) {
@@ -180683,6 +181045,7 @@ var cmsRouter = createRouter({
         { returnDocument: "after" }
       ).catch(() => null);
     }
+    invalidateCache("cms:videos");
     await createImmutableAuditLog({
       action: "DELETE_VIDEO",
       module: "Videos",
@@ -180696,21 +181059,29 @@ var cmsRouter = createRouter({
   listTc: publicQuery.input(
     external_exports.object({
       search: external_exports.string().optional(),
-      showTrash: external_exports.boolean().default(false)
+      showTrash: external_exports.boolean().default(false),
+      limit: external_exports.number().min(1).max(200).default(100)
     }).optional()
-  ).query(async ({ input }) => {
-    const { TransferCertificate } = await getTcModels();
-    const filter = { isDeleted: input?.showTrash ?? false };
-    if (input?.search && input.search.trim() !== "") {
-      const safeSearch = escapeRegex3(input.search.trim());
-      const regex = new RegExp(safeSearch, "i");
-      filter.$or = [
-        { admissionNumber: regex },
-        { studentName: regex },
-        { fatherName: regex }
-      ];
+  ).query(async ({ input, ctx }) => {
+    try {
+      const { TransferCertificate } = await getTcModels();
+      const isAdmin = !!ctx.user;
+      const isDeleted = isAdmin ? input?.showTrash ?? false : false;
+      const filter = { isDeleted };
+      if (input?.search && input.search.trim() !== "") {
+        const safeSearch = escapeRegex3(input.search.trim());
+        const regex = new RegExp(safeSearch, "i");
+        filter.$or = [
+          { admissionNumber: regex },
+          { studentName: regex },
+          { fatherName: regex }
+        ];
+      }
+      const queryLimit = input?.limit || 100;
+      return await TransferCertificate.find(filter).sort({ dateOfIssue: -1 }).limit(queryLimit);
+    } catch {
+      return [];
     }
-    return TransferCertificate.find(filter).sort({ dateOfIssue: -1 });
   }),
   createTc: adminMutation.input(
     external_exports.object({
@@ -180736,7 +181107,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const tcId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(tcId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(tcId)) {
       deleted = await TransferCertificate.findByIdAndDelete(tcId).catch(() => null);
     }
     if (!deleted) {
@@ -180754,7 +181125,7 @@ var cmsRouter = createRouter({
     return deleted || { success: true, id: tcId };
   }),
   // --- 13. MUN REGISTRATIONS ---
-  listMunRegistrations: publicQuery.query(async () => {
+  listMunRegistrations: adminQuery.query(async () => {
     const { MunRegistration } = await getMainModels();
     return MunRegistration.find({ isDeleted: false }).sort({ createdAt: -1 });
   }),
@@ -180807,7 +181178,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const menuId = String(rawId);
     let updated = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(menuId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(menuId)) {
       updated = await Menu.findByIdAndUpdate(menuId, { isActive: input.isActive, isDeleted: false }, { new: true });
     }
     if (!updated) {
@@ -180989,10 +181360,24 @@ var cmsRouter = createRouter({
     return { success: true };
   }),
   // --- 23. AI CONFIG ---
-  getAiConfig: publicQuery.query(async () => {
+  getAiConfig: adminQuery.query(async () => {
     const { AiConfig } = await getMainModels();
     const config2 = await AiConfig.findOne({}).sort({ updatedAt: -1 });
-    return config2 || null;
+    if (!config2) return null;
+    return {
+      _id: config2._id?.toString(),
+      systemPrompt: config2.systemPrompt,
+      modelId: config2.modelId,
+      temperature: config2.temperature,
+      maxTokens: config2.maxTokens,
+      elevenlabsVoiceId: config2.elevenlabsVoiceId,
+      ttsProvider: config2.ttsProvider,
+      googleTtsVoice: config2.googleTtsVoice,
+      apiKey: config2.apiKey ? "configured" : void 0,
+      elevenlabsApiKey: config2.elevenlabsApiKey ? "configured" : void 0,
+      googleTtsApiKey: config2.googleTtsApiKey ? "configured" : void 0,
+      updatedAt: config2.updatedAt
+    };
   }),
   updateAiConfig: adminMutation.input(
     external_exports.object({
@@ -181010,10 +181395,23 @@ var cmsRouter = createRouter({
   ).mutation(async ({ input, ctx }) => {
     const { AiConfig } = await getMainModels(ctx.tenantId);
     const existing = await AiConfig.findOne({});
+    const updateData = { ...input };
+    if (!input.apiKey || input.apiKey === "configured" || input.apiKey.trim() === "") {
+      if (existing?.apiKey) updateData.apiKey = existing.apiKey;
+      else delete updateData.apiKey;
+    }
+    if (!input.elevenlabsApiKey || input.elevenlabsApiKey === "configured" || input.elevenlabsApiKey.trim() === "") {
+      if (existing?.elevenlabsApiKey) updateData.elevenlabsApiKey = existing.elevenlabsApiKey;
+      else delete updateData.elevenlabsApiKey;
+    }
+    if (!input.googleTtsApiKey || input.googleTtsApiKey === "configured" || input.googleTtsApiKey.trim() === "") {
+      if (existing?.googleTtsApiKey) updateData.googleTtsApiKey = existing.googleTtsApiKey;
+      else delete updateData.googleTtsApiKey;
+    }
     if (existing) {
-      await AiConfig.findByIdAndUpdate(existing._id, input);
+      await AiConfig.findByIdAndUpdate(existing._id, updateData);
     } else {
-      await AiConfig.create(input);
+      await AiConfig.create(updateData);
     }
     return { success: true };
   }),
@@ -181096,7 +181494,7 @@ var cmsRouter = createRouter({
     const { id, ...data2 } = input;
     const { Leadership, SiteSettings } = await getMainModels();
     let updated = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(id)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(id)) {
       updated = await Leadership.findByIdAndUpdate(id, data2, { new: true });
     }
     if (!updated) {
@@ -181146,7 +181544,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const leadId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(leadId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(leadId)) {
       deleted = await Leadership.findByIdAndDelete(leadId).catch(() => null);
     }
     if (!deleted) {
@@ -181231,7 +181629,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const facId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(facId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(facId)) {
       deleted = await Facility.findByIdAndDelete(facId).catch(() => null);
     }
     if (!deleted) {
@@ -181307,7 +181705,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const deptId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(deptId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(deptId)) {
       deleted = await Department.findByIdAndDelete(deptId).catch(() => null);
     }
     if (!deleted) {
@@ -181383,7 +181781,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const stepId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(stepId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(stepId)) {
       deleted = await AdmissionStep.findByIdAndDelete(stepId).catch(() => null);
     }
     if (!deleted) {
@@ -181460,7 +181858,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const faqId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(faqId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(faqId)) {
       deleted = await Faq.findByIdAndDelete(faqId).catch(() => null);
     }
     if (!deleted) {
@@ -181534,7 +181932,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const timelineId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(timelineId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(timelineId)) {
       deleted = await TimelineItem.findByIdAndDelete(timelineId).catch(() => null);
     }
     if (!deleted) {
@@ -181608,7 +182006,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const valueId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(valueId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(valueId)) {
       deleted = await CoreValue.findByIdAndDelete(valueId).catch(() => null);
     }
     if (!deleted) {
@@ -181684,7 +182082,7 @@ var cmsRouter = createRouter({
     const rawId = input.id?._id || input.id;
     const cardId = String(rawId);
     let deleted = null;
-    if (import_mongoose15.default.Types.ObjectId.isValid(cardId)) {
+    if (import_mongoose17.default.Types.ObjectId.isValid(cardId)) {
       deleted = await FeatureCard.findByIdAndDelete(cardId).catch(() => null);
     }
     if (!deleted) {
@@ -181761,63 +182159,14 @@ var appRouter = createRouter({
   cms: cmsRouter
 });
 
-// server/context.ts
-var import_jsonwebtoken2 = __toESM(require_jsonwebtoken(), 1);
-var JWT_SECRET2 = process.env.JWT_SECRET || (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test" ? "dpsi_cms_super_secret_jwt_key_2026_dev" : "dpsi_secure_prod_fallback_token_key_2026_verified");
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.warn("[Security] Notice: Dedicated JWT_SECRET recommended in production environment.");
-}
-async function createContext(opts) {
-  let user = null;
-  const rawHeaderTenant = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") || "";
-  const authHeader = opts.req.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ") && JWT_SECRET2) {
-    const token = authHeader.slice(7);
-    try {
-      const decoded = import_jsonwebtoken2.default.verify(token, JWT_SECRET2, { algorithms: ["HS256"] });
-      user = {
-        id: decoded.id,
-        username: decoded.username,
-        role: decoded.role,
-        tenantId: decoded.tenantId || "dpsi"
-      };
-    } catch {
-    }
-  }
-  const isDevEnvironment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
-  if (!user && isDevEnvironment && process.env.ENABLE_DEV_ADMIN === "true") {
-    const adminHeader = opts.req.headers.get("x-admin-auth");
-    if (adminHeader === "true") {
-      user = {
-        id: "admin-master",
-        username: "Admin",
-        role: "superadmin",
-        tenantId: "all"
-      };
-    }
-  }
-  let resolvedTenantId = "dpsi";
-  if (user) {
-    if (user.role === "superadmin") {
-      resolvedTenantId = rawHeaderTenant && rawHeaderTenant !== "all" ? rawHeaderTenant : user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
-    } else {
-      resolvedTenantId = user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
-    }
-  } else {
-    resolvedTenantId = rawHeaderTenant || "dpsi";
-  }
-  return {
-    req: opts.req,
-    resHeaders: opts.resHeaders,
-    user,
-    tenantId: resolvedTenantId
-  };
-}
-
 // server/boot.ts
 init_mongodb();
+init_cmsSchemas();
 if (process.env.MONGODB_URI) {
-  getDbConnection(resolveDbName("dpsi", "main")).catch((err) => {
+  getDbConnection(resolveDbName("dpsi", "main")).then(async () => {
+    const { ensureCriticalIndexes: ensureCriticalIndexes2 } = await Promise.resolve().then(() => (init_cmsSchemas(), cmsSchemas_exports));
+    await ensureCriticalIndexes2("dpsi");
+  }).catch((err) => {
     console.warn("[Boot] Background DB pre-warm notice:", err.message);
   });
 }

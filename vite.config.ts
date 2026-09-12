@@ -105,13 +105,13 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /\/api\/trpc\/cms\.(listSliders|getSiteSettings|listAnnouncements|listStats|listFacilities|listNews|listAchievements|listVideos|listTestimonials).*/i,
+            urlPattern: /\/api\/trpc\/(cms|stats|testimonials|achievements|events|news|announcements|gallery)\..*/i,
             handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "cms-api-cache",
+              cacheName: "dpsi-api-cache",
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 10
               },
               cacheableResponse: {
                 statuses: [0, 200]

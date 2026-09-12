@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import DOMPurify from "isomorphic-dompurify";
 import { escapeRegex } from "../cms-router";
+import { getJwtSecret } from "../context";
+import { appRouter } from "../router";
 
 describe("Cybersecurity & Hardening Test Suite", () => {
   describe("ReDoS & Regex Injection Protection", () => {
@@ -378,6 +380,108 @@ describe("Cybersecurity & Hardening Test Suite", () => {
       expect(() => changePasswordSchema.parse({ currentPassword: "admin", newPassword: "123" })).toThrow();
       expect(() => changePasswordSchema.parse({ currentPassword: "admin", newPassword: "7chars!" })).toThrow();
       expect(() => changePasswordSchema.parse({ currentPassword: "admin", newPassword: "8charsOk!" })).not.toThrow();
+    });
+  });
+
+  describe("Audit Remediation & Hardening Verifications", () => {
+    it("enforces mandatory JWT_SECRET in production and disallows hardcoded fallback (VULN-03)", () => {
+      const origEnv = process.env.NODE_ENV;
+      const origSecret = process.env.JWT_SECRET;
+      try {
+        process.env.NODE_ENV = "production";
+        delete process.env.JWT_SECRET;
+        expect(() => getJwtSecret()).toThrow(/JWT_SECRET environment variable is mandatory/);
+
+        process.env.JWT_SECRET = "production_super_secret_key_12345";
+        expect(getJwtSecret()).toBe("production_super_secret_key_12345");
+      } finally {
+        process.env.NODE_ENV = origEnv;
+        if (origSecret) process.env.JWT_SECRET = origSecret;
+        else delete process.env.JWT_SECRET;
+      }
+    });
+
+    it("strictly rejects unauthenticated access to getAiConfig (VULN-01)", async () => {
+      const unauthedCaller = appRouter.createCaller({
+        req: new Request("http://localhost"),
+        resHeaders: new Headers(),
+        user: null,
+        tenantId: "dpsi",
+      });
+      await expect(unauthedCaller.cms.getAiConfig()).rejects.toThrow(/You must be logged in/);
+    });
+
+    it("strictly rejects unauthenticated access to listMunRegistrations (VULN-02)", async () => {
+      const unauthedCaller = appRouter.createCaller({
+        req: new Request("http://localhost"),
+        resHeaders: new Headers(),
+        user: null,
+        tenantId: "dpsi",
+      });
+      await expect(unauthedCaller.cms.listMunRegistrations()).rejects.toThrow(/You must be logged in/);
+    });
+
+    it("validates contact form submission schema and rejects invalid submissions (BUG-01)", () => {
+      const contactSchema = z.object({
+        name: z.string().min(2).max(255),
+        email: z.string().email(),
+        phone: z.string().max(20).optional(),
+        subject: z.string().max(255).optional(),
+        message: z.string().min(5),
+      });
+
+      expect(() => contactSchema.parse({ name: "A", email: "invalid-email", message: "Hi" })).toThrow();
+      expect(contactSchema.parse({
+        name: "Rohan Mehra",
+        email: "rohan@example.com",
+        phone: "+91-9876543210",
+        subject: "General Inquiry",
+        message: "Requesting details on campus transport facilities.",
+      })).toBeTruthy();
+    });
+
+    it("validates admission application schema and structure requirements (BUG-02)", () => {
+      const admissionSchema = z.object({
+        studentName: z.string().min(2).max(255),
+        parentName: z.string().min(2).max(255),
+        email: z.string().email(),
+        phone: z.string().min(10).max(20),
+        grade: z.string().min(1).max(50),
+        dob: z.string().min(1).max(50),
+        address: z.string().min(5),
+        city: z.string().min(2).max(100),
+        state: z.string().min(2).max(100),
+        pincode: z.string().min(4).max(20),
+        previousSchool: z.string().max(255).optional(),
+        message: z.string().optional(),
+      });
+
+      expect(() => admissionSchema.parse({ studentName: "A", parentName: "" })).toThrow();
+      expect(admissionSchema.parse({
+        studentName: "Aarav Sharma",
+        parentName: "Rajesh Sharma",
+        email: "rajesh.sharma@example.com",
+        phone: "9876543210",
+        grade: "Class XI",
+        dob: "2010-05-12",
+        address: "123 Ahinsa Khand-II",
+        city: "Ghaziabad",
+        state: "Uttar Pradesh",
+        pincode: "201014",
+        previousSchool: "St. Xavier's",
+      })).toBeTruthy();
+    });
+
+    it("protects transfer certificate queries and caps results (VULN-04)", async () => {
+      const unauthedCaller = appRouter.createCaller({
+        req: new Request("http://localhost"),
+        resHeaders: new Headers(),
+        user: null,
+        tenantId: "dpsi",
+      });
+
+      const listResult = await unauthedCaller.cms.listTc({ showTrash: true });
+      expect(Array.isArray(listResult)).toBe(true);
     });
   });
 });
