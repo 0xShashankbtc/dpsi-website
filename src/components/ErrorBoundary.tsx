@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { captureError } from "@/lib/sentry";
 
 interface Props {
   children: ReactNode;
@@ -26,6 +27,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught runtime error captured by ErrorBoundary:", error, errorInfo);
+    captureError(error, { componentStack: errorInfo.componentStack || "" });
     this.setState({ errorInfo });
   }
 

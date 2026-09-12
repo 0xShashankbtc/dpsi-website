@@ -18,7 +18,7 @@ import {
 
 const SENTRY_DSN =
   import.meta.env.VITE_SENTRY_DSN ||
-  "https://4af9b9eba8a785eebe4a2f825c232e87@o4511965668179968.ingest.us.sentry.io/4511965680304128";
+  "https://08fc42b0aa8123348987d264d2c88b99@o4511965668179968.ingest.us.sentry.io/4511965673029632";
 
 Sentry.init({
   dsn: SENTRY_DSN,
@@ -47,6 +47,7 @@ Sentry.init({
   // Propagate traces to our own API
   tracePropagationTargets: [
     "localhost",
+    /^https:\/\/dpsindirapuram\.vercel\.app/,
     /^https:\/\/dpsindirapuram\.com/,
     /^https:\/\/dpsi-website\.vercel\.app/,
   ],
