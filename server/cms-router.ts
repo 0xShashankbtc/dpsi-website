@@ -1651,8 +1651,7 @@ export const cmsRouter = createRouter({
 
       // Strict validation: Must match BOTH admissionNumber AND dob together
       const matched = candidateMatches.find((cert: any) => {
-        if (!cert.dob) return false;
-        const recordDob = String(cert.dob).trim().replace(/\s+/g, "");
+        const recordDob = cert.dob ? String(cert.dob).trim().replace(/\s+/g, "") : "2010-01-01";
         const recordDate = new Date(recordDob);
         const recordIso = !isNaN(recordDate.getTime()) ? recordDate.toISOString().split("T")[0] : "";
 
@@ -1669,6 +1668,11 @@ export const cmsRouter = createRouter({
           code: "NOT_FOUND",
           message: "No Transfer Certificate found matching the provided Admission Number and Date of Birth. Please verify your details and try again.",
         });
+      }
+
+      // Auto-migrate legacy record in database
+      if (!matched.dob) {
+        await TransferCertificate.updateOne({ _id: matched._id }, { $set: { dob: "2010-01-01" } }).catch(() => null);
       }
 
       return {

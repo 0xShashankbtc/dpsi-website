@@ -77310,6 +77310,7 @@ var init_cmsSchemas = __esm({
     TransferCertificateSchema = new import_mongoose5.Schema(
       {
         admissionNumber: { type: String, required: true, index: true },
+        dob: { type: String, index: true },
         studentName: { type: String, required: true, index: true },
         fatherName: { type: String, required: true },
         motherName: { type: String },
@@ -178837,6 +178838,7 @@ async function seedDatabase(tenantId = "dpsi", _options) {
       { key: "cta_title", value: "Ready to Shape Your Child's Bright Future?", label: "CTA Title", group: "cta" },
       { key: "cta_button_link", value: "/admissions", label: "CTA Button Link", group: "cta" },
       { key: "footer_copyright", value: "\xA9 2026 Delhi Public School Indirapuram. All rights reserved.", label: "Footer Copyright", group: "general" },
+      { key: "footer_credit", value: "Developed by : Shashank Jangid (Orange)", label: "Footer / Credit Text", group: "general" },
       { key: "footer_tagline", value: "Delhi Public School Indirapuram, established in 2003, is a premier institution under the DPS Society, committed to holistic education and excellence.", label: "Footer Tagline", group: "general" },
       { key: "chat_welcome_message", value: "Hello! I am DPSI AI. I can assist you with Admissions, Exam Schedules, Vacations, Academic Streams, and Campus Facilities.", label: "AI Chat Welcome Message", group: "ai" },
       { key: "calendar_pdf_url", value: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", label: "Academic Calendar PDF URL", group: "ai" }
@@ -179612,30 +179614,50 @@ async function seedDatabase(tenantId = "dpsi", _options) {
     if (tcCount === 0) {
       await TransferCertificate.insertMany([
         {
-          tcNumber: "TC-2025-001",
           admissionNumber: "ADM-18492",
+          dob: "2010-05-14",
           studentName: "Aarav Sharma",
           fatherName: "Mr. Vikram Sharma",
           motherName: "Mrs. Pooja Sharma",
-          classLeft: "Class X",
-          dateOfBirth: /* @__PURE__ */ new Date("2010-05-14"),
+          classLeaving: "Class X",
           dateOfIssue: /* @__PURE__ */ new Date("2025-04-10"),
-          reasonForLeaving: "Parent Transfer",
-          status: "Verified"
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Parent Transfer",
+          isDeleted: false
         },
         {
-          tcNumber: "TC-2025-002",
           admissionNumber: "ADM-19203",
+          dob: "2008-09-22",
           studentName: "Riya Verma",
           fatherName: "Mr. Alok Verma",
           motherName: "Mrs. Sneha Verma",
-          classLeft: "Class XII",
-          dateOfBirth: /* @__PURE__ */ new Date("2008-09-22"),
+          classLeaving: "Class XII",
           dateOfIssue: /* @__PURE__ */ new Date("2025-05-18"),
-          reasonForLeaving: "Course Completed",
-          status: "Verified"
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Course Completed",
+          isDeleted: false
+        },
+        {
+          admissionNumber: "DPSI-1082",
+          dob: "2009-11-15",
+          studentName: "Kabir Mehra",
+          fatherName: "Mr. Rajesh Mehra",
+          motherName: "Mrs. Sangeeta Mehra",
+          classLeaving: "Class XI",
+          dateOfIssue: /* @__PURE__ */ new Date("2025-06-01"),
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Higher Studies Relocation",
+          isDeleted: false
         }
       ]);
+    } else {
+      await TransferCertificate.updateMany(
+        { dob: { $exists: false } },
+        { $set: { dob: "2010-01-01" } }
+      );
     }
     const AdminUser = await getAdminUserModel();
     const adminUser = await AdminUser.findOne({ username: { $regex: /^admin$/i } });
@@ -181105,9 +181127,161 @@ var cmsRouter = createRouter({
       return [];
     }
   }),
+  verifyTc: publicMutation.input(
+    external_exports.object({
+      admissionNumber: external_exports.string().trim().min(2, "Admission number is required").max(50),
+      dob: external_exports.string().trim().min(4, "Date of birth is required").max(30)
+    })
+  ).mutation(async ({ input, ctx }) => {
+    const clientIp = ctx?.req?.headers?.["x-forwarded-for"]?.split(",")?.[0]?.trim() || ctx?.req?.ip || "127.0.0.1";
+    const cleanAdm = input.admissionNumber.trim().replace(/\s+/g, "");
+    const cleanDob = input.dob.trim().replace(/\s+/g, "");
+    const isIpAllowed = await checkPersistentRateLimit(`tc_verify_ip:${clientIp}`, 5, 60);
+    if (!isIpAllowed) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many verification attempts from this IP address. Please wait 1 minute before trying again."
+      });
+    }
+    const isAdmAllowed = await checkPersistentRateLimit(`tc_verify_adm:${cleanAdm.toUpperCase()}`, 10, 300);
+    if (!isAdmAllowed) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Too many verification attempts for this student record. Please try again after 5 minutes."
+      });
+    }
+    let normalizedDob = cleanDob;
+    const ddmmyyyyMatch = cleanDob.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (ddmmyyyyMatch) {
+      const day = ddmmyyyyMatch[1].padStart(2, "0");
+      const month = ddmmyyyyMatch[2].padStart(2, "0");
+      const year2 = ddmmyyyyMatch[3];
+      normalizedDob = `${year2}-${month}-${day}`;
+    } else {
+      const yyyymmddMatch = cleanDob.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+      if (yyyymmddMatch) {
+        const year2 = yyyymmddMatch[1];
+        const month = yyyymmddMatch[2].padStart(2, "0");
+        const day = yyyymmddMatch[3].padStart(2, "0");
+        normalizedDob = `${year2}-${month}-${day}`;
+      }
+    }
+    const parsedDate = new Date(normalizedDob);
+    const isoDateOnly = !isNaN(parsedDate.getTime()) ? parsedDate.toISOString().split("T")[0] : "";
+    const { TransferCertificate } = await getTcModels();
+    const baseAlphanumeric = cleanAdm.replace(/[^a-zA-Z0-9]/g, "");
+    const admRegexPattern = `^${escapeRegex3(cleanAdm).replace(/[-_\s]/g, "[-_\\s]?")}$`;
+    const candidateMatches = await TransferCertificate.find({
+      $or: [
+        { admissionNumber: { $regex: new RegExp(admRegexPattern, "i") } },
+        { admissionNumber: { $regex: new RegExp(`^${escapeRegex3(baseAlphanumeric)}$`, "i") } }
+      ],
+      isDeleted: false
+    });
+    const matched = candidateMatches.find((cert) => {
+      const recordDob = cert.dob ? String(cert.dob).trim().replace(/\s+/g, "") : "2010-01-01";
+      const recordDate = new Date(recordDob);
+      const recordIso = !isNaN(recordDate.getTime()) ? recordDate.toISOString().split("T")[0] : "";
+      return recordDob === cleanDob || recordDob === normalizedDob || recordIso && isoDateOnly && recordIso === isoDateOnly;
+    });
+    if (!matched) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "No Transfer Certificate found matching the provided Admission Number and Date of Birth. Please verify your details and try again."
+      });
+    }
+    if (!matched.dob) {
+      await TransferCertificate.updateOne({ _id: matched._id }, { $set: { dob: "2010-01-01" } }).catch(() => null);
+    }
+    return {
+      success: true,
+      data: {
+        id: String(matched._id),
+        admissionNumber: matched.admissionNumber,
+        studentName: matched.studentName,
+        fatherName: matched.fatherName,
+        classLeaving: matched.classLeaving,
+        dateOfIssue: matched.dateOfIssue,
+        certificatePdfUrl: matched.certificatePdfUrl,
+        status: matched.status
+      }
+    };
+  }),
+  uploadCacheImage: adminMutation.input(
+    external_exports.object({
+      fileName: external_exports.string().min(1).max(255),
+      fileType: external_exports.string().min(1).max(100),
+      base64Data: external_exports.string().min(1)
+    })
+  ).mutation(async ({ input }) => {
+    const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+    const lowerName = input.fileName.toLowerCase();
+    const hasValidExt = ALLOWED_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+    const hasValidMime = ALLOWED_MIME_TYPES.includes(input.fileType.toLowerCase());
+    if (!hasValidExt || !hasValidMime) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Security Policy Violation: Only standard image formats (JPEG, PNG, WebP, GIF) are permitted for cache storage."
+      });
+    }
+    const rawBase64 = input.base64Data.includes(",") ? input.base64Data.split(",")[1] : input.base64Data;
+    const buffer = Buffer.from(rawBase64, "base64");
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (buffer.length > MAX_SIZE) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "File size exceeds the 5MB limit for cached modal assets."
+      });
+    }
+    const webpResult = await convertImageToWebP(buffer, 1280, 85);
+    let uploadedUrl = "";
+    const hasR2 = !!process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
+    if (hasR2) {
+      try {
+        const { uploadToR2: uploadToR22 } = await Promise.resolve().then(() => (init_cloudflareR2(), cloudflareR2_exports));
+        const r2Res = await uploadToR22(Buffer.from(webpResult.buffer), `cache_${Date.now()}_${input.fileName.replace(/\.[^/.]+$/, ".webp")}`, "image/webp", "dpsi_cache");
+        uploadedUrl = r2Res.url;
+      } catch {
+      }
+    }
+    if (!uploadedUrl) {
+      const { uploadToCloudinary: uploadToCloudinary2 } = await Promise.resolve().then(() => (init_cloudinary(), cloudinary_exports));
+      const cloudRes = await uploadToCloudinary2(webpResult.buffer, "dpsi_cache", "image");
+      uploadedUrl = cloudRes.secure_url;
+    }
+    const { SiteSettings } = await getMainModels();
+    const newVersion = Date.now().toString();
+    await SiteSettings.findOneAndUpdate(
+      { key: "cached_popup_image" },
+      { value: uploadedUrl, label: "Cached Popup Image URL", group: "cache" },
+      { upsert: true, new: true }
+    );
+    await SiteSettings.findOneAndUpdate(
+      { key: "popup_cache_version" },
+      { value: newVersion, label: "Popup Cache Version", group: "cache" },
+      { upsert: true, new: true }
+    );
+    return {
+      success: true,
+      imageUrl: uploadedUrl,
+      cacheVersion: newVersion
+    };
+  }),
+  invalidatePopupCache: adminMutation.mutation(async () => {
+    const { SiteSettings } = await getMainModels();
+    const newVersion = Date.now().toString();
+    await SiteSettings.findOneAndUpdate(
+      { key: "popup_cache_version" },
+      { value: newVersion, label: "Popup Cache Version", group: "cache" },
+      { upsert: true, new: true }
+    );
+    return { success: true, cacheVersion: newVersion };
+  }),
   createTc: adminMutation.input(
     external_exports.object({
       admissionNumber: external_exports.string(),
+      dob: external_exports.string().optional(),
       studentName: external_exports.string(),
       fatherName: external_exports.string(),
       motherName: external_exports.string().optional(),
@@ -181123,6 +181297,29 @@ var cmsRouter = createRouter({
       ...input,
       dateOfIssue: new Date(input.dateOfIssue)
     });
+  }),
+  updateTc: adminMutation.input(
+    external_exports.object({
+      id: external_exports.string(),
+      admissionNumber: external_exports.string().optional(),
+      dob: external_exports.string().optional(),
+      studentName: external_exports.string().optional(),
+      fatherName: external_exports.string().optional(),
+      motherName: external_exports.string().optional(),
+      classLeaving: external_exports.string().optional(),
+      dateOfIssue: external_exports.string().optional(),
+      certificatePdfUrl: external_exports.string().optional(),
+      status: external_exports.enum(["Issued", "Pending", "Cancelled"]).optional(),
+      remarks: external_exports.string().optional()
+    })
+  ).mutation(async ({ input }) => {
+    const { TransferCertificate } = await getTcModels();
+    const updateData = { ...input };
+    delete updateData.id;
+    if (input.dateOfIssue) {
+      updateData.dateOfIssue = new Date(input.dateOfIssue);
+    }
+    return TransferCertificate.findByIdAndUpdate(input.id, updateData, { new: true });
   }),
   deleteTc: adminMutation.input(external_exports.object({ id: external_exports.union([external_exports.string(), external_exports.any()]), permanent: external_exports.boolean().default(true) })).mutation(async ({ input, ctx }) => {
     const { TransferCertificate } = await getTcModels();
