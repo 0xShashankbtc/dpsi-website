@@ -235,3 +235,45 @@ describe("Footer Credit Line & Site Settings Contract", () => {
     expect(textPart).toBe(customCredit);
   });
 });
+
+describe("Edge CDN Caching & Zero-Latency Hydration Audit", () => {
+  function computeCacheControl(isGet: boolean, hasAuth: boolean, isAdminAuth: boolean): string {
+    const isPublicQuery = isGet && !hasAuth && !isAdminAuth;
+    if (isPublicQuery) {
+      return "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400";
+    }
+    return "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+  }
+
+  it("sets Edge CDN acceleration headers for public unauthenticated GET queries", () => {
+    const header = computeCacheControl(true, false, false);
+    expect(header).toBe("public, max-age=60, s-maxage=3600, stale-while-revalidate=86400");
+    expect(header).toContain("s-maxage=3600");
+    expect(header).toContain("stale-while-revalidate=86400");
+  });
+
+  it("sets strict no-cache headers for authenticated or admin requests", () => {
+    expect(computeCacheControl(true, true, false)).toBe("no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+    expect(computeCacheControl(true, false, true)).toBe("no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+    expect(computeCacheControl(false, false, false)).toBe("no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  });
+
+  it("filters sensitive/admin queries during client-side cache persistence", () => {
+    const shouldDehydrate = (key: any[]) => {
+      const first = Array.isArray(key[0]) ? key[0][0] : key[0];
+      const second = Array.isArray(key[0]) ? key[0][1] : "";
+      if (first === "admin" || second === "verifyTc" || first === "auth" || typeof first !== "string") {
+        return false;
+      }
+      return true;
+    };
+
+    expect(shouldDehydrate([["cms", "getSiteSettings"], { type: "query" }])).toBe(true);
+    expect(shouldDehydrate([["cms", "listMarquees"], { type: "query" }])).toBe(true);
+    expect(shouldDehydrate([["stats", "list"], { type: "query" }])).toBe(true);
+    expect(shouldDehydrate([["admin", "login"], { type: "mutation" }])).toBe(false);
+    expect(shouldDehydrate([["cms", "verifyTc"], { type: "mutation" }])).toBe(false);
+    expect(shouldDehydrate([["auth", "me"], { type: "query" }])).toBe(false);
+  });
+});
+

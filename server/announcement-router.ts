@@ -6,7 +6,7 @@ import { withCache, invalidateCache } from "./lib/cache";
 
 export const announcementRouter = createRouter({
   list: publicQuery.query(async () => {
-    return withCache("announcements:list", 120, async () => {
+    return withCache("announcements:list", 300, async () => {
       try {
         const { Marquee } = await getMainModels();
         const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });

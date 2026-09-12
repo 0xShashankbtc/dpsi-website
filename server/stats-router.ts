@@ -6,7 +6,7 @@ import { withCache, invalidateCache } from "./lib/cache";
 
 export const statsRouter = createRouter({
   list: publicQuery.query(async () => {
-    return withCache("stats:list", 120, async () => {
+    return withCache("stats:list", 300, async () => {
       try {
         const { QuickStat } = await getMainModels();
         const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });

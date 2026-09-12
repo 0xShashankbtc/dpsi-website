@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { trpc } from "@/providers/trpc";
+import { DEFAULT_MARQUEES } from "@/lib/initialDataSnapshot";
 
 export default function AnnouncementsBar() {
   const { data: cmsMarquees } = trpc.cms.listMarquees.useQuery();
@@ -21,6 +22,16 @@ export default function AnnouncementsBar() {
       isTransparent: !!m.isTransparent,
     }));
 
+  const fallbackMarquees = DEFAULT_MARQUEES.map((m) => ({
+    id: m._id,
+    title: m.text,
+    link: m.linkUrl || "",
+    bgColor: m.bgColor,
+    textColor: m.textColor,
+    badgeText: m.badgeText,
+    isTransparent: false,
+  }));
+
   const items =
     dynamicMarquees && dynamicMarquees.length > 0
       ? dynamicMarquees
@@ -34,7 +45,7 @@ export default function AnnouncementsBar() {
           badgeText: undefined,
           isTransparent: false,
         }))
-      : [];
+      : fallbackMarquees;
 
   useEffect(() => {
     if (!items.length) return;

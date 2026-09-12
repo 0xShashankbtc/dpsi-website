@@ -6,7 +6,7 @@ import { withCache, invalidateCache } from "./lib/cache";
 
 export const newsRouter = createRouter({
   list: publicQuery.query(async () => {
-    return withCache("news:list", 120, async () => {
+    return withCache("news:list", 300, async () => {
       try {
         const { Activity } = await getMainModels();
         const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
@@ -29,7 +29,7 @@ export const newsRouter = createRouter({
   }),
 
   featured: publicQuery.query(async () => {
-    return withCache("news:featured", 120, async () => {
+    return withCache("news:featured", 300, async () => {
       try {
         const { Activity } = await getMainModels();
         const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
@@ -54,7 +54,7 @@ export const newsRouter = createRouter({
   getBySlug: publicQuery
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      return withCache(`news:slug:${input.slug}`, 120, async () => {
+      return withCache(`news:slug:${input.slug}`, 300, async () => {
         try {
           const { Activity } = await getMainModels();
           const safeSlug = input.slug.trim();

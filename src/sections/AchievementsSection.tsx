@@ -1,11 +1,14 @@
 import { motion } from "framer-motion";
 import { CoverflowCarousel, type CoverflowSlide } from "@/components/ui/coverflow-carousel";
 import { trpc } from "@/providers/trpc";
+import { DEFAULT_ACHIEVEMENTS } from "@/lib/initialDataSnapshot";
 
 export default function AchievementsSection() {
   const { data: achievements, isLoading } = trpc.achievements.list.useQuery();
+  const effectiveAchievements =
+    achievements && achievements.length > 0 ? achievements : DEFAULT_ACHIEVEMENTS;
 
-  const slides: CoverflowSlide[] = (achievements || []).map((ach: any) => ({
+  const slides: CoverflowSlide[] = effectiveAchievements.map((ach: any) => ({
     src: ach.imageUrl || ach.image || "/images/dps/topper_siddhant.webp",
     alt: ach.studentName,
     title: `${ach.studentName} • ${ach.score}`,
@@ -42,7 +45,7 @@ export default function AchievementsSection() {
           </p>
         </motion.div>
 
-        {isLoading ? (
+        {isLoading && slides.length === 0 ? (
           <div className="w-full max-w-4xl mx-auto py-8 flex items-center justify-center gap-4 sm:gap-6 overflow-hidden">
             <div className="hidden sm:block w-48 h-64 rounded-2xl bg-slate-100 dark:bg-slate-800/60 animate-pulse opacity-40 scale-90 shrink-0" />
             <div className="w-64 sm:w-72 h-80 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse shadow-lg shrink-0 flex flex-col justify-end p-6">

@@ -824,7 +824,7 @@ export const cmsRouter = createRouter({
     )
     .query(async ({ input }) => {
       const cacheKey = `cms:menus:${input?.location || "all"}:${input?.includeDeleted ? "del" : "active"}`;
-      return withCache(cacheKey, 60, async () => {
+      return withCache(cacheKey, 300, async () => {
         const { Menu } = await getMainModels();
         const filter: any = {};
         if (input?.location) filter.location = input.location;
@@ -961,7 +961,7 @@ export const cmsRouter = createRouter({
 
   // --- 5. POPUP MANAGEMENT ---
   listPopups: publicQuery.query(async () => {
-    return withCache("cms:popups", 60, async () => {
+    return withCache("cms:popups", 300, async () => {
       const { Popup } = await getMainModels();
       return Popup.find({}).sort({ createdAt: -1 }).lean();
     });
@@ -1031,7 +1031,7 @@ export const cmsRouter = createRouter({
 
   // --- 6. MARQUEE / FLASH ALERTS ---
   listMarquees: publicQuery.query(async () => {
-    return withCache("cms:marquees", 60, async () => {
+    return withCache("cms:marquees", 300, async () => {
       const { Marquee } = await getMainModels();
       return Marquee.find({}).sort({ createdAt: -1 }).lean();
     });
@@ -1135,7 +1135,7 @@ export const cmsRouter = createRouter({
 
   // --- 7. RECENT ACTIVITIES ---
   listActivities: publicQuery.query(async () => {
-    return withCache("cms:activities", 60, async () => {
+    return withCache("cms:activities", 300, async () => {
       const { Activity } = await getMainModels();
       return Activity.find({ isDeleted: { $ne: true } }).sort({ eventDate: -1 }).lean();
     });
@@ -1204,7 +1204,7 @@ export const cmsRouter = createRouter({
 
   // --- 8. HERO SLIDERS ---
   listSliders: publicQuery.query(async () => {
-    return withCache("cms:sliders", 60, async () => {
+    return withCache("cms:sliders", 300, async () => {
       const { Slider } = await getMainModels();
       return Slider.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
     });
@@ -1318,7 +1318,7 @@ export const cmsRouter = createRouter({
 
   // --- 9. ATTACHMENTS & CIRCULARS ---
   listAttachments: publicQuery.query(async () => {
-    return withCache("cms:attachments", 60, async () => {
+    return withCache("cms:attachments", 300, async () => {
       const { Attachment } = await getMainModels();
       return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     });
@@ -1377,7 +1377,7 @@ export const cmsRouter = createRouter({
 
   // --- 10. IMAGE GALLERY (dpsi_gallery DB) ---
   listGalleryCategories: publicQuery.query(async () => {
-    return withCache("cms:galleryCategories", 60, async () => {
+    return withCache("cms:galleryCategories", 300, async () => {
       const { GalleryCategory } = await getGalleryModels();
       return GalleryCategory.find({ isDeleted: false });
     });
@@ -1403,7 +1403,7 @@ export const cmsRouter = createRouter({
       const cacheKey = input?.category && input.category !== "All"
         ? `cms:galleryImages:${input.category}`
         : "cms:galleryImages:all";
-      return withCache(cacheKey, 60, async () => {
+      return withCache(cacheKey, 300, async () => {
         const { GalleryImage } = await getGalleryModels();
         const filter: any = { isDeleted: { $ne: true } };
         if (input?.category && input.category !== "All") {
@@ -1467,7 +1467,7 @@ export const cmsRouter = createRouter({
 
   // --- 11. VIDEO GALLERY (dpsi_gallery DB) ---
   listVideos: publicQuery.query(async () => {
-    return withCache("cms:videos", 60, async () => {
+    return withCache("cms:videos", 300, async () => {
       const { VideoGallery } = await getGalleryModels();
       return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     });
@@ -2019,7 +2019,7 @@ export const cmsRouter = createRouter({
 
   // --- 22. SITE SETTINGS ---
   getSiteSettings: publicQuery.query(async () => {
-    return withCache("cms:siteSettings", 60, async () => {
+    return withCache("cms:siteSettings", 300, async () => {
       const { SiteSettings } = await getMainModels();
       const settings = await SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
       if (!settings || settings.length === 0) {
@@ -2236,7 +2236,7 @@ export const cmsRouter = createRouter({
 
   // --- 26. LEADERSHIP & FACULTY ---
   listLeadership: publicQuery.query(async () => {
-    return withCache("cms:leadership", 60, async () => {
+    return withCache("cms:leadership", 300, async () => {
       const { Leadership } = await getMainModels();
       return Leadership.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -2370,7 +2370,7 @@ export const cmsRouter = createRouter({
 
   // --- 28. FACILITIES ---
   listFacilities: publicQuery.query(async () => {
-    return withCache("cms:facilities", 60, async () => {
+    return withCache("cms:facilities", 300, async () => {
       const { Facility } = await getMainModels();
       return Facility.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -2463,7 +2463,7 @@ export const cmsRouter = createRouter({
 
   // --- 29. DEPARTMENTS & CURRICULUM ---
   listDepartments: publicQuery.query(async () => {
-    return withCache("cms:departments", 60, async () => {
+    return withCache("cms:departments", 300, async () => {
       const { Department } = await getMainModels();
       return Department.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -2548,7 +2548,7 @@ export const cmsRouter = createRouter({
 
   // --- 30. ADMISSION STEPS ---
   listAdmissionSteps: publicQuery.query(async () => {
-    return withCache("cms:admissionSteps", 60, async () => {
+    return withCache("cms:admissionSteps", 300, async () => {
       const { AdmissionStep } = await getMainModels();
       return AdmissionStep.find({ isActive: true }).sort({ stepNumber: 1 }).lean();
     });
@@ -2636,7 +2636,7 @@ export const cmsRouter = createRouter({
     .input(z.object({ category: z.string().optional() }).optional())
     .query(async ({ input }) => {
       const cacheKey = `cms:faqs:${input?.category || "all"}`;
-      return withCache(cacheKey, 60, async () => {
+      return withCache(cacheKey, 300, async () => {
         const { Faq } = await getMainModels();
         const filter: any = { isActive: true };
         if (input?.category) filter.category = input.category;
@@ -2721,7 +2721,7 @@ export const cmsRouter = createRouter({
 
   // --- 32. TIMELINE & MILESTONES ---
   listTimeline: publicQuery.query(async () => {
-    return withCache("cms:timeline", 60, async () => {
+    return withCache("cms:timeline", 300, async () => {
       const { TimelineItem } = await getMainModels();
       return TimelineItem.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -2804,7 +2804,7 @@ export const cmsRouter = createRouter({
 
   // --- 33. CORE VALUES ---
   listCoreValues: publicQuery.query(async () => {
-    return withCache("cms:coreValues", 60, async () => {
+    return withCache("cms:coreValues", 300, async () => {
       const { CoreValue } = await getMainModels();
       return CoreValue.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -2887,7 +2887,7 @@ export const cmsRouter = createRouter({
 
   // --- 34. 3D FEATURE CARDS ---
   listFeatureCards: publicQuery.query(async () => {
-    return withCache("cms:featureCards", 60, async () => {
+    return withCache("cms:featureCards", 300, async () => {
       const { FeatureCard } = await getMainModels();
       return FeatureCard.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -3018,7 +3018,7 @@ export const cmsRouter = createRouter({
 
   // --- 36. BOARD RESULTS (Academics page bar chart — pass rates by year) ---
   listBoardResults: publicQuery.query(async () => {
-    return withCache("cms:boardResults", 60, async () => {
+    return withCache("cms:boardResults", 300, async () => {
       const { BoardResult } = await getMainModels();
       return BoardResult.find({ isActive: true }).sort({ order: 1, year: 1 }).lean();
     });
@@ -3069,7 +3069,7 @@ export const cmsRouter = createRouter({
 
   // --- 37. STREAM DISTRIBUTION (Academics page pie chart — Class XI streams) ---
   listStreamDistributions: publicQuery.query(async () => {
-    return withCache("cms:streamDistributions", 60, async () => {
+    return withCache("cms:streamDistributions", 300, async () => {
       const { StreamDistribution } = await getMainModels();
       return StreamDistribution.find({ isActive: true }).sort({ order: 1 }).lean();
     });

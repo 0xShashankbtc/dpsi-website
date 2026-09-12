@@ -13,6 +13,7 @@ import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { motion } from "framer-motion";
 import { trpc } from "@/providers/trpc";
 import { FlickeringGrid, useMediaQuery } from "@/components/ui/flickering-footer";
+import { DEFAULT_FOOTER_QUICK_MENUS, DEFAULT_FOOTER_RESOURCE_MENUS } from "@/lib/initialDataSnapshot";
 
 export default function Footer() {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -44,17 +45,19 @@ export default function Footer() {
     "Developed by : Shashank Jangid (Orange)"
   );
 
-  const quickLinks = dbQuickMenus
-    ? dbQuickMenus.filter((m: any) => m.isActive && !m.isDeleted).map((m: any) => ({ label: m.title, href: m.url }))
-    : [];
+  const rawQuick = dbQuickMenus && dbQuickMenus.length > 0 ? dbQuickMenus : DEFAULT_FOOTER_QUICK_MENUS;
+  const quickLinks = rawQuick
+    .filter((m: any) => m.isActive && !m.isDeleted)
+    .map((m: any) => ({ label: m.title, href: m.url }));
 
-  const resources = dbResourceMenus
-    ? dbResourceMenus.filter((m: any) => m.isActive && !m.isDeleted).map((m: any) => ({
-        label: m.title,
-        href: m.url,
-        external: m.url.startsWith("http"),
-      }))
-    : [];
+  const rawResources = dbResourceMenus && dbResourceMenus.length > 0 ? dbResourceMenus : DEFAULT_FOOTER_RESOURCE_MENUS;
+  const resources = rawResources
+    .filter((m: any) => m.isActive && !m.isDeleted)
+    .map((m: any) => ({
+      label: m.title,
+      href: m.url,
+      external: m.url.startsWith("http"),
+    }));
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });

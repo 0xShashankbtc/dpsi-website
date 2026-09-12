@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { Spotlight } from "@/components/ui/spotlight";
+import { DEFAULT_STATS } from "@/lib/initialDataSnapshot";
 
 const iconMap: Record<string, React.ReactNode> = {
   Calendar: <Calendar className="w-7 h-7" />,
@@ -18,6 +19,7 @@ const iconMap: Record<string, React.ReactNode> = {
   Network: <Network className="w-7 h-7" />,
   Award: <Award className="w-7 h-7" />,
   Trophy: <Trophy className="w-7 h-7" />,
+  Building: <Award className="w-7 h-7" />,
 };
 
 function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: string }) {
@@ -59,9 +61,8 @@ function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: str
 }
 
 export default function QuickStats() {
-  const { data: stats, isLoading } = trpc.stats.list.useQuery();
-
-  if (!isLoading && !stats?.length) return null;
+  const { data: stats } = trpc.stats.list.useQuery();
+  const effectiveStats = stats && stats.length > 0 ? stats : DEFAULT_STATS;
 
   const getGridClasses = (count: number) => {
     if (count === 1) return "grid-cols-1 max-w-sm";
@@ -75,29 +76,14 @@ export default function QuickStats() {
   return (
     <section className="py-10 sm:py-14 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto justify-center">
-            {[1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-center min-h-[160px] animate-pulse"
-              >
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 mb-3" />
-                <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-2" />
-                <div className="w-8 h-0.5 bg-slate-200 dark:bg-slate-700 rounded-full mb-2" />
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className={`grid ${getGridClasses(stats?.length || 4)} gap-4 sm:gap-6 mx-auto justify-center`}
-          >
-          {stats.map((stat, i) => (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className={`grid ${getGridClasses(effectiveStats.length)} gap-4 sm:gap-6 mx-auto justify-center`}
+        >
+          {effectiveStats.map((stat: any, i: number) => (
             <motion.div
               key={stat.id}
               initial={{ opacity: 0, y: 20 }}
@@ -138,7 +124,6 @@ export default function QuickStats() {
             </motion.div>
           ))}
         </motion.div>
-        )}
       </div>
     </section>
   );

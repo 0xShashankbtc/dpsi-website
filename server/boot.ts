@@ -73,11 +73,11 @@ app.use(
 
 import { tenantContextStorage } from "./models/cmsSchemas";
 
-const trpcHandler = async (c: any) => {
+const createTrpcHandler = (endpoint: string) => async (c: any) => {
   const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers(), info: {} as any });
   const res = await tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
-      endpoint: "/api/trpc",
+      endpoint,
       req: c.req.raw,
       router: appRouter,
       createContext: () => ctx,
@@ -91,7 +91,7 @@ const trpcHandler = async (c: any) => {
     c.req.header("x-admin-auth") !== "true";
 
   if (isPublicQuery) {
-    headers.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+    headers.set("Cache-Control", "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400");
   } else {
     headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     headers.set("Pragma", "no-cache");
@@ -104,27 +104,8 @@ const trpcHandler = async (c: any) => {
   });
 };
 
-app.all("/api/trpc/*", trpcHandler);
-app.all("/trpc/*", async (c: any) => {
-  const ctx = await createContext({ req: c.req.raw, resHeaders: new Headers(), info: {} as any });
-  const res = await tenantContextStorage.run(ctx.tenantId, () => {
-    return fetchRequestHandler({
-      endpoint: "/trpc",
-      req: c.req.raw,
-      router: appRouter,
-      createContext: () => ctx,
-    });
-  });
-  const headers = new Headers(res.headers);
-  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-  headers.set("Pragma", "no-cache");
-  headers.set("Expires", "0");
-  return new Response(res.body, {
-    status: res.status,
-    statusText: res.statusText,
-    headers,
-  });
-});
+app.all("/api/trpc/*", createTrpcHandler("/api/trpc"));
+app.all("/trpc/*", createTrpcHandler("/trpc"));
 
 // Deep Health & Diagnostic Check
 app.get("/api/health", async (c) => {

@@ -177283,7 +177283,7 @@ function invalidateCache(keyOrPrefix) {
 // server/news-router.ts
 var newsRouter = createRouter({
   list: publicQuery.query(async () => {
-    return withCache("news:list", 120, async () => {
+    return withCache("news:list", 300, async () => {
       try {
         const { Activity } = await getMainModels();
         const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 });
@@ -177305,7 +177305,7 @@ var newsRouter = createRouter({
     });
   }),
   featured: publicQuery.query(async () => {
-    return withCache("news:featured", 120, async () => {
+    return withCache("news:featured", 300, async () => {
       try {
         const { Activity } = await getMainModels();
         const acts = await Activity.find({ isDeleted: false, isPublished: true }).sort({ eventDate: -1, createdAt: -1 }).limit(3);
@@ -177327,7 +177327,7 @@ var newsRouter = createRouter({
     });
   }),
   getBySlug: publicQuery.input(external_exports.object({ slug: external_exports.string() })).query(async ({ input }) => {
-    return withCache(`news:slug:${input.slug}`, 120, async () => {
+    return withCache(`news:slug:${input.slug}`, 300, async () => {
       try {
         const { Activity } = await getMainModels();
         const safeSlug = input.slug.trim();
@@ -178093,7 +178093,7 @@ var import_mongoose13 = __toESM(require_mongoose2(), 1);
 init_cmsSchemas();
 var announcementRouter = createRouter({
   list: publicQuery.query(async () => {
-    return withCache("announcements:list", 120, async () => {
+    return withCache("announcements:list", 300, async () => {
       try {
         const { Marquee } = await getMainModels();
         const marquees = await Marquee.find({ isDeleted: { $ne: true }, isActive: true }).sort({ createdAt: -1 });
@@ -178214,7 +178214,7 @@ var import_mongoose14 = __toESM(require_mongoose2(), 1);
 init_cmsSchemas();
 var statsRouter = createRouter({
   list: publicQuery.query(async () => {
-    return withCache("stats:list", 120, async () => {
+    return withCache("stats:list", 300, async () => {
       try {
         const { QuickStat } = await getMainModels();
         const docs = await QuickStat.find({ isDeleted: { $ne: true }, isActive: true }).sort({ order: 1 });
@@ -180455,7 +180455,7 @@ var cmsRouter = createRouter({
     }).optional()
   ).query(async ({ input }) => {
     const cacheKey = `cms:menus:${input?.location || "all"}:${input?.includeDeleted ? "del" : "active"}`;
-    return withCache(cacheKey, 60, async () => {
+    return withCache(cacheKey, 300, async () => {
       const { Menu } = await getMainModels();
       const filter = {};
       if (input?.location) filter.location = input.location;
@@ -180575,7 +180575,7 @@ var cmsRouter = createRouter({
   }),
   // --- 5. POPUP MANAGEMENT ---
   listPopups: publicQuery.query(async () => {
-    return withCache("cms:popups", 60, async () => {
+    return withCache("cms:popups", 300, async () => {
       const { Popup } = await getMainModels();
       return Popup.find({}).sort({ createdAt: -1 }).lean();
     });
@@ -180636,7 +180636,7 @@ var cmsRouter = createRouter({
   }),
   // --- 6. MARQUEE / FLASH ALERTS ---
   listMarquees: publicQuery.query(async () => {
-    return withCache("cms:marquees", 60, async () => {
+    return withCache("cms:marquees", 300, async () => {
       const { Marquee } = await getMainModels();
       return Marquee.find({}).sort({ createdAt: -1 }).lean();
     });
@@ -180728,7 +180728,7 @@ var cmsRouter = createRouter({
   }),
   // --- 7. RECENT ACTIVITIES ---
   listActivities: publicQuery.query(async () => {
-    return withCache("cms:activities", 60, async () => {
+    return withCache("cms:activities", 300, async () => {
       const { Activity } = await getMainModels();
       return Activity.find({ isDeleted: { $ne: true } }).sort({ eventDate: -1 }).lean();
     });
@@ -180790,7 +180790,7 @@ var cmsRouter = createRouter({
   }),
   // --- 8. HERO SLIDERS ---
   listSliders: publicQuery.query(async () => {
-    return withCache("cms:sliders", 60, async () => {
+    return withCache("cms:sliders", 300, async () => {
       const { Slider } = await getMainModels();
       return Slider.find({ isDeleted: { $ne: true } }).sort({ order: 1, createdAt: -1 }).lean();
     });
@@ -180895,7 +180895,7 @@ var cmsRouter = createRouter({
   }),
   // --- 9. ATTACHMENTS & CIRCULARS ---
   listAttachments: publicQuery.query(async () => {
-    return withCache("cms:attachments", 60, async () => {
+    return withCache("cms:attachments", 300, async () => {
       const { Attachment } = await getMainModels();
       return Attachment.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     });
@@ -180947,7 +180947,7 @@ var cmsRouter = createRouter({
   }),
   // --- 10. IMAGE GALLERY (dpsi_gallery DB) ---
   listGalleryCategories: publicQuery.query(async () => {
-    return withCache("cms:galleryCategories", 60, async () => {
+    return withCache("cms:galleryCategories", 300, async () => {
       const { GalleryCategory } = await getGalleryModels();
       return GalleryCategory.find({ isDeleted: false });
     });
@@ -180967,7 +180967,7 @@ var cmsRouter = createRouter({
   }),
   listGalleryImages: publicQuery.input(external_exports.object({ category: external_exports.string().optional() }).optional()).query(async ({ input }) => {
     const cacheKey = input?.category && input.category !== "All" ? `cms:galleryImages:${input.category}` : "cms:galleryImages:all";
-    return withCache(cacheKey, 60, async () => {
+    return withCache(cacheKey, 300, async () => {
       const { GalleryImage } = await getGalleryModels();
       const filter = { isDeleted: { $ne: true } };
       if (input?.category && input.category !== "All") {
@@ -181025,7 +181025,7 @@ var cmsRouter = createRouter({
   }),
   // --- 11. VIDEO GALLERY (dpsi_gallery DB) ---
   listVideos: publicQuery.query(async () => {
-    return withCache("cms:videos", 60, async () => {
+    return withCache("cms:videos", 300, async () => {
       const { VideoGallery } = await getGalleryModels();
       return VideoGallery.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     });
@@ -181483,7 +181483,7 @@ var cmsRouter = createRouter({
   }),
   // --- 22. SITE SETTINGS ---
   getSiteSettings: publicQuery.query(async () => {
-    return withCache("cms:siteSettings", 60, async () => {
+    return withCache("cms:siteSettings", 300, async () => {
       const { SiteSettings } = await getMainModels();
       const settings = await SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
       if (!settings || settings.length === 0) {
@@ -181678,7 +181678,7 @@ var cmsRouter = createRouter({
   }),
   // --- 26. LEADERSHIP & FACULTY ---
   listLeadership: publicQuery.query(async () => {
-    return withCache("cms:leadership", 60, async () => {
+    return withCache("cms:leadership", 300, async () => {
       const { Leadership } = await getMainModels();
       return Leadership.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -181794,7 +181794,7 @@ var cmsRouter = createRouter({
   }),
   // --- 28. FACILITIES ---
   listFacilities: publicQuery.query(async () => {
-    return withCache("cms:facilities", 60, async () => {
+    return withCache("cms:facilities", 300, async () => {
       const { Facility } = await getMainModels();
       return Facility.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -181878,7 +181878,7 @@ var cmsRouter = createRouter({
   }),
   // --- 29. DEPARTMENTS & CURRICULUM ---
   listDepartments: publicQuery.query(async () => {
-    return withCache("cms:departments", 60, async () => {
+    return withCache("cms:departments", 300, async () => {
       const { Department } = await getMainModels();
       return Department.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -181954,7 +181954,7 @@ var cmsRouter = createRouter({
   }),
   // --- 30. ADMISSION STEPS ---
   listAdmissionSteps: publicQuery.query(async () => {
-    return withCache("cms:admissionSteps", 60, async () => {
+    return withCache("cms:admissionSteps", 300, async () => {
       const { AdmissionStep } = await getMainModels();
       return AdmissionStep.find({ isActive: true }).sort({ stepNumber: 1 }).lean();
     });
@@ -182031,7 +182031,7 @@ var cmsRouter = createRouter({
   // --- 31. FAQS ---
   listFaqs: publicQuery.input(external_exports.object({ category: external_exports.string().optional() }).optional()).query(async ({ input }) => {
     const cacheKey = `cms:faqs:${input?.category || "all"}`;
-    return withCache(cacheKey, 60, async () => {
+    return withCache(cacheKey, 300, async () => {
       const { Faq } = await getMainModels();
       const filter = { isActive: true };
       if (input?.category) filter.category = input.category;
@@ -182107,7 +182107,7 @@ var cmsRouter = createRouter({
   }),
   // --- 32. TIMELINE & MILESTONES ---
   listTimeline: publicQuery.query(async () => {
-    return withCache("cms:timeline", 60, async () => {
+    return withCache("cms:timeline", 300, async () => {
       const { TimelineItem } = await getMainModels();
       return TimelineItem.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -182181,7 +182181,7 @@ var cmsRouter = createRouter({
   }),
   // --- 33. CORE VALUES ---
   listCoreValues: publicQuery.query(async () => {
-    return withCache("cms:coreValues", 60, async () => {
+    return withCache("cms:coreValues", 300, async () => {
       const { CoreValue } = await getMainModels();
       return CoreValue.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -182255,7 +182255,7 @@ var cmsRouter = createRouter({
   }),
   // --- 34. 3D FEATURE CARDS ---
   listFeatureCards: publicQuery.query(async () => {
-    return withCache("cms:featureCards", 60, async () => {
+    return withCache("cms:featureCards", 300, async () => {
       const { FeatureCard } = await getMainModels();
       return FeatureCard.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -182371,7 +182371,7 @@ var cmsRouter = createRouter({
   }),
   // --- 36. BOARD RESULTS (Academics page bar chart — pass rates by year) ---
   listBoardResults: publicQuery.query(async () => {
-    return withCache("cms:boardResults", 60, async () => {
+    return withCache("cms:boardResults", 300, async () => {
       const { BoardResult } = await getMainModels();
       return BoardResult.find({ isActive: true }).sort({ order: 1, year: 1 }).lean();
     });
@@ -182412,7 +182412,7 @@ var cmsRouter = createRouter({
   }),
   // --- 37. STREAM DISTRIBUTION (Academics page pie chart — Class XI streams) ---
   listStreamDistributions: publicQuery.query(async () => {
-    return withCache("cms:streamDistributions", 60, async () => {
+    return withCache("cms:streamDistributions", 300, async () => {
       const { StreamDistribution } = await getMainModels();
       return StreamDistribution.find({ isActive: true }).sort({ order: 1 }).lean();
     });
@@ -182519,11 +182519,11 @@ app.use(
     maxAge: 86400
   })
 );
-var trpcHandler = async (c5) => {
+var createTrpcHandler = (endpoint) => async (c5) => {
   const ctx = await createContext({ req: c5.req.raw, resHeaders: new Headers(), info: {} });
   const res = await tenantContextStorage.run(ctx.tenantId, () => {
     return fetchRequestHandler({
-      endpoint: "/api/trpc",
+      endpoint,
       req: c5.req.raw,
       router: appRouter,
       createContext: () => ctx
@@ -182532,7 +182532,7 @@ var trpcHandler = async (c5) => {
   const headers = new Headers(res.headers);
   const isPublicQuery = c5.req.method === "GET" && !c5.req.header("authorization") && c5.req.header("x-admin-auth") !== "true";
   if (isPublicQuery) {
-    headers.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+    headers.set("Cache-Control", "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400");
   } else {
     headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     headers.set("Pragma", "no-cache");
@@ -182544,27 +182544,8 @@ var trpcHandler = async (c5) => {
     headers
   });
 };
-app.all("/api/trpc/*", trpcHandler);
-app.all("/trpc/*", async (c5) => {
-  const ctx = await createContext({ req: c5.req.raw, resHeaders: new Headers(), info: {} });
-  const res = await tenantContextStorage.run(ctx.tenantId, () => {
-    return fetchRequestHandler({
-      endpoint: "/trpc",
-      req: c5.req.raw,
-      router: appRouter,
-      createContext: () => ctx
-    });
-  });
-  const headers = new Headers(res.headers);
-  headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
-  headers.set("Pragma", "no-cache");
-  headers.set("Expires", "0");
-  return new Response(res.body, {
-    status: res.status,
-    statusText: res.statusText,
-    headers
-  });
-});
+app.all("/api/trpc/*", createTrpcHandler("/api/trpc"));
+app.all("/trpc/*", createTrpcHandler("/trpc"));
 app.get("/api/health", async (c5) => {
   const startTime = Date.now();
   let dbStatus = "disconnected";

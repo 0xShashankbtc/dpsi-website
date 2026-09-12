@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { ArrowRight, Clock, Newspaper } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { formatISTDate } from "@/lib/dateUtils";
+import { DEFAULT_ACTIVITIES } from "@/lib/initialDataSnapshot";
 
 export default function NewsHighlights() {
   const { data: cmsActivities, isLoading } = trpc.cms.listActivities.useQuery();
@@ -21,6 +22,15 @@ export default function NewsHighlights() {
       createdAt: a.eventDate || a.createdAt || new Date().toISOString(),
     }));
 
+  const fallbackActivities = DEFAULT_ACTIVITIES.map((a: any) => ({
+    id: a._id || a.id,
+    title: a.title,
+    category: a.category || "Campus Update",
+    excerpt: a.description,
+    image: a.imageUrl || "",
+    createdAt: a.eventDate || a.createdAt,
+  }));
+
   const allNews =
     dynamicActivities && dynamicActivities.length > 0
       ? dynamicActivities
@@ -33,7 +43,7 @@ export default function NewsHighlights() {
           image: n.image || "",
           createdAt: n.createdAt,
         }))
-      : [];
+      : fallbackActivities;
 
   const categories = ["All", ...Array.from(new Set(allNews.map((item) => item.category || "Campus Update")))];
 
@@ -102,7 +112,7 @@ export default function NewsHighlights() {
         )}
 
         {/* Cards Grid with AnimatePresence */}
-        {isLoading ? (
+        {isLoading && allNews.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((n) => (
               <div

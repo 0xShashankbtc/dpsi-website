@@ -3,15 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Quote, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
+import { DEFAULT_TESTIMONIALS } from "@/lib/initialDataSnapshot";
 
 export default function TestimonialsSection() {
   const { data: testimonials, isLoading } = trpc.testimonials.featured.useQuery();
+  const effectiveTestimonials =
+    testimonials && testimonials.length > 0 ? testimonials : DEFAULT_TESTIMONIALS;
   const [current, setCurrent] = useState(0);
 
-  if (!isLoading && !testimonials?.length) return null;
+  if (!isLoading && !effectiveTestimonials.length) return null;
 
-  const next = () => setCurrent((prev) => (prev + 1) % (testimonials?.length || 1));
-  const prev = () => setCurrent((prev) => (prev - 1 + (testimonials?.length || 1)) % (testimonials?.length || 1));
+  const next = () => setCurrent((prev) => (prev + 1) % (effectiveTestimonials.length || 1));
+  const prev = () =>
+    setCurrent(
+      (prev) => (prev - 1 + (effectiveTestimonials.length || 1)) % (effectiveTestimonials.length || 1)
+    );
 
   return (
     <section className="py-12 sm:py-16 bg-slate-50 dark:bg-slate-900 relative overflow-hidden border-t border-slate-200 dark:border-slate-800">
@@ -33,7 +39,7 @@ export default function TestimonialsSection() {
           <div className="w-14 h-1 bg-slate-900 dark:bg-slate-100 mx-auto mt-4 rounded-full" />
         </motion.div>
 
-        {isLoading ? (
+        {isLoading && effectiveTestimonials.length === 0 ? (
           <div className="relative max-w-3xl mx-auto">
             <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 sm:p-12 text-center rounded-3xl animate-pulse flex flex-col items-center">
               <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-700 mb-6" />
@@ -44,7 +50,7 @@ export default function TestimonialsSection() {
               <div className="h-3 bg-slate-100 dark:bg-slate-700/60 rounded w-24" />
             </div>
           </div>
-        ) : testimonials && testimonials.length > 0 && testimonials[current] ? (
+        ) : effectiveTestimonials.length > 0 && effectiveTestimonials[current] ? (
           <div className="relative max-w-3xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
@@ -58,23 +64,20 @@ export default function TestimonialsSection() {
                 dragElastic={0.2}
                 onDragEnd={(_, info) => {
                   if (info.offset.x < -50) next();
-                  else if (info.offset.x > 50) prev();
+                  if (info.offset.x > 50) prev();
                 }}
-                className="flat-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 sm:p-12 text-center cursor-grab active:cursor-grabbing relative shadow-sm rounded-3xl"
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 sm:p-12 text-center rounded-3xl shadow-sm relative group cursor-grab active:cursor-grabbing"
               >
-                {/* Quote icon */}
-                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 flex items-center justify-center mx-auto mb-6 shadow-xs">
-                  <Quote className="w-5 h-5" />
-                </div>
-                <p className="text-base sm:text-xl text-slate-700 dark:text-slate-200 leading-relaxed mb-8 font-medium italic select-none">
-                  "{testimonials[current].content}"
+                <Quote className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-6" />
+                <p className="text-base sm:text-lg text-slate-700 dark:text-slate-200 mb-8 leading-relaxed italic max-w-2xl mx-auto">
+                  "{effectiveTestimonials[current].content}"
                 </p>
                 <div>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight">
-                    {testimonials[current].name}
-                  </h4>
-                  <p className="text-slate-500 dark:text-slate-400 font-bold text-xs mt-1 uppercase tracking-wider">
-                    {testimonials[current].role}
+                  <p className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight">
+                    {effectiveTestimonials[current].name}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                    {effectiveTestimonials[current].role}
                   </p>
                 </div>
               </motion.div>
