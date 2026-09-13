@@ -539,12 +539,17 @@ const LeadershipSchema = new Schema<ILeadership>(
 export interface IFacility extends Document {
   title: string;
   category: string;
+  tagline?: string;
+  subBadge?: string;
   description: string;
   icon?: string;
   imageUrl?: string;
+  videoUrl?: string;
   geometry?: string;
   color?: string;
   accent?: string;
+  highlights?: string[];
+  metrics?: { value: string; label: string }[];
   order: number;
   isActive: boolean;
   isDeleted: boolean;
@@ -554,12 +559,22 @@ const FacilitySchema = new Schema<IFacility>(
   {
     title: { type: String, required: true },
     category: { type: String, default: "Campus" },
+    tagline: { type: String },
+    subBadge: { type: String },
     description: { type: String, required: true },
     icon: { type: String, default: "Microscope" },
     imageUrl: { type: String },
+    videoUrl: { type: String },
     geometry: { type: String, default: "torusKnot" },
     color: { type: String, default: "#10b981" },
     accent: { type: String, default: "#34d399" },
+    highlights: { type: [String], default: [] },
+    metrics: [
+      {
+        value: { type: String },
+        label: { type: String },
+      },
+    ],
     order: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },

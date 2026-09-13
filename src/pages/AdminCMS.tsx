@@ -1485,12 +1485,21 @@ export default function AdminCMS() {
   const [facilityForm, setFacilityForm] = useState({
     title: "",
     category: "Campus",
+    tagline: "",
+    subBadge: "",
     description: "",
     icon: "Microscope",
     imageUrl: "",
+    videoUrl: "",
     geometry: "torusKnot",
     color: "#10b981",
     accent: "#34d399",
+    highlights: "",
+    metrics: [
+      { value: "", label: "" },
+      { value: "", label: "" },
+      { value: "", label: "" },
+    ],
     order: 0,
   });
   const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null);
@@ -4499,12 +4508,21 @@ export default function AdminCMS() {
                         setFacilityForm({
                           title: "",
                           category: "Campus",
+                          tagline: "",
+                          subBadge: "",
                           description: "",
                           icon: "Microscope",
                           imageUrl: "",
+                          videoUrl: "",
                           geometry: "torusKnot",
                           color: "#10b981",
                           accent: "#34d399",
+                          highlights: "",
+                          metrics: [
+                            { value: "", label: "" },
+                            { value: "", label: "" },
+                            { value: "", label: "" },
+                          ],
                           order: 0,
                         });
                         setFacilityModal(true);
@@ -4537,7 +4555,19 @@ export default function AdminCMS() {
                           </div>
                           <div className="p-4">
                             <h3 className="font-bold text-slate-900 text-sm">{f.title}</h3>
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-3 leading-relaxed">{f.description}</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {f.subBadge && (
+                                <span className="inline-block px-1.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 rounded text-[10px] font-medium">
+                                  {f.subBadge}
+                                </span>
+                              )}
+                              {f.tagline && (
+                                <span className="inline-block px-1.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded text-[10px] font-medium">
+                                  {f.tagline}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2 line-clamp-3 leading-relaxed">{f.description}</p>
                           </div>
                         </div>
                         <div className="p-4 pt-0 flex justify-end gap-1">
@@ -4548,14 +4578,27 @@ export default function AdminCMS() {
                             onClick={() => {
                               setEditingFacilityId(f._id ? String(f._id) : f.id);
                               setFacilityForm({
-                                title: f.title,
+                                title: f.title || "",
                                 category: f.category || "Campus",
+                                tagline: f.tagline || "",
+                                subBadge: f.subBadge || "",
                                 description: f.description || "",
                                 icon: f.icon || "Microscope",
                                 imageUrl: f.imageUrl || "",
+                                videoUrl: f.videoUrl || "",
                                 geometry: f.geometry || "torusKnot",
                                 color: f.color || "#10b981",
                                 accent: f.accent || "#34d399",
+                                highlights: Array.isArray(f.highlights)
+                                  ? f.highlights.join("\n")
+                                  : (f.highlights || ""),
+                                metrics: Array.isArray(f.metrics) && f.metrics.length > 0
+                                  ? f.metrics
+                                  : [
+                                      { value: "", label: "" },
+                                      { value: "", label: "" },
+                                      { value: "", label: "" },
+                                    ],
                                 order: f.order || 0,
                               });
                               setFacilityModal(true);
@@ -8739,35 +8782,99 @@ export default function AdminCMS() {
         {/* --- FACILITIES MODAL --- */}
         {facilityModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-slate-900">{editingFacilityId ? "Edit Facility" : "Add Facility"}</h3>
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl my-8">
+              <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">{editingFacilityId ? "Edit Campus Facility" : "Add Campus Facility"}</h3>
+                  <p className="text-xs text-slate-500">Fully customize badges, titles, photos, videos, and metrics</p>
+                </div>
                 <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setFacilityModal(false)}><X className="w-4 h-4" /></Button>
               </div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+
+              <div className="space-y-3.5 max-h-[72vh] overflow-y-auto pr-1">
+                {/* 1. Title & Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Facility Title *</label>
-                    <Input value={facilityForm.title} onChange={(e) => setFacilityForm({ ...facilityForm, title: e.target.value })} placeholder="e.g. AI & Robotics Lab" className="text-xs" />
+                    <Input
+                      value={facilityForm.title}
+                      onChange={(e) => setFacilityForm({ ...facilityForm, title: e.target.value })}
+                      placeholder="e.g. AI & Humanoid Robotics Lab"
+                      className="text-xs"
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Category</label>
-                    <Input value={facilityForm.category} onChange={(e) => setFacilityForm({ ...facilityForm, category: e.target.value })} placeholder="Innovation / Labs / Sports" className="text-xs" />
+                    <Input
+                      value={facilityForm.category}
+                      onChange={(e) => setFacilityForm({ ...facilityForm, category: e.target.value })}
+                      placeholder="e.g. STEM & Future Technologies / Athletics"
+                      className="text-xs"
+                    />
                   </div>
                 </div>
+
+                {/* 2. Sub-Badge / Certification & Tagline (CIRCLED TEXT FIX) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-amber-50/50 p-3 rounded-xl border border-amber-200/60">
+                  <div>
+                    <label className="text-xs font-bold text-amber-900 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      Certification / Sub-Badge
+                    </label>
+                    <p className="text-[11px] text-slate-500 mb-1">Badge on card top-right and editorial pill</p>
+                    <Input
+                      value={facilityForm.subBadge}
+                      onChange={(e) => setFacilityForm({ ...facilityForm, subBadge: e.target.value })}
+                      placeholder="e.g. NITI Aayog Atal Tinkering Lab Certified"
+                      className="text-xs bg-white border-amber-300 focus-visible:ring-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-800">
+                      Tagline / Secondary Heading
+                    </label>
+                    <p className="text-[11px] text-slate-500 mb-1">Sub-headline shown on image overlay</p>
+                    <Input
+                      value={facilityForm.tagline}
+                      onChange={(e) => setFacilityForm({ ...facilityForm, tagline: e.target.value })}
+                      placeholder="e.g. Next-Gen Innovation Incubator"
+                      className="text-xs bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Description */}
                 <div>
                   <label className="text-xs font-semibold text-slate-700">Description *</label>
-                  <Textarea rows={3} value={facilityForm.description} onChange={(e) => setFacilityForm({ ...facilityForm, description: e.target.value })} placeholder="Detailed description of facility and equipment..." className="text-xs" />
+                  <Textarea
+                    rows={3}
+                    value={facilityForm.description}
+                    onChange={(e) => setFacilityForm({ ...facilityForm, description: e.target.value })}
+                    placeholder="Detailed description of facility, safety standards, and equipment..."
+                    className="text-xs"
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+
+                {/* 4. Media & Icons */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-slate-700">Icon Name</label>
-                    <Input value={facilityForm.icon} onChange={(e) => setFacilityForm({ ...facilityForm, icon: e.target.value })} placeholder="Microscope / FlaskConical / Dumbbell" className="text-xs" />
+                    <Input
+                      value={facilityForm.icon}
+                      onChange={(e) => setFacilityForm({ ...facilityForm, icon: e.target.value })}
+                      placeholder="Cpu / Waves / FlaskConical / Microscope"
+                      className="text-xs"
+                    />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="text-xs font-semibold text-slate-700">Facility Photo</label>
                     <div className="flex gap-2">
-                      <Input value={facilityForm.imageUrl} onChange={(e) => setFacilityForm({ ...facilityForm, imageUrl: e.target.value })} placeholder="Photo URL" className="text-xs" />
+                      <Input
+                        value={facilityForm.imageUrl}
+                        onChange={(e) => setFacilityForm({ ...facilityForm, imageUrl: e.target.value })}
+                        placeholder="Photo URL (or upload image)"
+                        className="text-xs"
+                      />
                       <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold flex items-center gap-1 shrink-0">
                         <Upload className="w-3.5 h-3.5" />
                         <input
@@ -8787,8 +8894,87 @@ export default function AdminCMS() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
 
+                {/* Video URL */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">Video Tour URL (Optional)</label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={facilityForm.videoUrl}
+                      onChange={(e) => setFacilityForm({ ...facilityForm, videoUrl: e.target.value })}
+                      placeholder="e.g. /videos/campus_hero.mp4 or YouTube / MP4 URL"
+                      className="text-xs"
+                    />
+                    <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold flex items-center gap-1 shrink-0">
+                      <Upload className="w-3.5 h-3.5" /> Video
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleMediaUpload(file, (url) => {
+                              setFacilityForm((prev) => ({ ...prev, videoUrl: url }));
+                            });
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* 5. Key Highlights / Bullets */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-700">Key Feature Highlights</label>
+                    <span className="text-[11px] text-slate-400">One feature bullet per line</span>
+                  </div>
+                  <Textarea
+                    rows={3}
+                    value={facilityForm.highlights}
+                    onChange={(e) => setFacilityForm({ ...facilityForm, highlights: e.target.value })}
+                    placeholder="Hands-on AI, Machine Learning & Robotics curriculum&#10;National Robotics Championship accredited training arena&#10;3D rapid prototyping and multi-sensor toolkits"
+                    className="text-xs font-mono"
+                  />
+                </div>
+
+                {/* 6. Metric Badges */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Key Metric Badges (Stat Counters)
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[0, 1, 2].map((mIdx) => (
+                      <div key={mIdx} className="p-2 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Stat #{mIdx + 1}</span>
+                        <Input
+                          value={facilityForm.metrics[mIdx]?.value || ""}
+                          onChange={(e) => {
+                            const newMetrics = [...facilityForm.metrics];
+                            newMetrics[mIdx] = { ...newMetrics[mIdx], value: e.target.value, label: newMetrics[mIdx]?.label || "" };
+                            setFacilityForm({ ...facilityForm, metrics: newMetrics });
+                          }}
+                          placeholder="Value: 50+ / 100%"
+                          className="text-xs h-7 bg-white"
+                        />
+                        <Input
+                          value={facilityForm.metrics[mIdx]?.label || ""}
+                          onChange={(e) => {
+                            const newMetrics = [...facilityForm.metrics];
+                            newMetrics[mIdx] = { ...newMetrics[mIdx], label: e.target.value, value: newMetrics[mIdx]?.value || "" };
+                            setFacilityForm({ ...facilityForm, metrics: newMetrics });
+                          }}
+                          placeholder="Label: AI Workstations"
+                          className="text-xs h-7 bg-white"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 7. 3D Aesthetics & Order */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
                   <div>
                     <label className="text-xs font-semibold text-slate-700">3D Geometry</label>
                     <select
@@ -8836,22 +9022,66 @@ export default function AdminCMS() {
                       />
                     </div>
                   </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Display Order</label>
+                    <Input
+                      type="number"
+                      value={facilityForm.order}
+                      onChange={(e) => setFacilityForm({ ...facilityForm, order: Number(e.target.value) || 0 })}
+                      placeholder="0"
+                      className="text-xs mt-0.5"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <Button variant="outline" size="sm" onClick={() => setFacilityModal(false)}>Cancel</Button>
                 <Button
                   size="sm"
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white cursor-pointer font-bold"
+                  disabled={createFacility.isPending || updateFacility.isPending}
                   onClick={() => {
                     if (!facilityForm.title || !facilityForm.description) {
                       toast.error("Please enter facility title and description");
                       return;
                     }
+
+                    const parsedHighlights = facilityForm.highlights
+                      ? facilityForm.highlights
+                          .split("\n")
+                          .map((h: string) => h.trim())
+                          .filter(Boolean)
+                      : [];
+
+                    const parsedMetrics = (facilityForm.metrics || [])
+                      .map((m: any) => ({
+                        value: String(m?.value || "").trim(),
+                        label: String(m?.label || "").trim(),
+                      }))
+                      .filter((m: any) => m.value && m.label);
+
+                    const payload = {
+                      title: facilityForm.title,
+                      category: facilityForm.category || "Campus",
+                      tagline: facilityForm.tagline || undefined,
+                      subBadge: facilityForm.subBadge || undefined,
+                      description: facilityForm.description,
+                      icon: facilityForm.icon || "Microscope",
+                      imageUrl: facilityForm.imageUrl || undefined,
+                      videoUrl: facilityForm.videoUrl || undefined,
+                      geometry: facilityForm.geometry,
+                      color: facilityForm.color,
+                      accent: facilityForm.accent,
+                      highlights: parsedHighlights,
+                      metrics: parsedMetrics,
+                      order: Number(facilityForm.order) || 0,
+                    };
+
                     if (editingFacilityId) {
-                      updateFacility.mutate({ id: editingFacilityId, ...facilityForm });
+                      updateFacility.mutate({ id: editingFacilityId, ...payload });
                     } else {
-                      createFacility.mutate(facilityForm);
+                      createFacility.mutate(payload);
                     }
                   }}
                 >

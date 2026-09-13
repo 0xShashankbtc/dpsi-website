@@ -26,12 +26,14 @@ interface FacilityItem {
   id: string;
   name: string;
   category: string;
+  subBadge?: string;
   icon: React.ComponentType<{ className?: string }>;
   image: string;
   tagline: string;
   description: string;
   highlights: string[];
   metrics: { value: string; label: string }[];
+  videoUrl?: string;
 }
 
 const FACILITIES_FALLBACK: FacilityItem[] = [
@@ -39,6 +41,7 @@ const FACILITIES_FALLBACK: FacilityItem[] = [
     id: "ai-lab",
     name: "AI & Humanoid Robotics Lab",
     category: "STEM & Future Technologies",
+    subBadge: "NITI Aayog Atal Tinkering Lab Certified",
     icon: Cpu,
     image: "/images/facilities/ai_robotics_lab.webp",
     tagline: "Next-Gen Innovation Incubator",
@@ -59,6 +62,7 @@ const FACILITIES_FALLBACK: FacilityItem[] = [
     id: "sports-aquatic",
     name: "Olympic Aquatics & Sports Complex",
     category: "Athletics & Physical Mastery",
+    subBadge: "25m Competition Pool • All-Weather Heated",
     icon: Waves,
     image: "/images/facilities/swimming_pool.webp",
     tagline: "World-Class Athletic & Heated Aquatic Arenas",
@@ -79,6 +83,7 @@ const FACILITIES_FALLBACK: FacilityItem[] = [
     id: "science",
     name: "Research-Grade Science Labs",
     category: "Experiential Sciences & STEAM",
+    subBadge: "Exceeds CBSE Experimental Standards",
     icon: FlaskConical,
     image: "/images/facilities/science_lab.webp",
     tagline: "Specialized Senior Experimental Laboratories",
@@ -99,6 +104,7 @@ const FACILITIES_FALLBACK: FacilityItem[] = [
     id: "performing-arts",
     name: "Acoustic Auditorium & Arts Atelier",
     category: "Creative Arts & Performance",
+    subBadge: "Acoustically Engineered • 1,200 Seats",
     icon: Music,
     image: "/images/facilities/auditorium.webp",
     tagline: "Acoustically Tuned Studios for Fine & Performing Arts",
@@ -119,6 +125,7 @@ const FACILITIES_FALLBACK: FacilityItem[] = [
     id: "smart-classes",
     name: "Smart Digital Classrooms & Safe Campus",
     category: "Digital Pedagogy & Campus Safety",
+    subBadge: "350+ AI Surveillance Nodes • 100% AC Fleet",
     icon: GraduationCap,
     image: "/images/facilities/smart_classroom.webp",
     tagline: "Ergonomic Smart Digital Learning Suites",
@@ -286,10 +293,12 @@ export default function InteractiveFacilitiesSection() {
           .map((f: any, idx: number) => {
             const fallback = FACILITIES_FALLBACK[idx % FACILITIES_FALLBACK.length];
             const IconComp = ICON_LOOKUP[f.icon] || fallback?.icon || Sparkles;
+            const theme = CARD_THEMES[idx % CARD_THEMES.length];
             return {
               id: f._id?.toString() || f.id || `fac-${idx}`,
               name: f.title || fallback?.name,
               category: f.category || fallback?.category || "Campus Facility",
+              subBadge: f.subBadge || fallback?.subBadge || theme?.defaultSubBadge,
               icon: IconComp,
               image: f.imageUrl || fallback?.image || "/images/facilities/ai_robotics_lab.webp",
               tagline: f.tagline || fallback?.tagline || "World-Class Learning Environment",
@@ -305,6 +314,7 @@ export default function InteractiveFacilitiesSection() {
                       { value: "100%", label: "Hands-on Practical" },
                       { value: "A+", label: "Safety Rating" },
                     ],
+              videoUrl: f.videoUrl,
             };
           })
       : FACILITIES_FALLBACK;
@@ -398,7 +408,7 @@ export default function InteractiveFacilitiesSection() {
                 </div>
                 <div className={`flex items-center gap-2 text-xs font-semibold ${theme.subTextColor}`}>
                   <IconComp className={`w-4 h-4 ${theme.catColor}`} />
-                  <span>{theme.defaultSubBadge}</span>
+                  <span>{facility.subBadge || theme.defaultSubBadge}</span>
                 </div>
               </div>
 
@@ -448,7 +458,7 @@ export default function InteractiveFacilitiesSection() {
                     className={`inline-flex items-center gap-2 w-max px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-3 border ${theme.tagBg}`}
                   >
                     <IconComp className="w-3.5 h-3.5" />
-                    <span>{facility.tagline}</span>
+                    <span>{facility.subBadge || facility.tagline}</span>
                   </div>
 
                   <h3 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.08] mb-4 ${theme.isDark ? 'text-white' : 'text-slate-900'}`}>

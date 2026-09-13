@@ -77436,12 +77436,22 @@ var init_cmsSchemas = __esm({
       {
         title: { type: String, required: true },
         category: { type: String, default: "Campus" },
+        tagline: { type: String },
+        subBadge: { type: String },
         description: { type: String, required: true },
         icon: { type: String, default: "Microscope" },
         imageUrl: { type: String },
+        videoUrl: { type: String },
         geometry: { type: String, default: "torusKnot" },
         color: { type: String, default: "#10b981" },
         accent: { type: String, default: "#34d399" },
+        highlights: { type: [String], default: [] },
+        metrics: [
+          {
+            value: { type: String },
+            label: { type: String }
+          }
+        ],
         order: { type: Number, default: 0 },
         isActive: { type: Boolean, default: true },
         isDeleted: { type: Boolean, default: false }
@@ -182202,12 +182212,17 @@ var cmsRouter = createRouter({
     external_exports.object({
       title: external_exports.string().min(2),
       category: external_exports.string().default("Campus"),
+      tagline: external_exports.string().optional(),
+      subBadge: external_exports.string().optional(),
       description: external_exports.string().min(5),
       icon: external_exports.string().default("Microscope"),
       imageUrl: external_exports.string().optional(),
+      videoUrl: external_exports.string().optional(),
       geometry: external_exports.string().optional(),
       color: external_exports.string().optional(),
       accent: external_exports.string().optional(),
+      highlights: external_exports.array(external_exports.string()).optional(),
+      metrics: external_exports.array(external_exports.object({ value: external_exports.string(), label: external_exports.string() })).optional(),
       order: external_exports.number().default(0)
     })
   ).mutation(async ({ input, ctx }) => {
@@ -182228,12 +182243,17 @@ var cmsRouter = createRouter({
       id: external_exports.union([external_exports.string(), external_exports.any()]),
       title: external_exports.string().min(2),
       category: external_exports.string().default("Campus"),
+      tagline: external_exports.string().optional(),
+      subBadge: external_exports.string().optional(),
       description: external_exports.string().min(5),
       icon: external_exports.string().default("Microscope"),
       imageUrl: external_exports.string().optional(),
+      videoUrl: external_exports.string().optional(),
       geometry: external_exports.string().optional(),
       color: external_exports.string().optional(),
       accent: external_exports.string().optional(),
+      highlights: external_exports.array(external_exports.string()).optional(),
+      metrics: external_exports.array(external_exports.object({ value: external_exports.string(), label: external_exports.string() })).optional(),
       order: external_exports.number().default(0),
       isActive: external_exports.boolean().optional()
     })

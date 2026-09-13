@@ -35,14 +35,36 @@ import InteractiveFacilitiesSection from "@/sections/InteractiveFacilitiesSectio
 interface FacilityDetail {
   id: string;
   name: string;
-  category: "STEM & Labs" | "Sports & Aquatics" | "Arts & Culture" | "Campus & Safety";
+  category: "STEM & Labs" | "Sports & Aquatics" | "Arts & Culture" | "Campus & Safety" | string;
   icon: React.ComponentType<{ className?: string }>;
   image: string;
   tagline: string;
+  subBadge?: string;
   description: string;
   highlights: string[];
   metrics: { value: string; label: string }[];
+  videoUrl?: string;
 }
+
+const ICON_LOOKUP: Record<string, React.ComponentType<{ className?: string }>> = {
+  FlaskConical,
+  BookOpen,
+  Dumbbell,
+  Microscope,
+  Music,
+  Palette,
+  Wifi,
+  Bus,
+  Shield,
+  HeartPulse,
+  Building,
+  Cpu,
+  Waves,
+  Sparkles,
+  Trophy,
+  GraduationCap,
+  ShieldCheck,
+};
 
 const ALL_FACILITIES: FacilityDetail[] = [
   {
@@ -299,7 +321,39 @@ export default function Facilities() {
   const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery();
   const [selectedCategory, setSelectedCategory] = useState<string>("All Facilities");
 
-  const filteredFacilities = ALL_FACILITIES.filter((f) => {
+  const facilitiesList: FacilityDetail[] =
+    cmsFacilities && cmsFacilities.length > 0
+      ? cmsFacilities
+          .filter((f: any) => !f.isDeleted && f.isActive !== false)
+          .map((f: any, idx: number) => {
+            const fallback = ALL_FACILITIES[idx % ALL_FACILITIES.length];
+            const IconComp = ICON_LOOKUP[f.icon] || fallback?.icon || Sparkles;
+            return {
+              id: f._id ? String(f._id) : f.id || `fac-${idx}`,
+              name: f.title || fallback?.name,
+              category: f.category || fallback?.category || "Campus & Safety",
+              icon: IconComp,
+              image: f.imageUrl || fallback?.image || "/images/facilities/ai_robotics_lab.webp",
+              tagline: f.tagline || fallback?.tagline || "World-Class Learning Environment",
+              subBadge: f.subBadge || fallback?.subBadge,
+              description: f.description || fallback?.description || "",
+              highlights:
+                Array.isArray(f.highlights) && f.highlights.length > 0
+                  ? f.highlights
+                  : fallback?.highlights || [],
+              metrics:
+                Array.isArray(f.metrics) && f.metrics.length > 0
+                  ? f.metrics
+                  : fallback?.metrics || [
+                      { value: "100%", label: "Practical Immersion" },
+                      { value: "A+", label: "Safety Rating" },
+                    ],
+              videoUrl: f.videoUrl,
+            };
+          })
+      : ALL_FACILITIES;
+
+  const filteredFacilities = facilitiesList.filter((f) => {
     if (selectedCategory === "All Facilities") return true;
     return f.category === selectedCategory;
   });
@@ -433,10 +487,15 @@ export default function Facilities() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
                       
-                      <div className="absolute top-4 left-4">
+                      <div className="absolute top-4 left-4 flex flex-wrap gap-1.5">
                         <span className="px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-emerald-300 border border-emerald-500/30 text-xs font-bold shadow-md">
                           {f.category}
                         </span>
+                        {f.subBadge && (
+                          <span className="px-3 py-1 rounded-full bg-emerald-950/80 backdrop-blur-md text-amber-300 border border-amber-500/30 text-xs font-bold shadow-md">
+                            {f.subBadge}
+                          </span>
+                        )}
                       </div>
 
                       <div className="absolute bottom-4 left-4 right-4 text-white">
@@ -451,7 +510,7 @@ export default function Facilities() {
                     <CardContent className="p-6 flex-1 flex flex-col justify-between">
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2">
-                          {f.tagline}
+                          {f.subBadge || f.tagline}
                         </p>
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-5 font-normal">
                           {f.description}
