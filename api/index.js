@@ -77107,6 +77107,8 @@ async function getTcModels(tenantId) {
   return models;
 }
 async function ensureCriticalIndexes(tenantId) {
+  if (_indexesEnsured) return;
+  _indexesEnsured = true;
   try {
     const main = await getMainModels(tenantId);
     const gallery = await getGalleryModels(tenantId);
@@ -77156,7 +77158,7 @@ async function ensureCriticalIndexes(tenantId) {
     console.warn("[MongoDB] Background index initialization notice:", err?.message);
   }
 }
-var import_mongoose5, PageSchema, MenuSchema, PopupSchema, MarqueeSchema, ActivitySchema, SliderSchema, AttachmentSchema, MunRegistrationSchema, ContactMessageSchema, AdmissionInquirySchema, GalleryCategorySchema, GalleryImageSchema, VideoGallerySchema, TransferCertificateSchema, SiteSettingsSchema, AiConfigSchema, AchievementSchema, TestimonialSchema, LeadershipSchema, FacilitySchema, FeatureCardSchema, DepartmentSchema, AdmissionStepSchema, FaqSchema, QuickStatSchema, TimelineItemSchema, CoreValueSchema, BoardResultSchema, StreamDistributionSchema, RateLimitSchema, tenantContextStorage, modelsCache, AuditLogSchema;
+var import_mongoose5, PageSchema, MenuSchema, PopupSchema, MarqueeSchema, ActivitySchema, SliderSchema, AttachmentSchema, MunRegistrationSchema, ContactMessageSchema, AdmissionInquirySchema, GalleryCategorySchema, GalleryImageSchema, VideoGallerySchema, TransferCertificateSchema, SiteSettingsSchema, AiConfigSchema, AchievementSchema, TestimonialSchema, LeadershipSchema, FacilitySchema, FeatureCardSchema, DepartmentSchema, AdmissionStepSchema, FaqSchema, QuickStatSchema, TimelineItemSchema, CoreValueSchema, BoardResultSchema, StreamDistributionSchema, RateLimitSchema, tenantContextStorage, modelsCache, AuditLogSchema, _indexesEnsured;
 var init_cmsSchemas = __esm({
   "server/models/cmsSchemas.ts"() {
     "use strict";
@@ -77574,6 +77576,7 @@ var init_cmsSchemas = __esm({
     AuditLogSchema.pre(/(updateOne|updateMany|findOneAndUpdate|replaceOne|deleteOne|deleteMany|findOneAndDelete|findOneAndRemove)/, function() {
       throw new Error("SECURITY VIOLATION: AuditLog ledger is strictly immutable. Modification and deletion are prohibited by database security policy.");
     });
+    _indexesEnsured = false;
   }
 });
 
@@ -182930,7 +182933,7 @@ var createTrpcHandler = (endpoint) => async (c5) => {
   const isPublicQuery = c5.req.method === "GET" && !c5.req.header("authorization") && c5.req.header("x-admin-auth") !== "true";
   if (isPublicQuery) {
     headers.set("Cache-Control", "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400");
-    headers.set("Vary", "x-tenant-id, Origin");
+    headers.set("Vary", "Accept-Encoding");
   } else {
     headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     headers.set("Pragma", "no-cache");

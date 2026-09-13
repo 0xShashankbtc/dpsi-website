@@ -983,7 +983,11 @@ export async function getTcModels(tenantId?: string) {
  * Proactively builds critical database compound indexes in Atlas on boot across all collections.
  * Turns full collection scans (COLLSCAN) into instant sub-10ms index scans (IXSCAN).
  */
+let _indexesEnsured = false;
+
 export async function ensureCriticalIndexes(tenantId?: string): Promise<void> {
+  if (_indexesEnsured) return;
+  _indexesEnsured = true;
   try {
     const main = await getMainModels(tenantId);
     const gallery = await getGalleryModels(tenantId);

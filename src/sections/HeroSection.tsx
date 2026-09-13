@@ -43,8 +43,8 @@ const DEFAULT_HERO_SLIDES = [
   {
     image: "/images/dps/slider_1.webp",
     videoUrl: "/videos/campus_hero.mp4",
-    mobileVideoUrl: "/videos/campus_hero.mp4",
-    useSeparateMobileVideo: false,
+    mobileVideoUrl: "/videos/campus_hero_mobile.mp4",
+    useSeparateMobileVideo: true,
     mediaType: "video" as const,
     title: "Delhi Public School Indirapuram",
     subtitle: "Premier CBSE Day School in Ghaziabad • Nursery to Class XII",
@@ -111,8 +111,8 @@ export default function HeroSection() {
             return {
               image: rawImg || "/images/dps/slider_1.webp",
               videoUrl: rawVid || "/videos/campus_hero.mp4",
-              mobileVideoUrl: rawMobileVid || "/videos/campus_hero.mp4",
-              useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo),
+              mobileVideoUrl: rawMobileVid || "/videos/campus_hero_mobile.mp4",
+              useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo ?? true),
               mediaType: (isVideo ? "video" : "image") as "image" | "video",
               title: s.title,
               subtitle: s.subtitle || "",
@@ -132,8 +132,8 @@ export default function HeroSection() {
   const safeSlideIndex = activeSlides.length > 0 ? currentSlide % activeSlides.length : 0;
   const slide = activeSlides[safeSlideIndex] || DEFAULT_HERO_SLIDES[0];
 
-  const hasDedicatedMobileVideo = Boolean(isMobile && slide.useSeparateMobileVideo && slide.mobileVideoUrl);
-  const effectiveRawVideo = hasDedicatedMobileVideo ? slide.mobileVideoUrl : slide.videoUrl;
+  const hasDedicatedMobileVideo = Boolean(isMobile && (slide.useSeparateMobileVideo || slide.mobileVideoUrl));
+  const effectiveRawVideo = hasDedicatedMobileVideo && slide.mobileVideoUrl ? slide.mobileVideoUrl : slide.videoUrl;
   const hasVideo = slide.mediaType === "video" && Boolean(effectiveRawVideo);
 
   const videoSource = hasVideo
@@ -150,16 +150,17 @@ export default function HeroSection() {
       video.setAttribute("playsinline", "true");
       video.setAttribute("webkit-playsinline", "true");
       try {
-        video.load();
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => setIsPlayingVideo(true))
-            .catch(() => {
-              video.muted = true;
-              setIsMuted(true);
-              video.play().catch(() => {});
-            });
+        if (video.paused) {
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => setIsPlayingVideo(true))
+              .catch(() => {
+                video.muted = true;
+                setIsMuted(true);
+                video.play().catch(() => {});
+              });
+          }
         }
       } catch {
         // Safe catch
@@ -288,7 +289,7 @@ export default function HeroSection() {
               muted={isMuted}
               loop
               playsInline
-              preload="metadata"
+              preload="auto"
               onPlay={() => setIsPlayingVideo(true)}
               onPause={() => setIsPlayingVideo(false)}
               onVolumeChange={() => {

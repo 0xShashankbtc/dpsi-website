@@ -96,7 +96,7 @@ const createTrpcHandler = (endpoint: string) => async (c: any) => {
 
   if (isPublicQuery) {
     headers.set("Cache-Control", "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400");
-    headers.set("Vary", "x-tenant-id, Origin");
+    headers.set("Vary", "Accept-Encoding");
   } else {
     headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     headers.set("Pragma", "no-cache");

@@ -16,7 +16,7 @@ export const queryClient = new QueryClient({
       staleTime: 10 * 60 * 1000, // 10 minutes of instant fresh cache hits
       gcTime: 24 * 60 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: true,
+      refetchOnMount: false,
       refetchOnReconnect: true,
       retry: 1,
     },
