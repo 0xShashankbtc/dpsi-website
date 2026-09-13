@@ -154,104 +154,99 @@ const ICON_LOOKUP: Record<string, React.ComponentType<{ className?: string }>> =
 
 const CARD_THEMES = [
   {
-    // Card 01: Deep DPS Emerald Forest
-    bg: "#031710",
+    bg: "#06130D", // Deep emerald forest
     isDark: true,
-    textColor: "text-white",
+    textColor: "text-slate-100",
     badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
     catColor: "text-emerald-400",
     tagBg: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-    btnPrimary: "bg-emerald-600 hover:bg-emerald-500 text-white font-bold",
-    btnOutline: "border-emerald-500/30 text-emerald-200 hover:bg-emerald-950/60",
+    btnPrimary: "bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold",
+    btnOutline: "border-emerald-500/30 text-emerald-200 hover:bg-emerald-950/50",
     metricColor: "text-emerald-400",
-    subTextColor: "text-emerald-200/80",
+    subTextColor: "text-slate-300",
     descColor: "text-slate-300",
     highlightTextColor: "text-slate-200",
     checkColor: "text-emerald-400",
     borderTop: "border-emerald-500/20",
     imgBorder: "border-emerald-500/30",
     defaultSubBadge: "NITI Aayog Atal Tinkering Lab Certified",
-    scrollHintColor: "text-emerald-300/80",
+    scrollHintColor: "text-emerald-300/70",
   },
   {
-    // Card 02: Deep Marine Forest & Gold
-    bg: "#041a16",
+    bg: "#040F1E", // Deep oceanic navy (Image 1 Card 02)
     isDark: true,
-    textColor: "text-white",
-    badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    catColor: "text-emerald-300",
-    tagBg: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-    btnPrimary: "bg-emerald-600 hover:bg-emerald-500 text-white font-bold",
-    btnOutline: "border-emerald-500/30 text-emerald-200 hover:bg-emerald-950/60",
-    metricColor: "text-amber-400",
-    subTextColor: "text-emerald-200/80",
+    textColor: "text-slate-100",
+    badgeBg: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+    catColor: "text-cyan-400",
+    tagBg: "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
+    btnPrimary: "bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold",
+    btnOutline: "border-cyan-500/30 text-cyan-200 hover:bg-cyan-950/50",
+    metricColor: "text-cyan-400",
+    subTextColor: "text-slate-300",
     descColor: "text-slate-300",
     highlightTextColor: "text-slate-200",
-    checkColor: "text-emerald-400",
-    borderTop: "border-emerald-500/20",
-    imgBorder: "border-emerald-500/30",
+    checkColor: "text-cyan-400",
+    borderTop: "border-cyan-500/20",
+    imgBorder: "border-cyan-500/30",
     defaultSubBadge: "25m Competition Pool • All-Weather Heated",
-    scrollHintColor: "text-emerald-300/80",
+    scrollHintColor: "text-cyan-300/70",
   },
   {
-    // Card 03: Deep Pine & Royal Amber Gold
-    bg: "#091a13",
-    isDark: true,
-    textColor: "text-white",
-    badgeBg: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    catColor: "text-amber-400",
-    tagBg: "bg-amber-500/10 text-amber-300 border-amber-500/20",
-    btnPrimary: "bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold",
-    btnOutline: "border-amber-500/30 text-amber-200 hover:bg-amber-950/60",
-    metricColor: "text-amber-400",
-    subTextColor: "text-amber-200/80",
-    descColor: "text-slate-300",
-    highlightTextColor: "text-slate-200",
-    checkColor: "text-amber-400",
-    borderTop: "border-amber-500/20",
-    imgBorder: "border-amber-500/30",
-    defaultSubBadge: "Research-Grade Experimental Suites",
-    scrollHintColor: "text-amber-300/80",
+    bg: "#F8F6F0", // Warm luxury cream (Image 1 Card 03)
+    isDark: false,
+    textColor: "text-slate-900",
+    badgeBg: "bg-amber-800/10 text-amber-900 border-amber-800/20",
+    catColor: "text-amber-900",
+    tagBg: "bg-amber-900/10 text-amber-900 border-amber-900/20",
+    btnPrimary: "bg-slate-900 hover:bg-slate-800 text-white font-bold",
+    btnOutline: "border-slate-300 text-slate-800 hover:bg-slate-200",
+    metricColor: "text-amber-900",
+    subTextColor: "text-slate-700",
+    descColor: "text-slate-700",
+    highlightTextColor: "text-slate-800",
+    checkColor: "text-emerald-600",
+    borderTop: "border-slate-300",
+    imgBorder: "border-slate-300",
+    defaultSubBadge: "Exceeds CBSE Experimental Standards",
+    scrollHintColor: "text-slate-600",
   },
   {
-    // Card 04: Deep Prestige Jade & Gold
-    bg: "#061d15",
+    bg: "#17071A", // Deep royal aubergine
     isDark: true,
-    textColor: "text-white",
-    badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    catColor: "text-emerald-300",
-    tagBg: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-    btnPrimary: "bg-emerald-600 hover:bg-emerald-500 text-white font-bold",
-    btnOutline: "border-emerald-500/30 text-emerald-200 hover:bg-emerald-950/60",
-    metricColor: "text-emerald-400",
-    subTextColor: "text-emerald-200/80",
+    textColor: "text-slate-100",
+    badgeBg: "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30",
+    catColor: "text-fuchsia-400",
+    tagBg: "bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20",
+    btnPrimary: "bg-fuchsia-500 hover:bg-fuchsia-400 text-slate-950 font-bold",
+    btnOutline: "border-fuchsia-500/30 text-fuchsia-200 hover:bg-fuchsia-950/50",
+    metricColor: "text-fuchsia-400",
+    subTextColor: "text-slate-300",
     descColor: "text-slate-300",
     highlightTextColor: "text-slate-200",
-    checkColor: "text-emerald-400",
-    borderTop: "border-emerald-500/20",
-    imgBorder: "border-emerald-500/30",
+    checkColor: "text-fuchsia-400",
+    borderTop: "border-fuchsia-500/20",
+    imgBorder: "border-fuchsia-500/30",
     defaultSubBadge: "1,200 Seats • Acoustic Sound Engineering",
-    scrollHintColor: "text-emerald-300/80",
+    scrollHintColor: "text-fuchsia-300/70",
   },
   {
-    // Card 05: Deep Midnight Emerald
-    bg: "#02140e",
+    bg: "#070B16", // Deep midnight slate navy
     isDark: true,
-    textColor: "text-white",
-    badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    catColor: "text-emerald-400",
-    tagBg: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-    btnPrimary: "bg-emerald-600 hover:bg-emerald-500 text-white font-bold",
-    btnOutline: "border-emerald-500/30 text-emerald-200 hover:bg-emerald-950/60",
-    metricColor: "text-amber-400",
-    subTextColor: "text-emerald-200/80",
+    textColor: "text-slate-100",
+    badgeBg: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+    catColor: "text-indigo-400",
+    tagBg: "bg-indigo-500/10 text-indigo-300 border-indigo-500/20",
+    btnPrimary: "bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold",
+    btnOutline: "border-indigo-500/30 text-indigo-200 hover:bg-indigo-950/50",
+    metricColor: "text-indigo-400",
+    subTextColor: "text-slate-300",
     descColor: "text-slate-300",
     highlightTextColor: "text-slate-200",
-    checkColor: "text-emerald-400",
-    borderTop: "border-emerald-500/20",
-    imgBorder: "border-emerald-500/30",
+    checkColor: "text-indigo-400",
+    borderTop: "border-indigo-500/20",
+    imgBorder: "border-indigo-500/30",
     defaultSubBadge: "350+ AI Surveillance Nodes • 100% AC Fleet",
-    scrollHintColor: "text-emerald-300/80",
+    scrollHintColor: "text-indigo-300/70",
   },
 ];
 
@@ -319,9 +314,9 @@ export default function InteractiveFacilitiesSection() {
   return (
     <section
       id="interactive-facilities"
-      className="bg-gradient-to-b from-slate-950 via-[#021c14] to-[#031710] text-white relative border-none"
+      className="bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-white relative border-none"
     >
-      {/* Editorial Section Header (DPS Emerald Theme) */}
+      {/* Editorial Section Header (Light Theme & Centered) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -332,34 +327,40 @@ export default function InteractiveFacilitiesSection() {
         >
           {/* Eyebrow Badge — Clean, no emojis */}
           <div className="flex items-center justify-center mb-4">
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-widest border border-emerald-500/30 shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-400 text-xs font-bold uppercase tracking-widest border border-emerald-200 dark:border-emerald-500/20 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               World-Class Infrastructure & Learning Ecosystems
             </span>
           </div>
 
           {/* Main Title */}
-          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white mb-4">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white mb-4">
             Architected for{" "}
-            <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-amber-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-800 dark:from-emerald-400 dark:via-teal-300 dark:to-amber-300 bg-clip-text text-transparent">
               Curiosity & Excellence
             </span>
           </h2>
 
           {/* Subtitle */}
-          <p className="text-slate-300 text-base sm:text-lg md:text-xl font-normal max-w-3xl mx-auto leading-relaxed mb-6">
+          <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg md:text-xl font-normal max-w-3xl mx-auto leading-relaxed mb-6">
             Immerse yourself in our premier educational facilities, research laboratories, and athletic arenas designed to inspire holistic leadership at Delhi Public School Indirapuram.
           </p>
 
           {/* Direct Action Link */}
           <div className="flex items-center justify-center">
             <Button
-              className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs sm:text-sm font-bold px-5 py-2.5 h-auto shadow-md shadow-emerald-950/40 transition-all hover:scale-105 cursor-pointer"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs sm:text-sm font-bold px-5 py-2.5 h-auto shadow-sm transition-all hover:scale-105 cursor-pointer"
               asChild
             >
-              <a href="#all-facilities">
-                View All 12+ Facilities <ArrowUpRight className="w-4 h-4 ml-1.5" />
-              </a>
+              {typeof window !== "undefined" && window.location.pathname.startsWith("/facilities") ? (
+                <a href="#all-facilities">
+                  View All 12+ Facilities <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                </a>
+              ) : (
+                <Link to="/facilities">
+                  View All 12+ Facilities <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                </Link>
+              )}
             </Button>
           </div>
         </motion.div>
