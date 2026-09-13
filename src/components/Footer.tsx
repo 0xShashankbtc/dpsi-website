@@ -144,7 +144,7 @@ export default function Footer() {
                 Quick Links
               </h4>
               <ul className="space-y-2.5">
-                {quickLinks.map((link) => (
+                {quickLinks.map((link: any) => (
                   <li
                     key={link.label}
                     className="group inline-flex w-full cursor-pointer items-center justify-start gap-1.5"
@@ -172,7 +172,7 @@ export default function Footer() {
                 Resources
               </h4>
               <ul className="space-y-2.5">
-                {resources.map((link) => (
+                {resources.map((link: any) => (
                   <li
                     key={link.label}
                     className="group inline-flex w-full cursor-pointer items-center justify-start gap-1.5"

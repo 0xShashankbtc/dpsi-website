@@ -282,7 +282,7 @@ export default function VideoGallerySection() {
 
           {/* Thumbnail Selector Strip */}
           <div className="mt-8 flex items-center justify-center gap-3 overflow-x-auto max-w-3xl mx-auto py-2">
-            {videos.map((vid, index) => (
+            {videos.map((vid: any, index: number) => (
               <motion.button
                 key={vid.id}
                 whileHover={{ scale: 1.05 }}

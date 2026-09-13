@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { optimizeMediaUrl } from "../../src/sections/HeroSection";
+import { optimizeMediaUrl } from "../../src/lib/mediaUtils";
 
 describe("Frontend Core & Instrumentation Unit Tests", () => {
   describe("Hero Media URL Optimizer (optimizeMediaUrl)", () => {

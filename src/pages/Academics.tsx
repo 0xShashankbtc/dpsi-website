@@ -227,7 +227,7 @@ export default function Academics() {
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie data={streamData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                        {streamData.map((entry, index) => (
+                        {streamData.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -235,7 +235,7 @@ export default function Academics() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="flex justify-center gap-4 mt-2 flex-wrap">
-                    {streamData.map((s) => (
+                    {streamData.map((s: any) => (
                       <div key={s.name} className="flex items-center gap-2 text-sm">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
                         <span>{s.name} ({s.value}%)</span>

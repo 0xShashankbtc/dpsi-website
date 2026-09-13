@@ -10,32 +10,8 @@ import {
   Maximize2,
 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
-
-export function optimizeMediaUrl(url?: string, _isMobile: boolean = false): string {
-  if (!url || typeof url !== "string") return "";
-  const clean = url.trim();
-  if (clean.includes("cloudinary.com") && clean.includes("/video/upload/")) {
-    const uploadIdx = clean.indexOf("/video/upload/");
-    const afterUpload = clean.substring(uploadIdx + "/video/upload/".length);
-    const parts = afterUpload.split("/");
-    const hasTransform = parts.length > 1 && !/^v\d+$/.test(parts[0]);
-    const cleanPath = hasTransform ? parts.slice(1).join("/") : afterUpload;
-
-    // Deliver pristine 1080p 60fps video on all devices (mobile & desktop).
-    // On mobile devices, because the video is landscape (16:9) and rendered with object-cover on tall portrait screens (852px-932px height),
-    // downscaling to w_720 gave only ~404px vertical resolution, which caused severe pixelation and blurriness when stretched over a 2556px+ Retina display.
-    // Serving w_1920 ensures full 1080 vertical lines, delivering razor-sharp HD clarity with hardware-accelerated H.264 decoding.
-    return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:best,vc_auto,w_1920,c_limit/${cleanPath}`;
-  }
-  if (clean.includes("cloudinary.com") && clean.includes("/image/upload/")) {
-    if (clean.includes("/image/upload/q_auto:best")) return clean;
-    return clean.replace(
-      "/image/upload/",
-      "/image/upload/q_auto:best,f_auto,w_2560,c_limit/"
-    );
-  }
-  return clean;
-}
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
+export { optimizeMediaUrl };
 
 const CACHED_SLIDERS_KEY = "dpsi_cached_hero_sliders_v2";
 
@@ -386,7 +362,7 @@ export default function HeroSection() {
               <ChevronLeft className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-1.5 px-1">
-              {activeSlides.map((_, idx) => (
+              {activeSlides.map((_: any, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentSlide(idx)}

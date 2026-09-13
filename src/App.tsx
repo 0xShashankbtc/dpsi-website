@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router'
 import ErrorBoundary from './components/ErrorBoundary'
 import { idlePrefetchTopRoutes } from './lib/routePreloader'
 import { trpc } from './providers/trpc'
+import { Toaster } from 'sonner'
 
 const Home = lazy(() => import('./pages/Home'))
 const About = lazy(() => import('./pages/About'))
@@ -62,6 +63,7 @@ export default function App() {
 
   return (
     <ErrorBoundary fallbackTitle="Application Interface Notice">
+      <Toaster richColors position="top-right" closeButton duration={4000} />
       <ScrollToTop />
       <Suspense fallback={<PageLoader />}>
         <Routes>

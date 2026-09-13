@@ -41,7 +41,7 @@ export default function Gallery() {
   // Extract dynamic categories
   const categories = useMemo(() => {
     const cats = new Set<string>(["All"]);
-    liveItems.forEach((item) => {
+    liveItems.forEach((item: any) => {
       if (item.category) cats.add(item.category);
     });
     return Array.from(cats);
@@ -49,12 +49,12 @@ export default function Gallery() {
 
   const filtered = useMemo(() => {
     if (selectedCategory === "All") return liveItems;
-    return liveItems.filter((g) => g.category?.toLowerCase() === selectedCategory.toLowerCase());
+    return liveItems.filter((g: any) => g.category?.toLowerCase() === selectedCategory.toLowerCase());
   }, [liveItems, selectedCategory]);
 
   // Construct dynamic 3D Coverflow slides
   const coverflowSlides: CoverflowSlide[] = useMemo(() => {
-    return liveItems.slice(0, 10).map((item) => ({
+    return liveItems.slice(0, 10).map((item: any) => ({
       src: item.imageUrl,
       alt: item.title,
       title: item.title,
@@ -185,7 +185,7 @@ export default function Gallery() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filtered.map((item, i) => (
+              {filtered.map((item: any, i: number) => (
                 <motion.div
                   key={item.id || i}
                   layout

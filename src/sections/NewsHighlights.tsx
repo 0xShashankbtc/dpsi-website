@@ -45,12 +45,12 @@ export default function NewsHighlights() {
         }))
       : fallbackActivities;
 
-  const categories = ["All", ...Array.from(new Set(allNews.map((item) => item.category || "Campus Update")))];
+  const categories: string[] = ["All", ...Array.from(new Set<string>(allNews.map((item: any) => String(item.category || "Campus Update"))))];
 
   const filteredNews =
     activeCategory === "All"
       ? allNews.slice(0, 6)
-      : allNews.filter((item) => (item.category || "Campus Update") === activeCategory).slice(0, 6);
+      : allNews.filter((item: any) => (item.category || "Campus Update") === activeCategory).slice(0, 6);
 
   if (!isLoading && allNews.length === 0) return null;
 
@@ -92,7 +92,7 @@ export default function NewsHighlights() {
         {/* Interactive Filter Pills */}
         {categories.length > 2 && (
           <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
-            {categories.map((cat) => {
+            {categories.map((cat: string) => {
               const isSelected = activeCategory === cat;
               return (
                 <button
@@ -135,7 +135,7 @@ export default function NewsHighlights() {
         ) : (
           <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence mode="popLayout">
-              {filteredNews.map((item) => (
+              {filteredNews.map((item: any) => (
                 <motion.div
                   key={item.id}
                   layout

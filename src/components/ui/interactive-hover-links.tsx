@@ -22,7 +22,7 @@ export function InteractiveHoverLinks({
   className = "",
   onLinkClick,
 }: InteractiveHoverLinksProps) {
-  const { data: dbMenus } = trpc.cms.listMenus.useQuery({ location: "header" });
+  trpc.cms.listMenus.useQuery({ location: "header" });
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
   // If custom links were passed via props, use them
@@ -106,7 +106,7 @@ function LinkItem({ heading, imgSrc, subheading, href, onLinkClick }: LinkItemPr
   const rotate = useTransform(mouseXSpring, [-0.5, 0.5], [-8, 8]);
 
   const handleMouseMove = (
-    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+    e: React.MouseEvent<HTMLElement>
   ) => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();

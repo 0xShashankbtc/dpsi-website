@@ -903,7 +903,7 @@ export default function AdminCMS() {
   });
 
   const uploadCacheImageMutation = trpc.cms.uploadCacheImage.useMutation({
-    onSuccess: (res) => {
+    onSuccess: () => {
       toast.success("Modal memory cache image updated and CDN synchronized!");
       refetchSiteSettings();
       utils.cms.getSiteSettings.invalidate();
@@ -3172,7 +3172,8 @@ export default function AdminCMS() {
                                 reader.onload = () => {
                                   uploadCacheImageMutation.mutate({
                                     fileName: file.name,
-                                    fileData: reader.result as string,
+                                    fileType: file.type,
+                                    base64Data: reader.result as string,
                                   });
                                 };
                                 reader.onerror = () => {
@@ -3889,7 +3890,8 @@ export default function AdminCMS() {
                               className="text-slate-600 hover:bg-slate-100 h-8 px-2 cursor-pointer"
                               title="Edit Slider"
                               onClick={() => {
-                                setEditingSlider(s._id);
+                                const targetId = String((s as any)._id || (s as any).id || "");
+                                setEditingSlider(targetId);
                                 setSliderForm({
                                   title: s.title || "",
                                   subtitle: s.subtitle || "",
@@ -3910,9 +3912,15 @@ export default function AdminCMS() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-red-600 hover:bg-red-50 h-8 px-2 cursor-pointer"
+                              disabled={deleteSlider.isPending}
+                              className="text-red-600 hover:bg-red-50 h-8 px-2 cursor-pointer disabled:opacity-50"
                               title="Delete Slider"
-                              onClick={() => deleteSlider.mutate({ id: s._id })}
+                              onClick={() => {
+                                const targetId = String((s as any)._id || (s as any).id || "");
+                                if (confirm("Are you sure you want to delete this hero slider?")) {
+                                  deleteSlider.mutate({ id: targetId });
+                                }
+                              }}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -4392,7 +4400,7 @@ export default function AdminCMS() {
                             onClick={() => {
                               const vId = String(val._id || val.id);
                               if (confirm(`Are you sure you want to delete core value "${val.title || 'this value'}"?`)) {
-                                deleteCoreValue.mutate(vId);
+                                deleteCoreValue.mutate({ id: vId });
                               }
                             }}
                           >
@@ -4476,7 +4484,7 @@ export default function AdminCMS() {
                             onClick={() => {
                               const tId = String(item._id || item.id);
                               if (confirm(`Are you sure you want to delete timeline item "${item.title || item.year}"?`)) {
-                                deleteTimelineItem.mutate(tId);
+                                deleteTimelineItem.mutate({ id: tId });
                               }
                             }}
                           >
@@ -7000,11 +7008,24 @@ export default function AdminCMS() {
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <Button variant="outline" onClick={() => setGalleryModal(false)} className="text-slate-600 text-xs">Cancel</Button>
                 <Button
-                  disabled={!galleryForm.imageUrl || isUploading}
-                  onClick={() => createGalleryImage.mutate(galleryForm)}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm"
+                  disabled={isUploading || createGalleryImage.isPending}
+                  onClick={() => {
+                    if (isUploading) {
+                      toast.error("Please wait for media upload to finish before saving");
+                      return;
+                    }
+                    if (!galleryForm.imageUrl?.trim()) {
+                      toast.error("Please upload or enter an image URL");
+                      return;
+                    }
+                    createGalleryImage.mutate(galleryForm);
+                  }}
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm flex items-center gap-1.5"
                 >
-                  Save Image
+                  {createGalleryImage.isPending && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
+                  {isUploading ? "Uploading..." : createGalleryImage.isPending ? "Saving..." : "Save Image"}
                 </Button>
               </div>
             </div>
@@ -7355,24 +7376,44 @@ export default function AdminCMS() {
                   Cancel
                 </Button>
                 <Button
-                  disabled={
-                    (sliderForm.mediaType === "video" ? !sliderForm.videoUrl : !sliderForm.imageUrl) ||
-                    isUploading
-                  }
+                  disabled={isUploading || updateSlider.isPending || createSlider.isPending}
                   onClick={() => {
+                    if (isUploading) {
+                      toast.error("Please wait for media upload to finish before saving");
+                      return;
+                    }
+                    if (sliderForm.mediaType === "video" && !sliderForm.videoUrl?.trim()) {
+                      toast.error("Please provide a video URL or upload a video file for this slider");
+                      return;
+                    }
+                    if (sliderForm.mediaType === "image" && !sliderForm.imageUrl?.trim()) {
+                      toast.error("Please provide an image URL or upload an image file for this slider");
+                      return;
+                    }
                     const payload = { ...sliderForm };
                     if (payload.mediaType === "video" && !payload.imageUrl) {
                       payload.imageUrl = "/images/dps/slider_1.webp";
                     }
                     if (editingSlider) {
-                      updateSlider.mutate({ id: editingSlider, ...payload });
+                      updateSlider.mutate({ id: String(editingSlider), ...payload });
                     } else {
                       createSlider.mutate(payload);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
                 >
-                  {isUploading ? "Uploading..." : editingSlider ? "Update Slider" : "Save Slider"}
+                  {(updateSlider.isPending || createSlider.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
+                  {isUploading
+                    ? "Uploading..."
+                    : updateSlider.isPending
+                    ? "Updating Slider..."
+                    : createSlider.isPending
+                    ? "Saving Slider..."
+                    : editingSlider
+                    ? "Update Slider"
+                    : "Save Slider"}
                 </Button>
               </div>
             </div>
@@ -7506,10 +7547,18 @@ export default function AdminCMS() {
                 </Button>
                 <Button
                   type="button"
-                  disabled={!videoForm.title.trim() || !videoForm.youtubeUrl.trim() || createVideo.isPending || updateVideo.isPending}
+                  disabled={createVideo.isPending || updateVideo.isPending}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (!videoForm.title.trim()) {
+                      toast.error("Please enter a video title");
+                      return;
+                    }
+                    if (!videoForm.youtubeUrl.trim()) {
+                      toast.error("Please enter a YouTube video URL or ID");
+                      return;
+                    }
                     const payload = {
                       title: videoForm.title.trim(),
                       category: videoForm.category || "Events",
@@ -7522,8 +7571,11 @@ export default function AdminCMS() {
                       createVideo.mutate(payload);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs cursor-pointer shadow-sm font-semibold"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs cursor-pointer shadow-sm font-semibold flex items-center gap-1.5"
                 >
+                  {(createVideo.isPending || updateVideo.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
                   {createVideo.isPending || updateVideo.isPending
                     ? "Saving..."
                     : editingVideoId
@@ -7647,11 +7699,19 @@ export default function AdminCMS() {
                   Cancel
                 </Button>
                 <Button
-                  disabled={!menuForm.title || !menuForm.url || updateMenu.isPending || createMenu.isPending}
+                  disabled={updateMenu.isPending || createMenu.isPending}
                   onClick={() => {
+                    if (!menuForm.title?.trim()) {
+                      toast.error("Please enter a menu title");
+                      return;
+                    }
+                    if (!menuForm.url?.trim()) {
+                      toast.error("Please enter a navigation URL for the menu item");
+                      return;
+                    }
                     if (editingMenuId) {
                       updateMenu.mutate({
-                        id: editingMenuId,
+                        id: String(editingMenuId),
                         ...menuForm,
                         isDeleted: false,
                       });
@@ -7659,8 +7719,11 @@ export default function AdminCMS() {
                       createMenu.mutate(menuForm);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm flex items-center gap-1.5"
                 >
+                  {(updateMenu.isPending || createMenu.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
                   {editingMenuId
                     ? (updateMenu.isPending ? "Updating..." : "Update Menu Item")
                     : (createMenu.isPending ? "Saving..." : "Save Menu Item")}
@@ -7867,23 +7930,42 @@ export default function AdminCMS() {
                   Cancel
                 </Button>
                 <Button
-                  disabled={!tcForm.admissionNumber || !tcForm.studentName || !tcForm.dob || createTc.isPending || updateTc.isPending}
+                  disabled={createTc.isPending || updateTc.isPending || isUploading}
                   onClick={() => {
+                    if (isUploading) {
+                      toast.error("Please wait for the document upload to finish");
+                      return;
+                    }
+                    if (!tcForm.admissionNumber?.trim()) {
+                      toast.error("Please enter the student's admission number");
+                      return;
+                    }
+                    if (!tcForm.studentName?.trim()) {
+                      toast.error("Please enter the student's name");
+                      return;
+                    }
+                    if (!tcForm.dob?.trim()) {
+                      toast.error("Please enter the student's date of birth");
+                      return;
+                    }
                     const payload = {
                       ...tcForm,
                       certificatePdfUrl: tcForm.certificatePdfUrl || "https://dpsindirapuram.com/tc/sample.pdf",
                     };
                     if (editingTcId) {
                       updateTc.mutate({
-                        id: editingTcId,
+                        id: String(editingTcId),
                         ...payload,
                       });
                     } else {
                       createTc.mutate(payload);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
                 >
+                  {(createTc.isPending || updateTc.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
                   {editingTcId
                     ? (updateTc.isPending ? "Updating..." : "Update TC Record")
                     : (createTc.isPending ? "Saving..." : "Save TC Record")}
@@ -8008,17 +8090,30 @@ export default function AdminCMS() {
                   Cancel
                 </Button>
                 <Button
-                  disabled={!popupForm.title}
+                  disabled={updatePopup.isPending || createPopup.isPending || isUploading}
                   onClick={() => {
+                    if (isUploading) {
+                      toast.error("Please wait for the image upload to finish");
+                      return;
+                    }
+                    if (!popupForm.title?.trim()) {
+                      toast.error("Please enter a title for the popup notice");
+                      return;
+                    }
                     if (editingPopup) {
-                      updatePopup.mutate({ id: editingPopup, ...popupForm });
+                      updatePopup.mutate({ id: String(editingPopup), ...popupForm });
                     } else {
                       createPopup.mutate(popupForm);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm flex items-center gap-1.5"
                 >
-                  {editingPopup ? "Update Popup" : "Publish Popup"}
+                  {(updatePopup.isPending || createPopup.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
+                  {editingPopup
+                    ? (updatePopup.isPending ? "Updating..." : "Update Popup")
+                    : (createPopup.isPending ? "Publishing..." : "Publish Popup")}
                 </Button>
               </div>
             </div>
@@ -8257,17 +8352,26 @@ export default function AdminCMS() {
                   Cancel
                 </Button>
                 <Button
-                  disabled={!marqueeForm.text.trim()}
+                  disabled={updateMarquee.isPending || createMarquee.isPending}
                   onClick={() => {
+                    if (!marqueeForm.text.trim()) {
+                      toast.error("Please enter announcement text for the ticker marquee");
+                      return;
+                    }
                     if (editingMarquee) {
-                      updateMarquee.mutate({ id: editingMarquee, ...marqueeForm });
+                      updateMarquee.mutate({ id: String(editingMarquee), ...marqueeForm });
                     } else {
                       createMarquee.mutate(marqueeForm);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer flex items-center gap-1.5"
                 >
-                  {editingMarquee ? "Update Marquee" : "Save Marquee"}
+                  {(updateMarquee.isPending || createMarquee.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
+                  {editingMarquee
+                    ? (updateMarquee.isPending ? "Updating..." : "Update Marquee")
+                    : (createMarquee.isPending ? "Saving..." : "Save Marquee")}
                 </Button>
               </div>
             </div>
@@ -8331,16 +8435,30 @@ export default function AdminCMS() {
                   Cancel
                 </Button>
                 <Button
+                  disabled={updateActivity.isPending || createActivity.isPending}
                   onClick={() => {
+                    if (!activityForm.title?.trim()) {
+                      toast.error("Please enter a title for the activity");
+                      return;
+                    }
+                    if (!activityForm.description?.trim()) {
+                      toast.error("Please enter a description for the activity");
+                      return;
+                    }
                     if (editingActivity) {
-                      updateActivity.mutate({ id: editingActivity, ...activityForm });
+                      updateActivity.mutate({ id: String(editingActivity), ...activityForm });
                     } else {
                       createActivity.mutate(activityForm);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm flex items-center gap-1.5"
                 >
-                  {editingActivity ? "Update Activity" : "Save Activity"}
+                  {(updateActivity.isPending || createActivity.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
+                  {editingActivity
+                    ? (updateActivity.isPending ? "Updating..." : "Update Activity")
+                    : (createActivity.isPending ? "Saving..." : "Save Activity")}
                 </Button>
               </div>
             </div>
@@ -8366,24 +8484,27 @@ export default function AdminCMS() {
                 </button>
               </div>
 
-              <Input
-                placeholder="Document Title"
-                value={attachmentForm.title}
-                onChange={(e) => setAttachmentForm({ ...attachmentForm, title: e.target.value })}
-                className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-              />
-              <Input
-                placeholder="Category (e.g. Circulars, DateSheet, Syllabus)"
-                value={attachmentForm.category}
-                onChange={(e) => setAttachmentForm({ ...attachmentForm, category: e.target.value })}
-                className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-              />
-              <Input
-                placeholder="File URL / PDF Link"
-                value={attachmentForm.fileUrl}
-                onChange={(e) => setAttachmentForm({ ...attachmentForm, fileUrl: e.target.value, fileName: e.target.value.split("/").pop() || "doc.pdf" })}
-                className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-              />
+              <div className="space-y-3">
+                <Input
+                  placeholder="Title (e.g. Fee Structure 2026-27)"
+                  value={attachmentForm.title}
+                  onChange={(e) => setAttachmentForm({ ...attachmentForm, title: e.target.value })}
+                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                />
+                <Input
+                  placeholder="Category (e.g. Circulars, DateSheet, Syllabus)"
+                  value={attachmentForm.category}
+                  onChange={(e) => setAttachmentForm({ ...attachmentForm, category: e.target.value })}
+                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                />
+                <Input
+                  placeholder="File URL / PDF Link"
+                  value={attachmentForm.fileUrl}
+                  onChange={(e) => setAttachmentForm({ ...attachmentForm, fileUrl: e.target.value, fileName: e.target.value.split("/").pop() || "document.pdf" })}
+                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+                />
+              </div>
+
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <Button
                   variant="outline"
@@ -8396,16 +8517,30 @@ export default function AdminCMS() {
                   Cancel
                 </Button>
                 <Button
+                  disabled={updateAttachment.isPending || createAttachment.isPending}
                   onClick={() => {
+                    if (!attachmentForm.title?.trim()) {
+                      toast.error("Please enter a title for the attachment");
+                      return;
+                    }
+                    if (!attachmentForm.fileUrl?.trim()) {
+                      toast.error("Please enter or upload a file URL");
+                      return;
+                    }
                     if (editingAttachment) {
-                      updateAttachment.mutate({ id: editingAttachment, ...attachmentForm });
+                      updateAttachment.mutate({ id: String(editingAttachment), ...attachmentForm });
                     } else {
                       createAttachment.mutate(attachmentForm);
                     }
                   }}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm flex items-center gap-1.5"
                 >
-                  {editingAttachment ? "Update Attachment" : "Save Attachment"}
+                  {(updateAttachment.isPending || createAttachment.isPending) && (
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                  )}
+                  {editingAttachment
+                    ? (updateAttachment.isPending ? "Updating..." : "Update Attachment")
+                    : (createAttachment.isPending ? "Saving..." : "Save Attachment")}
                 </Button>
               </div>
             </div>

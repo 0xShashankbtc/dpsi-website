@@ -98,7 +98,7 @@ export default function TestimonialsSection() {
               </motion.div>
 
               <div className="flex items-center gap-2">
-                {testimonials.map((_, i) => (
+                {testimonials.map((_: any, i: number) => (
                   <motion.button
                     key={i}
                     onClick={() => setCurrent(i)}

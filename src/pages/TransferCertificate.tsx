@@ -9,7 +9,6 @@ import {
   Calendar,
   UserCheck,
   CheckCircle2,
-  FileCheck2,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";

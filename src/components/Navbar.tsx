@@ -374,7 +374,7 @@ export default function Navbar() {
             </Link>
 
             <nav className="hidden lg:flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-2 shrink min-w-0" onMouseLeave={() => setHoveredLink(null)}>
-              {visibleNavItems.map((link) => {
+              {visibleNavItems.map((link: any) => {
                 const isActive =
                   location.pathname === link.href ||
                   (link.href !== "/" && location.pathname.startsWith(link.href));
@@ -790,7 +790,7 @@ export default function Navbar() {
                   }}
                   className="space-y-1 pt-1"
                 >
-                  {activeNavItems.map((link) => {
+                  {activeNavItems.map((link: any) => {
                     const isActive = location.pathname === link.href;
                     return (
                       <motion.div

@@ -21,7 +21,6 @@ import {
   CheckCircle2,
   ArrowRight,
   ShieldCheck,
-  Compass,
   Phone,
   Calendar,
 } from "lucide-react";

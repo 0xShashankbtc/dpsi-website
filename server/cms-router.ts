@@ -1293,7 +1293,10 @@ export const cmsRouter = createRouter({
     )
     .mutation(async ({ input, ctx }) => {
       const { Slider } = await getMainModels();
-      const sliderId = String(input.id?._id || input.id);
+      const rawId = typeof input.id === "object" && input.id !== null
+        ? (input.id._id || input.id.id || input.id)
+        : input.id;
+      const sliderId = String(rawId);
       const { id, ...data } = input as any;
       if (data.buttonLink && !data.linkUrl) {
         data.linkUrl = data.buttonLink;
@@ -1301,13 +1304,31 @@ export const cmsRouter = createRouter({
       if (data.linkUrl && !data.buttonLink) {
         data.buttonLink = data.linkUrl;
       }
-      const updated = await Slider.findByIdAndUpdate(sliderId, data, { new: true });
+
+      let updated: any = null;
+      if (mongoose.Types.ObjectId.isValid(sliderId)) {
+        updated = await Slider.findByIdAndUpdate(sliderId, data, { new: true, returnDocument: 'after' as any });
+      }
+      if (!updated) {
+        updated = await Slider.findOneAndUpdate(
+          { $or: [{ _id: sliderId }, { id: sliderId }] },
+          data,
+          { new: true, returnDocument: 'after' as any }
+        );
+      }
+      if (!updated) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Hero slider not found for ID: ${sliderId}`,
+        });
+      }
+
       await createImmutableAuditLog({
         action: "UPDATE_SLIDER",
         module: "Sliders",
         performedBy: ctx.user?.username || "Admin",
         documentId: sliderId,
-        details: `Updated hero slider: ${updated?.title}`,
+        details: `Updated hero slider: ${updated?.title || sliderId}`,
       });
       invalidateCache("cms:sliders");
       return updated;
@@ -1316,7 +1337,9 @@ export const cmsRouter = createRouter({
     .input(z.object({ id: z.union([z.string(), z.any()]) }))
     .mutation(async ({ input, ctx }) => {
       const { Slider } = await getMainModels();
-      const rawId = input.id?._id || input.id;
+      const rawId = typeof input.id === "object" && input.id !== null
+        ? (input.id._id || input.id.id || input.id)
+        : input.id;
       const sliderId = String(rawId);
 
       let deleted: any = null;
@@ -3080,7 +3103,13 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { BoardResult } = await getMainModels();
       const created = await BoardResult.create({ ...input, isActive: true });
-      await writeAuditLog(ctx, { action: "CREATE", module: "BoardResults", documentId: String(created._id), details: `Created board result for year: ${input.year}` });
+      await createImmutableAuditLog({
+        action: "CREATE_BOARD_RESULT",
+        module: "BoardResults",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: String(created._id),
+        details: `Created board result for year: ${input.year}`,
+      });
       invalidateCache("cms:boardResults");
       return created;
     }),
@@ -3098,7 +3127,13 @@ export const cmsRouter = createRouter({
       const { BoardResult } = await getMainModels();
       const { id, ...data } = input;
       const updated = await BoardResult.findByIdAndUpdate(id, data, { new: true });
-      await writeAuditLog(ctx, { action: "UPDATE", module: "BoardResults", documentId: id, details: `Updated board result ${id}` });
+      await createImmutableAuditLog({
+        action: "UPDATE_BOARD_RESULT",
+        module: "BoardResults",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: id,
+        details: `Updated board result ${id}`,
+      });
       invalidateCache("cms:boardResults");
       return updated;
     }),
@@ -3108,7 +3143,13 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input: id, ctx }) => {
       const { BoardResult } = await getMainModels();
       const deleted = await BoardResult.findByIdAndDelete(id);
-      await writeAuditLog(ctx, { action: "DELETE", module: "BoardResults", documentId: id, details: `Deleted board result ${deleted?.year || id}` });
+      await createImmutableAuditLog({
+        action: "DELETE_BOARD_RESULT",
+        module: "BoardResults",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: id,
+        details: `Deleted board result ${deleted?.year || id}`,
+      });
       invalidateCache("cms:boardResults");
       return { success: true };
     }),
@@ -3131,7 +3172,13 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       const { StreamDistribution } = await getMainModels();
       const created = await StreamDistribution.create({ ...input, isActive: true });
-      await writeAuditLog(ctx, { action: "CREATE", module: "StreamDistribution", documentId: String(created._id), details: `Created stream: ${input.name}` });
+      await createImmutableAuditLog({
+        action: "CREATE_STREAM_DISTRIBUTION",
+        module: "StreamDistribution",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: String(created._id),
+        details: `Created stream: ${input.name}`,
+      });
       invalidateCache("cms:streamDistributions");
       return created;
     }),
@@ -3149,7 +3196,13 @@ export const cmsRouter = createRouter({
       const { StreamDistribution } = await getMainModels();
       const { id, ...data } = input;
       const updated = await StreamDistribution.findByIdAndUpdate(id, data, { new: true });
-      await writeAuditLog(ctx, { action: "UPDATE", module: "StreamDistribution", documentId: id, details: `Updated stream ${id}` });
+      await createImmutableAuditLog({
+        action: "UPDATE_STREAM_DISTRIBUTION",
+        module: "StreamDistribution",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: id,
+        details: `Updated stream ${id}`,
+      });
       invalidateCache("cms:streamDistributions");
       return updated;
     }),
@@ -3159,7 +3212,13 @@ export const cmsRouter = createRouter({
     .mutation(async ({ input: id, ctx }) => {
       const { StreamDistribution } = await getMainModels();
       const deleted = await StreamDistribution.findByIdAndDelete(id);
-      await writeAuditLog(ctx, { action: "DELETE", module: "StreamDistribution", documentId: id, details: `Deleted stream ${deleted?.name || id}` });
+      await createImmutableAuditLog({
+        action: "DELETE_STREAM_DISTRIBUTION",
+        module: "StreamDistribution",
+        performedBy: ctx.user?.username || "Admin",
+        documentId: id,
+        details: `Deleted stream ${deleted?.name || id}`,
+      });
       invalidateCache("cms:streamDistributions");
       return { success: true };
     }),
