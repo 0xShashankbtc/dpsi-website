@@ -219,14 +219,14 @@ describe("Cache Layer & Upload Security Audit", () => {
 });
 
 describe("Footer Credit Line & Site Settings Contract", () => {
-  const defaultCredit = "developed by Shashank Jangid";
+  const defaultCredit = "Developed by : Shashank Jangid";
 
   it("formats developer credit cleanly without Orange badge", () => {
-    expect(defaultCredit).toBe("developed by Shashank Jangid");
+    expect(defaultCredit).toBe("Developed by : Shashank Jangid");
     expect(defaultCredit.toLowerCase()).not.toContain("orange");
 
     const textPart = defaultCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim();
-    expect(textPart).toBe("developed by Shashank Jangid");
+    expect(textPart).toBe("Developed by : Shashank Jangid");
   });
 
   it("allows arbitrary admin overrides for footer_credit", () => {

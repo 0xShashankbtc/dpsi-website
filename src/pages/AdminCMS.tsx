@@ -6096,7 +6096,7 @@ export default function AdminCMS() {
                         onClick={() => {
                           const creditVal = settingsEdits["footer_credit"] !== undefined
                             ? settingsEdits["footer_credit"]
-                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "developed by Shashank Jangid");
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid");
                           const copyVal = settingsEdits["footer_copyright"] !== undefined
                             ? settingsEdits["footer_copyright"]
                             : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
@@ -6126,7 +6126,7 @@ export default function AdminCMS() {
                         {(() => {
                           const previewCredit = settingsEdits["footer_credit"] !== undefined
                             ? settingsEdits["footer_credit"]
-                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "developed by Shashank Jangid");
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid");
                           const previewCopy = settingsEdits["footer_copyright"] !== undefined
                             ? settingsEdits["footer_copyright"]
                             : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
@@ -6139,7 +6139,7 @@ export default function AdminCMS() {
                                 </p>
                                 {previewCredit && (
                                   <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm">
-                                    <span>{previewCredit.replace(/\s*\(?Orange\)?\s*/gi, "").replace(/:\s*/, "").trim()}</span>
+                                    <span>{previewCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim()}</span>
                                   </div>
                                 )}
                                 <div className="p-2 rounded-full bg-emerald-700 text-white opacity-80 cursor-default">
@@ -6156,15 +6156,15 @@ export default function AdminCMS() {
                         <div className="space-y-1.5">
                           <label className="text-[11px] font-semibold text-slate-700">Developer Credit Text</label>
                           <Input
-                            placeholder="developed by Shashank Jangid"
+                            placeholder="Developed by : Shashank Jangid"
                             value={settingsEdits["footer_credit"] !== undefined
                               ? settingsEdits["footer_credit"]
-                              : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "developed by Shashank Jangid")}
+                              : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid")}
                             onChange={(e) => setSettingsEdits({ ...settingsEdits, footer_credit: e.target.value })}
                             className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
                           />
                           <p className="text-[10px] text-slate-400">
-                            Default: developed by Shashank Jangid
+                            Default: Developed by : Shashank Jangid
                           </p>
                         </div>
                         <div className="space-y-1.5">

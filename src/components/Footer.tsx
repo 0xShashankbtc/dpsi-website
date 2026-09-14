@@ -44,7 +44,7 @@ export default function Footer() {
   );
   const footerCredit = getSetting(
     "footer_credit",
-    "developed by Shashank Jangid"
+    "Developed by : Shashank Jangid"
   );
 
   const rawQuick = dbQuickMenus && dbQuickMenus.length > 0 ? dbQuickMenus : DEFAULT_FOOTER_QUICK_MENUS;
@@ -259,9 +259,7 @@ export default function Footer() {
           <div className="flex justify-center items-center">
             {footerCredit && (
               <p className="text-[11px] text-slate-500/70 font-normal tracking-wide select-none hover:text-slate-400 transition-colors">
-                {footerCredit.replace(/\s*\(?Orange\)?\s*/gi, "").replace(/:\s*/, "").trim() === "Developed by Shashank Jangid"
-                  ? "developed by Shashank Jangid"
-                  : footerCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim()}
+                {footerCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim()}
               </p>
             )}
           </div>
