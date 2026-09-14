@@ -380,8 +380,7 @@ export default function Facilities() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold uppercase tracking-wider mb-5 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold uppercase tracking-wider mb-5 shadow-sm">
               DPS Indirapuram • Campus Infrastructure
             </span>
 

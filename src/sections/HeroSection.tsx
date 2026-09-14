@@ -86,9 +86,9 @@ export default function HeroSection() {
             const isVideo = s.mediaType === "video" || Boolean(rawVid) || Boolean(rawMobileVid);
             return {
               image: rawImg || "/images/dps/slider_1.webp",
-              videoUrl: rawVid || "/videos/campus_hero.mp4",
-              mobileVideoUrl: rawMobileVid || "/videos/campus_hero_mobile.mp4",
-              useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo ?? true),
+              videoUrl: rawVid || (isVideo ? "/videos/campus_hero.mp4" : ""),
+              mobileVideoUrl: rawMobileVid,
+              useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo && rawMobileVid),
               mediaType: (isVideo ? "video" : "image") as "image" | "video",
               title: s.title,
               subtitle: s.subtitle || "",
@@ -108,8 +108,8 @@ export default function HeroSection() {
   const safeSlideIndex = activeSlides.length > 0 ? currentSlide % activeSlides.length : 0;
   const slide = activeSlides[safeSlideIndex] || DEFAULT_HERO_SLIDES[0];
 
-  const hasDedicatedMobileVideo = Boolean(isMobile && (slide.useSeparateMobileVideo || slide.mobileVideoUrl));
-  const effectiveRawVideo = hasDedicatedMobileVideo && slide.mobileVideoUrl ? slide.mobileVideoUrl : slide.videoUrl;
+  const hasDedicatedMobileVideo = Boolean(isMobile && slide.useSeparateMobileVideo && slide.mobileVideoUrl);
+  const effectiveRawVideo = hasDedicatedMobileVideo ? slide.mobileVideoUrl : slide.videoUrl;
   const hasVideo = slide.mediaType === "video" && Boolean(effectiveRawVideo);
 
   const videoSource = hasVideo

@@ -336,10 +336,9 @@ export default function InteractiveFacilitiesSection() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="text-center max-w-4xl mx-auto"
         >
-          {/* Eyebrow Badge — Clean, no emojis */}
+          {/* Eyebrow Badge — Clean, no icons/logos */}
           <div className="flex items-center justify-center mb-4">
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-400 text-xs font-bold uppercase tracking-widest border border-emerald-200 dark:border-emerald-500/20 shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+            <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-400 text-xs font-bold uppercase tracking-widest border border-emerald-200 dark:border-emerald-500/20 shadow-xs">
               World-Class Infrastructure & Learning Ecosystems
             </span>
           </div>

@@ -252,4 +252,55 @@ describe("Frontend Core & Instrumentation Unit Tests", () => {
       expect(desktopConfig.pinningEnabled).toBe(true);
     });
   });
+
+  describe("Hero Video Slide Resolution & Fallback Behavior", () => {
+    function resolveSlideMedia(slide: any, isMobile: boolean) {
+      const rawVid = (slide.videoUrl || "").trim();
+      const rawMobileVid = (slide.mobileVideoUrl || "").trim();
+      const isVideo = slide.mediaType === "video" || Boolean(rawVid) || Boolean(rawMobileVid);
+      const useSeparateMobile = Boolean(slide.useSeparateMobileVideo && rawMobileVid);
+      const hasDedicatedMobileVideo = Boolean(isMobile && useSeparateMobile && rawMobileVid);
+      const effectiveRaw = hasDedicatedMobileVideo
+        ? rawMobileVid
+        : (rawVid || (isVideo ? "/videos/campus_hero.mp4" : ""));
+      return optimizeMediaUrl(effectiveRaw, isMobile);
+    }
+
+    it("plays user-uploaded Cloudinary video on mobile when separate mobile video is not set", () => {
+      const cmsSlide = {
+        mediaType: "video",
+        videoUrl: "https://res.cloudinary.com/dpsi/video/upload/v12345/hero.mp4",
+        mobileVideoUrl: "",
+        useSeparateMobileVideo: false,
+      };
+
+      const mobileVideo = resolveSlideMedia(cmsSlide, true);
+      // Must NOT be overridden by /videos/campus_hero_mobile.mp4
+      expect(mobileVideo).not.toBe("/videos/campus_hero_mobile.mp4");
+      expect(mobileVideo).toContain("hero.mp4");
+      expect(mobileVideo).toContain("w_720");
+    });
+
+    it("plays dedicated mobile video on mobile when explicitly provided", () => {
+      const cmsSlide = {
+        mediaType: "video",
+        videoUrl: "https://res.cloudinary.com/dpsi/video/upload/v12345/hero_desktop.mp4",
+        mobileVideoUrl: "https://res.cloudinary.com/dpsi/video/upload/v12345/hero_portrait.mp4",
+        useSeparateMobileVideo: true,
+      };
+
+      const mobileVideo = resolveSlideMedia(cmsSlide, true);
+      const desktopVideo = resolveSlideMedia(cmsSlide, false);
+
+      expect(mobileVideo).toContain("hero_portrait.mp4");
+      expect(desktopVideo).toContain("hero_desktop.mp4");
+    });
+
+    it("falls back to default campus video when no video URL is provided", () => {
+      const emptySlide = { mediaType: "video", videoUrl: "" };
+      const resolved = resolveSlideMedia(emptySlide, false);
+      expect(resolved).toBe("/videos/campus_hero.mp4");
+    });
+  });
 });
+
