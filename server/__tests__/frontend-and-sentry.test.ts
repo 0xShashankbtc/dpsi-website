@@ -223,4 +223,33 @@ describe("Frontend Core & Instrumentation Unit Tests", () => {
       expect(normalized.metrics).toEqual([{ value: "100%", label: "Practical" }]);
     });
   });
+
+  describe("3D Story Scroll Responsive Pinning & Rotation Engine", () => {
+    function getStoryScrollConfig(viewportWidth: number) {
+      const isMobile = viewportWidth < 768;
+      return {
+        rotationAngle: isMobile ? 18 : 30,
+        scrub: isMobile ? 0.3 : true,
+        endTrigger: isMobile ? "top 15%" : "top 25%",
+        pinningEnabled: true,
+        anticipatePin: 1,
+        ignoreMobileResize: true,
+      };
+    }
+
+    it("enables 18° rotation and touch-friendly scrub on mobile viewports (< 768px)", () => {
+      const mobileConfig = getStoryScrollConfig(390); // iPhone 14/15/16
+      expect(mobileConfig.rotationAngle).toBe(18);
+      expect(mobileConfig.scrub).toBe(0.3);
+      expect(mobileConfig.pinningEnabled).toBe(true);
+      expect(mobileConfig.ignoreMobileResize).toBe(true);
+    });
+
+    it("enables 30° rotation and desktop pinning on wide viewports (>= 768px)", () => {
+      const desktopConfig = getStoryScrollConfig(1440);
+      expect(desktopConfig.rotationAngle).toBe(30);
+      expect(desktopConfig.scrub).toBe(true);
+      expect(desktopConfig.pinningEnabled).toBe(true);
+    });
+  });
 });

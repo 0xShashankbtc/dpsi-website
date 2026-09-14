@@ -396,28 +396,28 @@ export default function InteractiveFacilitiesSection() {
               className="border-none shadow-none outline-none"
             >
               {/* Card Top Row */}
-              <div className={`flex flex-wrap items-center justify-between gap-3 pb-3 border-b ${theme.borderTop}`}>
-                <div className="flex items-center gap-3">
+              <div className={`flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-2 sm:pb-3 border-b ${theme.borderTop}`}>
+                <div className="flex items-center gap-2 sm:gap-3">
                   <span
-                    className={`px-3 py-1 rounded-full font-mono text-xs font-black tracking-widest border ${theme.badgeBg}`}
+                    className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-mono text-[11px] sm:text-xs font-black tracking-widest border ${theme.badgeBg}`}
                   >
                     {stepNum}
                   </span>
-                  <span className={`text-xs sm:text-sm font-bold uppercase tracking-wider ${theme.catColor}`}>
+                  <span className={`text-[11px] sm:text-sm font-bold uppercase tracking-wider ${theme.catColor}`}>
                     {facility.category}
                   </span>
                 </div>
-                <div className={`flex items-center gap-2 text-xs font-semibold ${theme.subTextColor}`}>
-                  <IconComp className={`w-4 h-4 ${theme.catColor}`} />
-                  <span>{facility.subBadge || theme.defaultSubBadge}</span>
+                <div className={`flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold ${theme.subTextColor}`}>
+                  <IconComp className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${theme.catColor}`} />
+                  <span className="truncate max-w-[160px] sm:max-w-none">{facility.subBadge || theme.defaultSubBadge}</span>
                 </div>
               </div>
 
               {/* Main Stage Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center my-auto py-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 lg:gap-10 items-center my-auto py-1 sm:py-4">
                 {/* Left Column: Visual Showcase */}
                 <div className="lg:col-span-7 relative group">
-                  <div className={`relative aspect-[16/10] rounded-3xl overflow-hidden shadow-xl border ${theme.imgBorder} ${theme.isDark ? 'bg-slate-900' : 'bg-white'}`}>
+                  <div className={`relative aspect-[18/9] sm:aspect-[16/9] lg:aspect-[16/10] max-h-[170px] sm:max-h-[250px] lg:max-h-none rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border ${theme.imgBorder} ${theme.isDark ? 'bg-slate-900' : 'bg-white'}`}>
                     <img
                       src={facility.image}
                       alt={facility.name}
@@ -428,26 +428,26 @@ export default function InteractiveFacilitiesSection() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
                     {/* Floating Highlights Badges */}
-                    <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                    <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 flex flex-wrap gap-1.5 sm:gap-2">
                       {facility.highlights.slice(0, 2).map((hl, hIdx) => (
                         <span
                           key={hIdx}
-                          className="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold border border-white/20"
+                          className="px-2 py-0.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold border border-white/20"
                         >
                           {hl}
                         </span>
                       ))}
                     </div>
 
-                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
-                      <div>
-                        <p className={`text-xs font-semibold uppercase tracking-widest ${theme.catColor}`}>
+                    <div className="absolute bottom-2 left-2.5 right-2.5 sm:bottom-4 sm:left-4 sm:right-4 flex items-center justify-between text-white">
+                      <div className="min-w-0 pr-2">
+                        <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-widest ${theme.catColor} truncate`}>
                           {facility.category}
                         </p>
-                        <p className="text-lg sm:text-xl font-black">{facility.tagline}</p>
+                        <p className="text-sm sm:text-xl font-black truncate">{facility.tagline}</p>
                       </div>
-                      <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/20 text-white text-xs font-bold backdrop-blur-sm border border-white/30">
-                        <ShieldCheck className={`w-3.5 h-3.5 ${theme.catColor}`} /> Certified
+                      <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-white/20 text-white text-[10px] sm:text-xs font-bold backdrop-blur-sm border border-white/30 shrink-0">
+                        <ShieldCheck className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${theme.catColor}`} /> Certified
                       </span>
                     </div>
                   </div>
@@ -456,43 +456,43 @@ export default function InteractiveFacilitiesSection() {
                 {/* Right Column: Editorial Copy */}
                 <div className={`lg:col-span-5 flex flex-col justify-center ${theme.textColor}`}>
                   <div
-                    className={`inline-flex items-center gap-2 w-max px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-3 border ${theme.tagBg}`}
+                    className={`inline-flex items-center gap-1.5 sm:gap-2 w-max px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1.5 sm:mb-3 border ${theme.tagBg}`}
                   >
-                    <IconComp className="w-3.5 h-3.5" />
-                    <span>{facility.subBadge || facility.tagline}</span>
+                    <IconComp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="truncate max-w-[240px] sm:max-w-none">{facility.subBadge || facility.tagline}</span>
                   </div>
 
-                  <h3 className={`text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.08] mb-4 ${theme.isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className={`text-xl sm:text-3xl lg:text-5xl font-black tracking-tight leading-[1.12] sm:leading-[1.08] mb-1.5 sm:mb-4 ${theme.isDark ? 'text-white' : 'text-slate-900'}`}>
                     {facility.name}
                   </h3>
 
-                  <p className={`text-sm sm:text-base leading-relaxed mb-6 font-normal ${theme.descColor}`}>
+                  <p className={`text-xs sm:text-sm lg:text-base leading-relaxed mb-2.5 sm:mb-6 font-normal ${theme.descColor} line-clamp-2 sm:line-clamp-3 lg:line-clamp-none`}>
                     {facility.description}
                   </p>
 
                   {/* Key Highlights */}
-                  <div className="space-y-2.5 mb-6">
-                    {facility.highlights.map((item, i) => (
-                      <div key={i} className={`flex items-start gap-2.5 text-xs sm:text-sm ${theme.highlightTextColor}`}>
-                        <CheckCircle2 className={`w-4 h-4 ${theme.checkColor} shrink-0 mt-0.5`} />
-                        <span className="font-semibold">{item}</span>
+                  <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-6">
+                    {facility.highlights.slice(0, 3).map((item, i) => (
+                      <div key={i} className={`flex items-start gap-2 text-xs sm:text-sm ${theme.highlightTextColor} ${i >= 2 ? 'hidden sm:flex' : 'flex'}`}>
+                        <CheckCircle2 className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${theme.checkColor} shrink-0 mt-0.5`} />
+                        <span className="font-semibold line-clamp-1 sm:line-clamp-none">{item}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Action Row */}
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <Button
-                      className={`${theme.btnPrimary} font-bold px-5 py-2.5 rounded-xl shadow-md cursor-pointer`}
+                      className={`${theme.btnPrimary} font-bold px-3.5 sm:px-5 py-1.5 sm:py-2.5 h-8 sm:h-auto text-xs sm:text-sm rounded-xl shadow-md cursor-pointer`}
                       asChild
                     >
                       <Link to="/facilities">
-                        View Facility Specs <ArrowRight className="w-4 h-4 ml-1.5" />
+                        View Facility Specs <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                       </Link>
                     </Button>
                     <Button
                       variant="outline"
-                      className={`${theme.btnOutline} rounded-xl font-semibold cursor-pointer`}
+                      className={`${theme.btnOutline} rounded-xl font-semibold h-8 sm:h-auto text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2.5 cursor-pointer`}
                       asChild
                     >
                       <Link to="/admissions">Admissions Enquiry</Link>
@@ -502,14 +502,14 @@ export default function InteractiveFacilitiesSection() {
               </div>
 
               {/* Bottom Row: Metrics & Scroll Guidance */}
-              <div className={`flex flex-wrap items-center justify-between gap-4 pt-3 border-t ${theme.borderTop} ${theme.textColor}`}>
+              <div className={`flex flex-wrap items-center justify-between gap-2 sm:gap-4 pt-2 sm:pt-3 border-t ${theme.borderTop} ${theme.textColor}`}>
                 <div className="flex flex-wrap gap-4 sm:gap-8">
                   {facility.metrics.map((metric, mIdx) => (
                     <div key={mIdx}>
-                      <p className={`text-xl sm:text-2xl font-black ${theme.metricColor}`}>
+                      <p className={`text-base sm:text-xl lg:text-2xl font-black ${theme.metricColor}`}>
                         {metric.value}
                       </p>
-                      <p className={`text-[11px] font-medium uppercase tracking-wider ${theme.isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                      <p className={`text-[9px] sm:text-[11px] font-medium uppercase tracking-wider ${theme.isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                         {metric.label}
                       </p>
                     </div>
@@ -517,9 +517,9 @@ export default function InteractiveFacilitiesSection() {
                 </div>
 
                 {idx < displayCards.length - 1 && (
-                  <div className={`flex items-center gap-2 text-xs font-semibold ${theme.scrollHintColor} animate-bounce`}>
+                  <div className={`flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold ${theme.scrollHintColor} animate-bounce`}>
                     <span>Scroll to explore {displayCards[idx + 1]?.name}</span>
-                    <ChevronRight className="w-4 h-4 rotate-90" />
+                    <ChevronRight className="w-3.5 h-3.5 rotate-90" />
                   </div>
                 )}
               </div>

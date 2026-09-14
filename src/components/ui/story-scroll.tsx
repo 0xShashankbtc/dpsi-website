@@ -29,13 +29,13 @@ export const FlowSection: React.FC<FlowSectionProps> = ({
   <section
     data-flow-section
     aria-label={ariaLabel}
-    className={cx('relative min-h-screen w-full overflow-visible border-0 outline-none', className)}
+    className={cx('relative min-h-[100dvh] w-full overflow-visible border-0 outline-none', className)}
   >
     <div
       data-flow-inner
       className={cx(
-        'flow-art-container relative flex min-h-screen w-full flex-col justify-between gap-6 px-[4vw] pt-[clamp(2rem,8vw,4vw)] pb-[4vw] border-0 outline-none shadow-[0_-20px_50px_rgba(0,0,0,0.35),0_25px_50px_rgba(0,0,0,0.25)]',
-        'will-change-transform',
+        'flow-art-container relative flex min-h-[100dvh] w-full flex-col justify-between gap-3 sm:gap-6 px-3 sm:px-6 md:px-[4vw] pt-3 sm:pt-6 md:pt-[clamp(2rem,8vw,4vw)] pb-3 sm:pb-6 md:pb-[4vw] border-0 outline-none shadow-[0_-20px_50px_rgba(0,0,0,0.4),0_25px_50px_rgba(0,0,0,0.3)]',
+        'will-change-transform transform-gpu',
       )}
       style={{ transformOrigin: 'bottom left', ...style }}
     >
@@ -92,12 +92,14 @@ export const FlowArt: React.FC<FlowArtProps> = ({
       );
       if (sections.length === 0) return;
 
-      const isMobile =
-        typeof window !== 'undefined' &&
-        (window.innerWidth < 768 ||
-          window.matchMedia('(pointer: coarse)').matches ||
-          'ontouchstart' in window);
+      // Prevent mobile address bar collapse from thrashing ScrollTrigger
+      ScrollTrigger.config({ ignoreMobileResize: true });
 
+      const isMobile =
+        typeof window !== 'undefined' && window.innerWidth < 768;
+
+      // Calibrated rotation angle: 18° on mobile for high-impact 3D card tilt without overflow; 30° on desktop
+      const rotationAngle = isMobile ? 18 : 30;
       const triggers: ScrollTrigger[] = [];
 
       sections.forEach((section, i) => {
@@ -106,55 +108,41 @@ export const FlowArt: React.FC<FlowArtProps> = ({
         const inner = section.querySelector<HTMLElement>('.flow-art-container');
         if (!inner) return;
 
-        if (isMobile) {
-          // Mobile: Zero diagonal rotation, zero touch scroll hijacking for native 120Hz/60Hz smoothness
-          gsap.set(inner, { rotation: 0, transformOrigin: 'center center' });
-          if (i > 0) {
-            const tween = gsap.fromTo(
-              inner,
-              { opacity: 0.9, y: 25 },
-              {
-                opacity: 1,
-                y: 0,
-                ease: 'power1.out',
-                scrollTrigger: {
-                  trigger: section,
-                  start: 'top 90%',
-                  end: 'top 50%',
-                  scrub: 0.4,
-                },
-              }
-            );
-            if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-          }
-        } else {
-          // Desktop: Full cinematic 30° rotation & GSAP viewport pinning
-          if (i > 0) {
-            gsap.set(inner, { rotation: 30, transformOrigin: 'bottom left' });
-            const tween = gsap.to(inner, {
-              rotation: 0,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: section,
-                start: 'top bottom',
-                end: 'top 25%',
-                scrub: true,
-              },
-            });
-            if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-          }
+        // Animate non-first cards: enter tilted and smoothly rotate flat as they stack over the previous card
+        if (i > 0) {
+          gsap.set(inner, {
+            rotation: rotationAngle,
+            transformOrigin: 'bottom left',
+            willChange: 'transform',
+          });
 
-          if (i < sections.length - 1) {
-            triggers.push(
-              ScrollTrigger.create({
-                trigger: section,
-                start: 'bottom bottom',
-                end: 'bottom top',
-                pin: true,
-                pinSpacing: false,
-              }),
-            );
-          }
+          const tween = gsap.to(inner, {
+            rotation: 0,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top bottom',
+              end: isMobile ? 'top 15%' : 'top 25%',
+              scrub: isMobile ? 0.3 : true,
+              invalidateOnRefresh: true,
+            },
+          });
+          if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+        }
+
+        // Viewport pinning for all cards except the last one (enabling 3D card stack on both mobile & desktop)
+        if (i < sections.length - 1) {
+          triggers.push(
+            ScrollTrigger.create({
+              trigger: section,
+              start: 'bottom bottom',
+              end: 'bottom top',
+              pin: true,
+              pinSpacing: false,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+            }),
+          );
         }
       });
 
@@ -163,8 +151,16 @@ export const FlowArt: React.FC<FlowArtProps> = ({
         ScrollTrigger.refresh();
       }, 200);
 
+      const handleResize = () => {
+        ScrollTrigger.refresh();
+      };
+      window.addEventListener('resize', handleResize, { passive: true });
+      window.addEventListener('orientationchange', handleResize, { passive: true });
+
       return () => {
         clearTimeout(timer);
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
         triggers.forEach((t) => {
           t.kill(true);
         });
