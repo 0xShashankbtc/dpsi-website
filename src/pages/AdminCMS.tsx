@@ -6096,7 +6096,7 @@ export default function AdminCMS() {
                         onClick={() => {
                           const creditVal = settingsEdits["footer_credit"] !== undefined
                             ? settingsEdits["footer_credit"]
-                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid (Orange)");
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "developed by Shashank Jangid");
                           const copyVal = settingsEdits["footer_copyright"] !== undefined
                             ? settingsEdits["footer_copyright"]
                             : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
@@ -6109,7 +6109,7 @@ export default function AdminCMS() {
                           toast.success("Footer branding updated!");
                         }}
                         disabled={updateSiteSettingsMutation.isPending}
-                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-8 px-4 cursor-pointer shadow-xs"
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-8 px-4 cursor-pointer shadow-xs"
                       >
                         <Save className="w-3.5 h-3.5 mr-1" />
                         <span>{updateSiteSettingsMutation.isPending ? "Saving..." : "Save Footer Credit"}</span>
@@ -6120,13 +6120,13 @@ export default function AdminCMS() {
                       {/* Live Simulated Footer Bottom Bar */}
                       <div className="space-y-1.5">
                         <label className="text-[11px] font-bold text-slate-700 uppercase flex items-center gap-1.5">
-                          <Eye className="w-3.5 h-3.5 text-orange-500" />
+                          <Eye className="w-3.5 h-3.5 text-emerald-600" />
                           <span>Live Footer Bottom Bar Simulator</span>
                         </label>
                         {(() => {
                           const previewCredit = settingsEdits["footer_credit"] !== undefined
                             ? settingsEdits["footer_credit"]
-                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid (Orange)");
+                            : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "developed by Shashank Jangid");
                           const previewCopy = settingsEdits["footer_copyright"] !== undefined
                             ? settingsEdits["footer_copyright"]
                             : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
@@ -6139,12 +6139,7 @@ export default function AdminCMS() {
                                 </p>
                                 {previewCredit && (
                                   <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm">
-                                    <span>{previewCredit.replace(/\(Orange\)/gi, "").trim()}</span>
-                                    {previewCredit.toLowerCase().includes("orange") && (
-                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                                        Orange
-                                      </span>
-                                    )}
+                                    <span>{previewCredit.replace(/\s*\(?Orange\)?\s*/gi, "").replace(/:\s*/, "").trim()}</span>
                                   </div>
                                 )}
                                 <div className="p-2 rounded-full bg-emerald-700 text-white opacity-80 cursor-default">
@@ -6161,15 +6156,15 @@ export default function AdminCMS() {
                         <div className="space-y-1.5">
                           <label className="text-[11px] font-semibold text-slate-700">Developer Credit Text</label>
                           <Input
-                            placeholder="Developed by : Shashank Jangid (Orange)"
+                            placeholder="developed by Shashank Jangid"
                             value={settingsEdits["footer_credit"] !== undefined
                               ? settingsEdits["footer_credit"]
-                              : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid (Orange)")}
+                              : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "developed by Shashank Jangid")}
                             onChange={(e) => setSettingsEdits({ ...settingsEdits, footer_credit: e.target.value })}
                             className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
                           />
                           <p className="text-[10px] text-slate-400">
-                            Include <code className="text-orange-600 bg-orange-50 px-1 py-0.5 rounded font-mono">(Orange)</code> for stylized badge highlight
+                            Default: developed by Shashank Jangid
                           </p>
                         </div>
                         <div className="space-y-1.5">

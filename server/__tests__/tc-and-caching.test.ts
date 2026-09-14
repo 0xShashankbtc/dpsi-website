@@ -219,19 +219,19 @@ describe("Cache Layer & Upload Security Audit", () => {
 });
 
 describe("Footer Credit Line & Site Settings Contract", () => {
-  const defaultCredit = "Developed by : Shashank Jangid (Orange)";
+  const defaultCredit = "developed by Shashank Jangid";
 
-  it("formats developer credit with Orange badge highlighting", () => {
-    expect(defaultCredit).toContain("Developed by : Shashank Jangid");
-    expect(defaultCredit.toLowerCase()).toContain("orange");
+  it("formats developer credit cleanly without Orange badge", () => {
+    expect(defaultCredit).toBe("developed by Shashank Jangid");
+    expect(defaultCredit.toLowerCase()).not.toContain("orange");
 
-    const textPart = defaultCredit.replace(/\(Orange\)/gi, "").trim();
-    expect(textPart).toBe("Developed by : Shashank Jangid");
+    const textPart = defaultCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim();
+    expect(textPart).toBe("developed by Shashank Jangid");
   });
 
   it("allows arbitrary admin overrides for footer_credit", () => {
     const customCredit = "Managed by DPSI Technology Team";
-    const textPart = customCredit.replace(/\(Orange\)/gi, "").trim();
+    const textPart = customCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim();
     expect(textPart).toBe(customCredit);
   });
 });
