@@ -179218,7 +179218,7 @@ async function seedDatabase(tenantId = "dpsi", _options) {
       { key: "cta_title", value: "Ready to Shape Your Child's Bright Future?", label: "CTA Title", group: "cta" },
       { key: "cta_button_link", value: "/admissions", label: "CTA Button Link", group: "cta" },
       { key: "footer_copyright", value: "\xA9 2026 Delhi Public School Indirapuram. All rights reserved.", label: "Footer Copyright", group: "general" },
-      { key: "footer_credit", value: "Developed by : Shashank Jangid (Orange)", label: "Footer / Credit Text", group: "general" },
+      { key: "footer_credit", value: "developed by Shashank Jangid", label: "Footer / Credit Text", group: "general" },
       { key: "footer_tagline", value: "Delhi Public School Indirapuram, established in 2003, is a premier institution under the DPS Society, committed to holistic education and excellence.", label: "Footer Tagline", group: "general" },
       { key: "chat_welcome_message", value: "Hello! I am DPSI AI. I can assist you with Admissions, Exam Schedules, Vacations, Academic Streams, and Campus Facilities.", label: "AI Chat Welcome Message", group: "ai" },
       { key: "calendar_pdf_url", value: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", label: "Academic Calendar PDF URL", group: "ai" }
