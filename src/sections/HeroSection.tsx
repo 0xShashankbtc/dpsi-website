@@ -126,85 +126,99 @@ export default function HeroSection() {
       ? optimizeMediaUrl(slide.image, { isMobile, preset: "hero" })
       : "");
 
-  // Automatically load and start video playback when videoSource or slide changes
+  // High-performance visibility & scroll manager:
+  // - Plays video EVERY TIME hero is visible or scrolled back into view
+  // - Pauses immediately when user scrolls down past hero (saving 100% GPU/CPU)
+  // - Resumes on tab visibility, window focus, or mobile touch gesture
   useEffect(() => {
-    const video = videoRef.current;
-    if (video && hasVideo && videoSource) {
-      video.muted = isMuted;
-      video.defaultMuted = true;
-      video.playsInline = true;
-      video.setAttribute("playsinline", "true");
-      video.setAttribute("webkit-playsinline", "true");
-      if (video.paused && !userPausedRef.current) {
-        video.play().then(() => setIsPlayingVideo(true)).catch(() => {
-          video.muted = true;
-          setIsMuted(true);
-          video.play().catch(() => {});
-        });
+    if (typeof window === "undefined" || !hasVideo) return;
+
+    const checkAndSyncPlayback = () => {
+      const video = videoRef.current;
+      const container = containerRef.current;
+      if (!video) return;
+
+      let isInView = true;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        isInView = rect.bottom > 60 && rect.top < window.innerHeight;
+      } else {
+        isInView = window.scrollY < 300;
       }
 
-      // iOS / WebKit user gesture fallback (handles strict autoplay restrictions)
-      const handleUserGesture = () => {
-        if (videoRef.current && videoRef.current.paused && !userPausedRef.current) {
-          videoRef.current.play().then(() => setIsPlayingVideo(true)).catch(() => {});
-        }
-      };
-      window.addEventListener("touchstart", handleUserGesture, { once: true, passive: true });
-      window.addEventListener("click", handleUserGesture, { once: true, passive: true });
-      window.addEventListener("scroll", handleUserGesture, { once: true, passive: true });
-      return () => {
-        window.removeEventListener("touchstart", handleUserGesture);
-        window.removeEventListener("click", handleUserGesture);
-        window.removeEventListener("scroll", handleUserGesture);
-      };
-    }
-  }, [videoSource, safeSlideIndex, hasVideo, isMuted]);
-
-  // Eagerly pause video hardware decode loop as soon as user scrolls down to preserve 100% GPU/CPU for smooth 60/120fps scrolling
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleScrollPause = () => {
-      if (!videoRef.current) return;
-      if (window.scrollY > 240) {
-        if (!videoRef.current.paused) {
-          videoRef.current.pause();
+      if (isInView && document.visibilityState === "visible") {
+        video.muted = isMuted;
+        video.defaultMuted = true;
+        video.playsInline = true;
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("webkit-playsinline", "true");
+        if (video.paused && !userPausedRef.current) {
+          video.play().then(() => setIsPlayingVideo(true)).catch(() => {
+            video.muted = true;
+            setIsMuted(true);
+            video.play().then(() => setIsPlayingVideo(true)).catch(() => {});
+          });
         }
       } else {
-        if (videoRef.current.paused && !userPausedRef.current) {
-          videoRef.current.play().catch(() => {});
+        if (!video.paused) {
+          video.pause();
         }
       }
     };
-    window.addEventListener("scroll", handleScrollPause, { passive: true });
 
+    // Initial check on mount
+    checkAndSyncPlayback();
+
+    // Throttled scroll listener via requestAnimationFrame (0ms layout thrashing)
+    let rafId: number | null = null;
+    const handleScroll = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        checkAndSyncPlayback();
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+
+    // IntersectionObserver with granular threshold for instant play/pause detection
     let observer: IntersectionObserver | null = null;
-    if ("IntersectionObserver" in window) {
+    if ("IntersectionObserver" in window && containerRef.current) {
       observer = new IntersectionObserver(
-        ([entry]) => {
-          if (!videoRef.current) return;
-          if (entry.isIntersecting && entry.intersectionRatio > 0.15) {
-            if (videoRef.current.paused && !userPausedRef.current && window.scrollY < 240) {
-              videoRef.current.play().catch(() => {});
-            }
-          } else if (!entry.isIntersecting) {
-            if (!videoRef.current.paused) {
-              videoRef.current.pause();
-            }
-          }
+        () => {
+          checkAndSyncPlayback();
         },
-        { threshold: [0, 0.15] }
+        { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0] }
       );
-      if (containerRef.current) {
-        observer.observe(containerRef.current);
-      }
+      observer.observe(containerRef.current);
     }
 
+    // Page visibility (tab switch / unlock phone screen)
+    const handleVisibilityChange = () => {
+      checkAndSyncPlayback();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", checkAndSyncPlayback);
+
+    // Mobile touch interaction triggers (ensures instant resume on mobile gestures)
+    const handleUserInteraction = () => {
+      checkAndSyncPlayback();
+    };
+    window.addEventListener("touchstart", handleUserInteraction, { passive: true });
+    window.addEventListener("click", handleUserInteraction, { passive: true });
+
     return () => {
-      window.removeEventListener("scroll", handleScrollPause);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", checkAndSyncPlayback);
+      window.removeEventListener("touchstart", handleUserInteraction);
+      window.removeEventListener("click", handleUserInteraction);
       observer?.disconnect();
     };
-  }, []);
+  }, [hasVideo, videoSource, safeSlideIndex, isMuted]);
 
   const handleNextSlide = () => {
     if (activeSlides.length <= 1) return;
@@ -324,6 +338,8 @@ export default function HeroSection() {
               loop
               playsInline
               preload="auto"
+              disablePictureInPicture
+              disableRemotePlayback
               onLoadedMetadata={(e) => {
                 const v = e.currentTarget;
                 v.muted = isMuted;
