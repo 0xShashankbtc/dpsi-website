@@ -5,6 +5,7 @@ import { ArrowRight, Clock, Newspaper } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { formatISTDate } from "@/lib/dateUtils";
 import { DEFAULT_ACTIVITIES } from "@/lib/initialDataSnapshot";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export default function NewsHighlights() {
   const { data: cmsActivities, isLoading } = trpc.cms.listActivities.useQuery();
@@ -18,7 +19,7 @@ export default function NewsHighlights() {
       title: a.title,
       category: a.category || "Campus Update",
       excerpt: a.description,
-      image: a.imageUrl || "",
+      image: a.imageUrl ? optimizeMediaUrl(a.imageUrl, { preset: "card" }) : "",
       createdAt: a.eventDate || a.createdAt || new Date().toISOString(),
     }));
 

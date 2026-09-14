@@ -3,6 +3,7 @@ import { Target, Eye, Heart, BookOpen, Users, Award, Shield, Compass, Sparkles }
 import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 const iconMap: Record<string, React.ReactNode> = {
   Target: <Target className="w-6 h-6" />,
@@ -180,7 +181,15 @@ export default function About() {
                   className="bg-slate-50 dark:bg-slate-800/80 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-lg hover:shadow-xl transition-all text-center flex flex-col items-center group"
                 >
                   <div className="w-48 h-48 sm:w-52 sm:h-52 rounded-2xl overflow-hidden mb-5 border-2 border-emerald-500/30 shadow-md group-hover:scale-105 transition-transform duration-500 bg-slate-900">
-                    <img src={l.imageUrl || "/images/leadership/priya_john.webp"} alt={l.name} className="w-full h-full object-cover object-top" loading="lazy" />
+                    <img
+                      src={optimizeMediaUrl(l.imageUrl || "/images/leadership/priya_john.webp", { preset: "thumb" })}
+                      alt={l.name}
+                      className="w-full h-full object-cover object-top"
+                      loading="lazy"
+                      decoding="async"
+                      width={208}
+                      height={208}
+                    />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5">{l.name}</h3>
                   <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold leading-relaxed px-2">{l.role}</p>

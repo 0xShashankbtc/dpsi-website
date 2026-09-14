@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CoverflowCarousel, type CoverflowSlide } from "@/components/ui/coverflow-carousel";
 import { trpc } from "@/providers/trpc";
 import { DEFAULT_ACHIEVEMENTS } from "@/lib/initialDataSnapshot";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export default function AchievementsSection() {
   const { data: achievements, isLoading } = trpc.achievements.list.useQuery();
@@ -9,7 +10,7 @@ export default function AchievementsSection() {
     achievements && achievements.length > 0 ? achievements : DEFAULT_ACHIEVEMENTS;
 
   const slides: CoverflowSlide[] = effectiveAchievements.map((ach: any) => ({
-    src: ach.imageUrl || ach.image || "/images/dps/topper_siddhant.webp",
+    src: optimizeMediaUrl(ach.imageUrl || ach.image || "/images/dps/topper_siddhant.webp", { preset: "card" }),
     alt: ach.studentName,
     title: `${ach.studentName} • ${ach.score}`,
     subtitle: `${ach.className || ach.class} • ${ach.exam || "CBSE Board Examination"}`,

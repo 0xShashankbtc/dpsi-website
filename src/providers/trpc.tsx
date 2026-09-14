@@ -8,15 +8,15 @@ import { seedInitialQueryData } from "@/lib/initialDataSnapshot";
 
 export const trpc = createTRPCReact<AppRouter>();
 
-const CACHE_STORAGE_KEY = "dpsi_query_cache_v3";
+const CACHE_STORAGE_KEY = "dpsi_query_cache_v4";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 60 * 1000, // 10 minutes of instant fresh cache hits
+      staleTime: 30 * 1000, // 30s fresh cache for instant sub-page navigation
       gcTime: 24 * 60 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
+      refetchOnMount: true, // Always revalidate in background on mount so fresh CMS updates appear
       refetchOnReconnect: true,
       retry: 1,
     },

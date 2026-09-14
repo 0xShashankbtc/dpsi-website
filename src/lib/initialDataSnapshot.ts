@@ -107,13 +107,13 @@ export const DEFAULT_STATS = [
 
 export const DEFAULT_SLIDERS = [
   {
-    _id: "sl1",
+    _id: "6a857b179da29b46d258444c",
     title: "Empowering Minds, Shaping Tomorrow",
     subtitle: "Ranked among the Top CBSE Schools in the National Capital Region with 20+ Years of Academic Legacy",
     imageUrl: "/images/dps/slider_1.webp",
-    videoUrl: "/videos/campus_hero.mp4",
-    mobileVideoUrl: "/videos/campus_hero.mp4",
-    useSeparateMobileVideo: false,
+    videoUrl: "https://res.cloudinary.com/uqty03zf/video/upload/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4",
+    mobileVideoUrl: "/videos/campus_hero_mobile.mp4",
+    useSeparateMobileVideo: true,
     mediaType: "video",
     buttonText: "Explore Campus",
     buttonLink: "/about",
@@ -122,24 +122,17 @@ export const DEFAULT_SLIDERS = [
     isDeleted: false,
   },
   {
-    _id: "sl2",
+    _id: "6aa62c6ffd8efbe73a59778c",
     title: "Futuristic AI & Robotics Innovation",
     subtitle: "Equipping young minds with humanoid robotics, 3D prototyping, and cutting-edge STEM labs",
     imageUrl: "/images/dps/slider_2.webp",
+    videoUrl: "https://res.cloudinary.com/uqty03zf/video/upload/v1789275226/dpsi_videos/lkktjeu2akh99yt7ukjk.mp4",
+    mobileVideoUrl: "/videos/campus_hero_mobile.mp4",
+    useSeparateMobileVideo: true,
+    mediaType: "video",
     buttonText: "Discover Facilities",
     buttonLink: "/facilities",
     order: 2,
-    isActive: true,
-    isDeleted: false,
-  },
-  {
-    _id: "sl3",
-    title: "Admissions Open for Academic Session 2026-27",
-    subtitle: "Give your child the foundation of holistic education, global exposure, and athletic excellence",
-    imageUrl: "/images/dps/slider_3.webp",
-    buttonText: "Apply Online",
-    buttonLink: "/admissions",
-    order: 3,
     isActive: true,
     isDeleted: false,
   },
@@ -356,6 +349,18 @@ export const DEFAULT_FEATURED_NEWS = DEFAULT_ACTIVITIES.map((a) => ({
   published: true,
   featured: true,
   createdAt: a.eventDate,
+}));
+
+export const DEFAULT_EVENTS = DEFAULT_ACTIVITIES.map((a) => ({
+  id: a._id,
+  _id: a._id,
+  title: a.title,
+  description: a.description,
+  image: a.imageUrl || "",
+  imageUrl: a.imageUrl || "",
+  eventDate: a.eventDate,
+  location: "DPSI Campus",
+  category: a.category || "Events",
 }));
 
 export const DEFAULT_ACHIEVEMENTS = [
@@ -677,7 +682,7 @@ export function seedInitialQueryData(queryClient: QueryClient): void {
   const seedIfMissing = (key: any[], data: any) => {
     try {
       if (queryClient.getQueryData(key) === undefined) {
-        queryClient.setQueryData(key, data);
+        queryClient.setQueryData(key, data, { updatedAt: 0 });
       }
     } catch {
       // safe fallback
@@ -694,6 +699,7 @@ export function seedInitialQueryData(queryClient: QueryClient): void {
   seedIfMissing([["cms", "listSliders"], { type: "query" }], DEFAULT_SLIDERS);
   seedIfMissing([["cms", "listFacilities"], { type: "query" }], DEFAULT_FACILITIES);
   seedIfMissing([["cms", "listActivities"], { type: "query" }], DEFAULT_ACTIVITIES);
+  seedIfMissing([["events", "list"], { type: "query" }], DEFAULT_EVENTS);
   seedIfMissing([["news", "featured"], { type: "query" }], DEFAULT_FEATURED_NEWS);
   seedIfMissing([["achievements", "list"], { type: "query" }], DEFAULT_ACHIEVEMENTS);
   seedIfMissing([["testimonials", "featured"], { type: "query" }], DEFAULT_TESTIMONIALS);

@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import FlowArt, { FlowSection } from "@/components/ui/story-scroll";
 import { trpc } from "@/providers/trpc";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 interface FacilityItem {
   id: string;
@@ -300,7 +301,7 @@ export default function InteractiveFacilitiesSection() {
               category: f.category || fallback?.category || "Campus Facility",
               subBadge: f.subBadge || fallback?.subBadge || theme?.defaultSubBadge,
               icon: IconComp,
-              image: f.imageUrl || fallback?.image || "/images/facilities/ai_robotics_lab.webp",
+              image: f.imageUrl ? optimizeMediaUrl(f.imageUrl, { preset: "card" }) : (fallback?.image || "/images/facilities/ai_robotics_lab.webp"),
               tagline: f.tagline || fallback?.tagline || "World-Class Learning Environment",
               description: f.description || fallback?.description || "",
               highlights:

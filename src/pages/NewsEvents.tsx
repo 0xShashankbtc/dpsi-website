@@ -6,6 +6,7 @@ import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 import { formatISTDate } from "@/lib/dateUtils";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export default function NewsEvents() {
   const { data: cmsActivities, isLoading: isCmsLoading } = trpc.cms.listActivities.useQuery();
@@ -22,7 +23,7 @@ export default function NewsEvents() {
       category: a.category || "Campus Activity",
       excerpt: a.description,
       description: a.description,
-      image: a.imageUrl || "",
+      image: a.imageUrl ? optimizeMediaUrl(a.imageUrl, { preset: "card" }) : "",
       createdAt: a.eventDate || a.createdAt || new Date().toISOString(),
       eventDate: a.eventDate || a.createdAt || new Date().toISOString(),
       location: a.location || "DPS Indirapuram Campus",
@@ -37,7 +38,7 @@ export default function NewsEvents() {
         category: n.category || "News",
         excerpt: n.excerpt || n.content?.slice(0, 150),
         description: n.content || n.excerpt,
-        image: n.image || "",
+        image: n.image ? optimizeMediaUrl(n.image, { preset: "card" }) : "",
         createdAt: n.createdAt,
         eventDate: n.createdAt,
         location: "DPS Indirapuram Campus",
@@ -53,7 +54,7 @@ export default function NewsEvents() {
         category: e.category || "Event",
         excerpt: e.description,
         description: e.description,
-        image: e.image || e.imageUrl || "",
+        image: (e.image || e.imageUrl) ? optimizeMediaUrl(e.image || e.imageUrl, { preset: "card" }) : "",
         createdAt: e.eventDate || e.createdAt,
         eventDate: e.eventDate || e.createdAt,
         location: e.location || "DPS Indirapuram Campus",
@@ -135,7 +136,7 @@ export default function NewsEvents() {
                         <div>
                           <div className="relative h-48 overflow-hidden bg-slate-900 flex items-center justify-center">
                             {item.image ? (
-                              <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                              <img src={item.image} alt={item.title} className="w-full h-full object-cover" loading="lazy" decoding="async" width={600} height={350} />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-slate-900 flex items-center justify-center p-6 text-center">
                                 <Newspaper className="w-10 h-10 text-emerald-300/60" />
@@ -193,7 +194,7 @@ export default function NewsEvents() {
                         <Card className="overflow-hidden hover:shadow-lg transition-all h-full border border-slate-200 dark:border-slate-800">
                           <div className="relative h-48 overflow-hidden bg-slate-900 flex items-center justify-center">
                             {event.image ? (
-                              <img src={event.image} alt={event.title} className="w-full h-full object-cover" loading="lazy" />
+                              <img src={event.image} alt={event.title} className="w-full h-full object-cover" loading="lazy" decoding="async" width={600} height={350} />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-slate-900 to-amber-950/40 flex items-center justify-center p-6 text-center">
                                 <CalendarDays className="w-10 h-10 text-emerald-300/60" />

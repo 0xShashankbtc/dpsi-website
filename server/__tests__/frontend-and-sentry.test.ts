@@ -37,6 +37,21 @@ describe("Frontend Core & Instrumentation Unit Tests", () => {
       const result = optimizeMediaUrl(alreadyOptimized);
       expect(result).toBe(alreadyOptimized);
     });
+
+    it("transforms Cloudinary video to fast lightweight 720p stream on mobile", () => {
+      const rawCloudinary = "https://res.cloudinary.com/dpsi/video/upload/v12345/campus_tour.mp4";
+      const mobileOptimized = optimizeMediaUrl(rawCloudinary, true);
+      expect(mobileOptimized).toContain("/video/upload/q_auto:eco,vc_auto,w_720,c_limit/");
+    });
+
+    it("applies responsive thumbnail and card presets for images", () => {
+      const rawImage = "https://res.cloudinary.com/dpsi/image/upload/v12345/photo.jpg";
+      const thumb = optimizeMediaUrl(rawImage, { isMobile: true, preset: "thumb" });
+      expect(thumb).toContain("/image/upload/q_auto:eco,f_auto,w_320,c_limit/");
+
+      const card = optimizeMediaUrl(rawImage, { isMobile: false, preset: "card" });
+      expect(card).toContain("/image/upload/q_auto:good,f_auto,w_800,c_limit/");
+    });
   });
 
   describe("Footer Text Canvas Scaling Algorithm", () => {

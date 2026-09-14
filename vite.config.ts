@@ -107,12 +107,27 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*\.(?:png|jpg|jpeg|webp|avif|mp4|webm)$/i,
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*\.(?:mp4|webm)$/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "cloudinary-media-cache",
+              cacheName: "cloudinary-video-cache",
               expiration: {
-                maxEntries: 60,
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              rangeRequests: true
+            }
+          },
+          {
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "cloudinary-image-cache",
+              expiration: {
+                maxEntries: 150,
                 maxAgeSeconds: 60 * 60 * 24 * 30
               },
               cacheableResponse: {

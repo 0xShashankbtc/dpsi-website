@@ -30,6 +30,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
 import InteractiveFacilitiesSection from "@/sections/InteractiveFacilitiesSection";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 interface FacilityDetail {
   id: string;
@@ -332,7 +333,7 @@ export default function Facilities() {
               name: f.title || fallback?.name,
               category: f.category || fallback?.category || "Campus & Safety",
               icon: IconComp,
-              image: f.imageUrl || fallback?.image || "/images/facilities/ai_robotics_lab.webp",
+              image: f.imageUrl ? optimizeMediaUrl(f.imageUrl, { preset: "card" }) : (fallback?.image || "/images/facilities/ai_robotics_lab.webp"),
               tagline: f.tagline || fallback?.tagline || "World-Class Learning Environment",
               subBadge: f.subBadge || fallback?.subBadge,
               description: f.description || fallback?.description || "",

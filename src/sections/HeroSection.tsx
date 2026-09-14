@@ -116,6 +116,10 @@ export default function HeroSection() {
     ? optimizeMediaUrl(effectiveRawVideo, isMobile)
     : "";
 
+  const effectivePoster = slide.image
+    ? optimizeMediaUrl(slide.image, { isMobile, preset: "hero" })
+    : "/images/dps/slider_1.webp";
+
   // Automatically load and start video playback when videoSource or slide changes
   useEffect(() => {
     const video = videoRef.current;
@@ -260,7 +264,7 @@ export default function HeroSection() {
               ref={videoRef}
               key={videoSource}
               src={videoSource}
-              poster={slide.image || "/images/dps/slider_1.webp"}
+              poster={effectivePoster}
               autoPlay
               muted={isMuted}
               loop
@@ -277,7 +281,7 @@ export default function HeroSection() {
             />
           ) : (
             <img
-              src={slide.image || "/images/dps/slider_1.webp"}
+              src={effectivePoster}
               alt={slide.title}
               className="w-full h-full object-cover object-center will-change-transform"
               loading="eager"

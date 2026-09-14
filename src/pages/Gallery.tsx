@@ -6,6 +6,7 @@ import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 import VideoGallerySection from "@/sections/VideoGallerySection";
 import { CoverflowCarousel, type CoverflowSlide } from "@/components/ui/coverflow-carousel";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export default function Gallery() {
   const { data: legacyGallery, isLoading: isLegacyLoading } = trpc.gallery.list.useQuery();
@@ -55,7 +56,7 @@ export default function Gallery() {
   // Construct dynamic 3D Coverflow slides
   const coverflowSlides: CoverflowSlide[] = useMemo(() => {
     return liveItems.slice(0, 10).map((item: any) => ({
-      src: item.imageUrl,
+      src: optimizeMediaUrl(item.imageUrl, { preset: "card" }),
       alt: item.title,
       title: item.title,
       subtitle: item.category ? `Category: ${item.category}` : "Campus Showcase",
@@ -196,7 +197,15 @@ export default function Gallery() {
                   className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group bg-slate-900"
                   onClick={() => setSelectedImage(item.imageUrl)}
                 >
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
+                  <img
+                    src={optimizeMediaUrl(item.imageUrl, { preset: "thumb" })}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
+                    width={400}
+                    height={400}
+                  />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">

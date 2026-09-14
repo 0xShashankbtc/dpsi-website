@@ -4,6 +4,7 @@ import { ArrowRight, GraduationCap, CalendarDays, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/providers/trpc";
 import { formatISTDate } from "@/lib/dateUtils";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export default function PrincipalMessage() {
   const { data: events } = trpc.events.list.useQuery();
@@ -18,7 +19,8 @@ export default function PrincipalMessage() {
   const title = getSetting("principal_title", "Principal, DPS Indirapuram");
   const badge = getSetting("principal_badge", "Principal's Message");
   const headline = getSetting("principal_headline", "Nurturing Future Leaders");
-  const image = getSetting("principal_image", "/images/leadership/priya_john.webp");
+  const rawImage = getSetting("principal_image", "/images/leadership/priya_john.webp");
+  const image = optimizeMediaUrl(rawImage, { preset: "card" });
   const p1 = getSetting(
     "principal_message_p1",
     "Welcome to Delhi Public School Indirapuram, where we believe in empowering every child to discover their unique potential. Our institution stands as a beacon of excellence, combining traditional values with modern educational approaches."

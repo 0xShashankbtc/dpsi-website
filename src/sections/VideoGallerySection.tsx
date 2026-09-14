@@ -22,7 +22,7 @@ function extractYoutubeInfo(url: string) {
   };
 }
 
-import { optimizeMediaUrl } from "./HeroSection";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export const DEFAULT_CAMPUS_VIDEOS = [
   {
@@ -75,7 +75,7 @@ export default function VideoGallerySection() {
         id: v._id ? String(v._id) : `vid-${i}`,
         title: v.title,
         url: optimizeMediaUrl(directVid),
-        thumbnail: thumb,
+        thumbnail: optimizeMediaUrl(thumb, { preset: "card" }),
         isDirectVideo: !!(v.videoUrl || targetUrl.match(/\.(mp4|webm|ogg|mov)($|\?)/i)),
       };
     });

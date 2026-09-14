@@ -39,10 +39,30 @@ export default function Home() {
     utils.cms.listSliders.prefetch();
     utils.cms.listFacilities.prefetch();
     utils.cms.listActivities.prefetch();
+    utils.events.list.prefetch();
     utils.news.featured.prefetch();
     utils.achievements.list.prefetch();
     utils.testimonials.featured.prefetch();
     utils.cms.listVideos.prefetch();
+
+    // Preload below-fold section components during initial idle so scrolling down has ZERO skeleton delays
+    const preloadSections = () => {
+      import("@/sections/InteractiveFacilitiesSection");
+      import("@/sections/NewsHighlights");
+      import("@/sections/PrincipalMessage");
+      import("@/sections/AchievementsSection");
+      import("@/sections/VideoGallerySection");
+      import("@/sections/TestimonialsSection");
+      import("@/sections/CTASection");
+    };
+
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        (window as any).requestIdleCallback(preloadSections, { timeout: 1500 });
+      } else {
+        setTimeout(preloadSections, 250);
+      }
+    }
   }, [utils]);
 
   return (
