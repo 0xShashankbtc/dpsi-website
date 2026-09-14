@@ -86,3 +86,24 @@ export function optimizeMediaUrl(
 
   return clean;
 }
+
+/**
+ * Extracts a crystal-clear first-frame poster image (at second 0) directly from a Cloudinary video URL.
+ * Automatically adapts resolution for mobile (720w) vs desktop (1920w).
+ */
+export function getVideoPosterUrl(videoUrl?: string, isMobile = false): string {
+  if (!videoUrl || typeof videoUrl !== "string") return "";
+  const clean = videoUrl.trim();
+  if (clean.includes("cloudinary.com") && clean.includes("/video/upload/")) {
+    const uploadIdx = clean.indexOf("/video/upload/");
+    const afterUpload = clean.substring(uploadIdx + "/video/upload/".length);
+    const parts = afterUpload.split("/");
+    const hasTransform = parts.length > 1 && !/^v\d+$/.test(parts[0]);
+    const cleanPath = hasTransform ? parts.slice(1).join("/") : afterUpload;
+    const jpgPath = cleanPath.replace(/\.[a-z0-9]+$/i, ".jpg");
+    const width = isMobile ? 720 : 1920;
+    return `${clean.substring(0, uploadIdx)}/video/upload/so_0,q_auto,f_auto,w_${width},c_limit/${jpgPath}`;
+  }
+  return "";
+}
+

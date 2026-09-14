@@ -92,40 +92,10 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /\/videos\/.*\.mp4$/i,
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*\.(?:png|jpg|jpeg|svg|webp|gif|avif)$/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "dpsi-videos-cache",
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 90
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
-              rangeRequests: true
-            }
-          },
-          {
-            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*\.(?:mp4|webm)$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "cloudinary-video-cache",
-              expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
-              rangeRequests: true
-            }
-          },
-          {
-            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "cloudinary-image-cache",
+              cacheName: "cloudinary-image-cache-v2",
               expiration: {
                 maxEntries: 150,
                 maxAgeSeconds: 60 * 60 * 24 * 30

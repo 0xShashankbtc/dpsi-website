@@ -10,17 +10,17 @@ import {
   Maximize2,
 } from "lucide-react";
 import { trpc } from "@/providers/trpc";
-import { optimizeMediaUrl } from "@/lib/mediaUtils";
-export { optimizeMediaUrl };
+import { optimizeMediaUrl, getVideoPosterUrl } from "@/lib/mediaUtils";
+export { optimizeMediaUrl, getVideoPosterUrl };
 
 const CACHED_SLIDERS_KEY = "dpsi_cached_hero_sliders_v2";
 
 const DEFAULT_HERO_SLIDES = [
   {
-    image: "/images/dps/slider_1.webp",
-    videoUrl: "/videos/campus_hero.mp4",
-    mobileVideoUrl: "/videos/campus_hero_mobile.mp4",
-    useSeparateMobileVideo: true,
+    image: "https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg",
+    videoUrl: "https://res.cloudinary.com/uqty03zf/video/upload/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4",
+    mobileVideoUrl: "",
+    useSeparateMobileVideo: false,
     mediaType: "video" as const,
     title: "Delhi Public School Indirapuram",
     subtitle: "Premier CBSE Day School in Ghaziabad • Nursery to Class XII",
@@ -84,13 +84,15 @@ export default function HeroSection() {
             const rawMobileVid = (s.mobileVideoUrl || "").trim();
             const rawImg = (s.imageUrl || "").trim();
             const isVideo = s.mediaType === "video" || Boolean(rawVid) || Boolean(rawMobileVid);
+            const derivedPoster = rawVid ? getVideoPosterUrl(rawVid, isMobile) : "";
+            const cleanImage = (rawImg && !rawImg.includes("slider_1.webp")) ? rawImg : "";
             return {
-              image: rawImg || "/images/dps/slider_1.webp",
-              videoUrl: rawVid || (isVideo ? "/videos/campus_hero.mp4" : ""),
+              image: cleanImage || derivedPoster || "/images/dps/logo.webp",
+              videoUrl: rawVid || (isVideo ? "https://res.cloudinary.com/uqty03zf/video/upload/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4" : ""),
               mobileVideoUrl: rawMobileVid,
               useSeparateMobileVideo: Boolean(s.useSeparateMobileVideo && rawMobileVid),
               mediaType: (isVideo ? "video" : "image") as "image" | "video",
-              title: s.title,
+              title: s.title || "Delhi Public School Indirapuram",
               subtitle: s.subtitle || "",
               badge: s.subtitle ? "Excellence in Education" : "Admissions Open 2026-27",
               buttonText: s.buttonText || "",
@@ -104,6 +106,7 @@ export default function HeroSection() {
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLElement | null>(null);
+  const userPausedRef = useRef(false);
 
   const safeSlideIndex = activeSlides.length > 0 ? currentSlide % activeSlides.length : 0;
   const slide = activeSlides[safeSlideIndex] || DEFAULT_HERO_SLIDES[0];
@@ -116,9 +119,12 @@ export default function HeroSection() {
     ? optimizeMediaUrl(effectiveRawVideo, isMobile)
     : "";
 
-  const effectivePoster = slide.image
-    ? optimizeMediaUrl(slide.image, { isMobile, preset: "hero" })
-    : "/images/dps/slider_1.webp";
+  const videoPoster = (hasVideo && effectiveRawVideo) ? getVideoPosterUrl(effectiveRawVideo, isMobile) : "";
+  const effectivePoster =
+    videoPoster ||
+    (slide.image && !slide.image.includes("slider_1.webp")
+      ? optimizeMediaUrl(slide.image, { isMobile, preset: "hero" })
+      : "");
 
   // Automatically load and start video playback when videoSource or slide changes
   useEffect(() => {
@@ -129,34 +135,27 @@ export default function HeroSection() {
       video.playsInline = true;
       video.setAttribute("playsinline", "true");
       video.setAttribute("webkit-playsinline", "true");
-      try {
-        if (video.paused) {
-          const playPromise = video.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => setIsPlayingVideo(true))
-              .catch(() => {
-                video.muted = true;
-                setIsMuted(true);
-                video.play().catch(() => {});
-              });
-          }
-        }
-      } catch {
-        // Safe catch
+      if (video.paused && !userPausedRef.current) {
+        video.play().then(() => setIsPlayingVideo(true)).catch(() => {
+          video.muted = true;
+          setIsMuted(true);
+          video.play().catch(() => {});
+        });
       }
 
-      // iOS Safari gesture fallback
+      // iOS / WebKit user gesture fallback (handles strict autoplay restrictions)
       const handleUserGesture = () => {
-        if (videoRef.current && videoRef.current.paused) {
-          videoRef.current.play().catch(() => {});
+        if (videoRef.current && videoRef.current.paused && !userPausedRef.current) {
+          videoRef.current.play().then(() => setIsPlayingVideo(true)).catch(() => {});
         }
       };
       window.addEventListener("touchstart", handleUserGesture, { once: true, passive: true });
       window.addEventListener("click", handleUserGesture, { once: true, passive: true });
+      window.addEventListener("scroll", handleUserGesture, { once: true, passive: true });
       return () => {
         window.removeEventListener("touchstart", handleUserGesture);
         window.removeEventListener("click", handleUserGesture);
+        window.removeEventListener("scroll", handleUserGesture);
       };
     }
   }, [videoSource, safeSlideIndex, hasVideo, isMuted]);
@@ -167,12 +166,12 @@ export default function HeroSection() {
 
     const handleScrollPause = () => {
       if (!videoRef.current) return;
-      if (window.scrollY > 220) {
+      if (window.scrollY > 240) {
         if (!videoRef.current.paused) {
           videoRef.current.pause();
         }
       } else {
-        if (videoRef.current.paused && isPlayingVideo) {
+        if (videoRef.current.paused && !userPausedRef.current) {
           videoRef.current.play().catch(() => {});
         }
       }
@@ -184,17 +183,17 @@ export default function HeroSection() {
       observer = new IntersectionObserver(
         ([entry]) => {
           if (!videoRef.current) return;
-          if (entry.isIntersecting && entry.intersectionRatio > 0.25) {
-            if (videoRef.current.paused && isPlayingVideo && window.scrollY < 220) {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.15) {
+            if (videoRef.current.paused && !userPausedRef.current && window.scrollY < 240) {
               videoRef.current.play().catch(() => {});
             }
-          } else {
+          } else if (!entry.isIntersecting) {
             if (!videoRef.current.paused) {
               videoRef.current.pause();
             }
           }
         },
-        { threshold: [0, 0.25] }
+        { threshold: [0, 0.15] }
       );
       if (containerRef.current) {
         observer.observe(containerRef.current);
@@ -205,7 +204,7 @@ export default function HeroSection() {
       window.removeEventListener("scroll", handleScrollPause);
       observer?.disconnect();
     };
-  }, [isPlayingVideo]);
+  }, []);
 
   const handleNextSlide = () => {
     if (activeSlides.length <= 1) return;
@@ -220,8 +219,10 @@ export default function HeroSection() {
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
       if (videoRef.current.paused) {
+        userPausedRef.current = false;
         videoRef.current.play().then(() => setIsPlayingVideo(true)).catch(() => {});
       } else {
+        userPausedRef.current = true;
         videoRef.current.pause();
         setIsPlayingVideo(false);
       }
@@ -274,29 +275,74 @@ export default function HeroSection() {
       onTouchEnd={handleTouchEnd}
       className="relative w-full h-[100dvh] min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950 text-white select-none contain-paint touch-pan-y"
     >
+      {/* BRANDED FALLBACK BACKDROP WITH DPSI LOGO */}
+      <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center pointer-events-none z-0">
+        <div className="relative flex flex-col items-center gap-3">
+          <img
+            src="/images/dps/logo.webp"
+            alt="Delhi Public School Indirapuram"
+            className="w-24 h-24 sm:w-32 sm:h-32 object-contain opacity-75 animate-pulse drop-shadow-[0_0_24px_rgba(245,158,11,0.25)]"
+            width={128}
+            height={128}
+            loading="eager"
+            fetchPriority="high"
+          />
+          <div className="h-0.5 w-20 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+        </div>
+      </div>
+
       {/* GPU-ACCELERATED BACKGROUND MEDIA */}
-      <AnimatePresence initial={false} mode="wait">
+      <AnimatePresence initial={false}>
         <motion.div
           key={`hero-slide-${safeSlideIndex}-${hasVideo ? videoSource : slide.image}`}
-          initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 z-0 overflow-hidden will-change-transform"
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="absolute inset-0 z-1 overflow-hidden will-change-transform"
         >
           {hasVideo && videoSource ? (
             <video
-              ref={videoRef}
+              ref={(el) => {
+                videoRef.current = el;
+                if (el) {
+                  el.muted = isMuted;
+                  el.defaultMuted = true;
+                  el.playsInline = true;
+                  el.setAttribute("playsinline", "true");
+                  el.setAttribute("webkit-playsinline", "true");
+                  if (el.paused && !userPausedRef.current) {
+                    el.play().then(() => setIsPlayingVideo(true)).catch(() => {});
+                  }
+                }
+              }}
               key={videoSource}
               src={videoSource}
-              poster={effectivePoster}
+              poster={effectivePoster || undefined}
               autoPlay
               muted={isMuted}
               loop
               playsInline
               preload="auto"
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget;
+                v.muted = isMuted;
+                if (!userPausedRef.current && v.paused) {
+                  v.play().then(() => setIsPlayingVideo(true)).catch(() => {});
+                }
+              }}
+              onCanPlay={(e) => {
+                const v = e.currentTarget;
+                if (!userPausedRef.current && v.paused) {
+                  v.play().then(() => setIsPlayingVideo(true)).catch(() => {});
+                }
+              }}
               onPlay={() => setIsPlayingVideo(true)}
-              onPause={() => setIsPlayingVideo(false)}
+              onPause={() => {
+                if (userPausedRef.current) {
+                  setIsPlayingVideo(false);
+                }
+              }}
               onVolumeChange={() => {
                 if (videoRef.current) {
                   setIsMuted(videoRef.current.muted);
@@ -306,7 +352,7 @@ export default function HeroSection() {
             />
           ) : (
             <img
-              src={effectivePoster}
+              src={effectivePoster || "/images/dps/logo.webp"}
               alt={slide.title}
               className="w-full h-full object-cover object-center will-change-transform"
               loading="eager"
@@ -332,11 +378,11 @@ export default function HeroSection() {
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="absolute top-5 sm:top-7 inset-x-0 z-20 flex justify-center px-4 pointer-events-auto"
+        className="absolute top-5 sm:top-7 inset-x-0 z-20 flex justify-center items-center px-4 pointer-events-auto"
       >
         <div
           style={{ backgroundColor: "rgba(255, 255, 255, 0.14)" }}
-          className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full backdrop-blur-xl border border-white/30 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/10 cursor-default transition-all"
+          className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full backdrop-blur-xl border border-white/30 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/10 cursor-default transition-all"
         >
           <span>{slide.badge || "Admissions Open 2026-27"}</span>
           <span className="text-white/40">|</span>
@@ -345,10 +391,10 @@ export default function HeroSection() {
       </motion.div>
 
       {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM) */}
-      <div className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6 pointer-events-none">
         {/* Left: Video Play & Audio Controls */}
         {hasVideo && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pointer-events-auto">
             <button
               type="button"
               onClick={toggleVideoPlayback}
@@ -382,7 +428,7 @@ export default function HeroSection() {
 
         {/* Right: Slide Controls (If Multiple Slides) */}
         {activeSlides.length > 1 && (
-          <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 ml-auto shadow-sm">
+          <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 ml-auto shadow-sm pointer-events-auto">
             <button
               onClick={handlePrevSlide}
               className="p-1.5 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer touch-manipulation active:scale-90"

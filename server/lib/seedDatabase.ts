@@ -610,7 +610,9 @@ export async function seedDatabase(
         {
           title: "Empowering Minds, Shaping Tomorrow",
           subtitle: "Ranked among the Top CBSE Schools in the National Capital Region with 20+ Years of Academic Legacy",
-          imageUrl: "/images/dps/slider_1.webp",
+          imageUrl: "https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg",
+          videoUrl: "https://res.cloudinary.com/uqty03zf/video/upload/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4",
+          mediaType: "video",
           buttonText: "Explore Campus",
           buttonLink: "/about",
           order: 1,
