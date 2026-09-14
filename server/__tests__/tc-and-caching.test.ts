@@ -234,6 +234,70 @@ describe("Footer Credit Line & Site Settings Contract", () => {
     const textPart = customCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim();
     expect(textPart).toBe(customCredit);
   });
+
+  describe("Developer Credit Password Security Guard", () => {
+    // Import helper dynamically to verify runtime export
+    it("rejects unauthorized password attempts (empty, wrong, or malformed)", async () => {
+      const { verifyDevCreditPassword } = await import("../cms-router");
+      expect(verifyDevCreditPassword("")).toBe(false);
+      expect(verifyDevCreditPassword(undefined)).toBe(false);
+      expect(verifyDevCreditPassword("admin123")).toBe(false);
+      expect(verifyDevCreditPassword("WrongPassword!")).toBe(false);
+      expect(verifyDevCreditPassword("  ")).toBe(false);
+    });
+
+    it("verifies unlock password correctly using environment or secure hash", async () => {
+      const { verifyDevCreditPassword } = await import("../cms-router");
+      const secret = process.env.DEV_CREDIT_UNLOCK_PASSWORD;
+      if (secret) {
+        expect(verifyDevCreditPassword(secret)).toBe(true);
+        expect(verifyDevCreditPassword(`  ${secret}  `)).toBe(true);
+      }
+    });
+
+    it("guards footer_credit from unauthorized modification while allowing other settings", () => {
+      function evaluateCreditGuard(
+        currentCredit: string,
+        newCredit: string,
+        unlockPasswordValid: boolean
+      ): { allowed: boolean; error?: string } {
+        if (newCredit.trim() !== currentCredit.trim()) {
+          if (!unlockPasswordValid) {
+            return {
+              allowed: false,
+              error: "Protected Field: Modifying Developer Credit Text requires the developer authorization password.",
+            };
+          }
+        }
+        return { allowed: true };
+      }
+
+      // Blocked: modifying credit without valid password
+      const blockedAttempt = evaluateCreditGuard(
+        "Developed by : Shashank Jangid",
+        "Developed by : Someone Else",
+        false
+      );
+      expect(blockedAttempt.allowed).toBe(false);
+      expect(blockedAttempt.error).toContain("developer authorization password");
+
+      // Allowed: same credit unchanged (no password needed)
+      const untouchedAttempt = evaluateCreditGuard(
+        "Developed by : Shashank Jangid",
+        "Developed by : Shashank Jangid",
+        false
+      );
+      expect(untouchedAttempt.allowed).toBe(true);
+
+      // Allowed: modifying credit with valid password
+      const authorizedAttempt = evaluateCreditGuard(
+        "Developed by : Shashank Jangid",
+        "Developed by : Shashank Jangid (Updated)",
+        true
+      );
+      expect(authorizedAttempt.allowed).toBe(true);
+    });
+  });
 });
 
 describe("Edge CDN Caching & Zero-Latency Hydration Audit", () => {

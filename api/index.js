@@ -10982,8 +10982,8 @@ var require_bson = __commonJS({
       return crypto.getRandomValues(nodeJsByteUtils.allocate(byteLength));
     }
     var nodejsRandomBytes = (() => {
-      const { crypto: crypto3 } = globalThis;
-      if (crypto3 != null && typeof crypto3.getRandomValues === "function") {
+      const { crypto: crypto4 } = globalThis;
+      if (crypto4 != null && typeof crypto4.getRandomValues === "function") {
         return nodejsSecureRandomBytes;
       } else {
         return nodejsMathRandomBytes;
@@ -11088,10 +11088,10 @@ var require_bson = __commonJS({
       return webByteUtils.fromNumberArray(Array.from({ length: byteLength }, () => Math.floor(Math.random() * 256)));
     }
     var webRandomBytes = (() => {
-      const { crypto: crypto3 } = globalThis;
-      if (crypto3 != null && typeof crypto3.getRandomValues === "function") {
+      const { crypto: crypto4 } = globalThis;
+      if (crypto4 != null && typeof crypto4.getRandomValues === "function") {
         return (byteLength) => {
-          return crypto3.getRandomValues(webByteUtils.allocate(byteLength));
+          return crypto4.getRandomValues(webByteUtils.allocate(byteLength));
         };
       } else {
         if (isReactNative()) {
@@ -77898,14 +77898,14 @@ var require_buffer_equal_constant_time = __commonJS({
 var require_jwa = __commonJS({
   "node_modules/jwa/index.js"(exports, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
-    var crypto3 = __require("crypto");
+    var crypto4 = __require("crypto");
     var formatEcdsa = require_ecdsa_sig_formatter();
     var util2 = __require("util");
     var MSG_INVALID_ALGORITHM = '"%s" is not a valid algorithm.\n  Supported algorithms are:\n  "HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512" and "none".';
     var MSG_INVALID_SECRET = "secret must be a string or buffer";
     var MSG_INVALID_VERIFIER_KEY = "key must be a string or a buffer";
     var MSG_INVALID_SIGNER_KEY = "key must be a string, a buffer or an object";
-    var supportsKeyObjects = typeof crypto3.createPublicKey === "function";
+    var supportsKeyObjects = typeof crypto4.createPublicKey === "function";
     if (supportsKeyObjects) {
       MSG_INVALID_VERIFIER_KEY += " or a KeyObject";
       MSG_INVALID_SECRET += "or a KeyObject";
@@ -77995,17 +77995,17 @@ var require_jwa = __commonJS({
       return function sign(thing, secret) {
         checkIsSecretKey(secret);
         thing = normalizeInput(thing);
-        var hmac = crypto3.createHmac("sha" + bits, secret);
+        var hmac = crypto4.createHmac("sha" + bits, secret);
         var sig = (hmac.update(thing), hmac.digest("base64"));
         return fromBase649(sig);
       };
     }
     var bufferEqual;
-    var timingSafeEqual = "timingSafeEqual" in crypto3 ? function timingSafeEqual2(a5, b6) {
+    var timingSafeEqual = "timingSafeEqual" in crypto4 ? function timingSafeEqual2(a5, b6) {
       if (a5.byteLength !== b6.byteLength) {
         return false;
       }
-      return crypto3.timingSafeEqual(a5, b6);
+      return crypto4.timingSafeEqual(a5, b6);
     } : function timingSafeEqual2(a5, b6) {
       if (!bufferEqual) {
         bufferEqual = require_buffer_equal_constant_time();
@@ -78022,7 +78022,7 @@ var require_jwa = __commonJS({
       return function sign(thing, privateKey) {
         checkIsPrivateKey(privateKey);
         thing = normalizeInput(thing);
-        var signer = crypto3.createSign("RSA-SHA" + bits);
+        var signer = crypto4.createSign("RSA-SHA" + bits);
         var sig = (signer.update(thing), signer.sign(privateKey, "base64"));
         return fromBase649(sig);
       };
@@ -78032,7 +78032,7 @@ var require_jwa = __commonJS({
         checkIsPublicKey(publicKey);
         thing = normalizeInput(thing);
         signature = toBase649(signature);
-        var verifier = crypto3.createVerify("RSA-SHA" + bits);
+        var verifier = crypto4.createVerify("RSA-SHA" + bits);
         verifier.update(thing);
         return verifier.verify(publicKey, signature, "base64");
       };
@@ -78041,11 +78041,11 @@ var require_jwa = __commonJS({
       return function sign(thing, privateKey) {
         checkIsPrivateKey(privateKey);
         thing = normalizeInput(thing);
-        var signer = crypto3.createSign("RSA-SHA" + bits);
+        var signer = crypto4.createSign("RSA-SHA" + bits);
         var sig = (signer.update(thing), signer.sign({
           key: privateKey,
-          padding: crypto3.constants.RSA_PKCS1_PSS_PADDING,
-          saltLength: crypto3.constants.RSA_PSS_SALTLEN_DIGEST
+          padding: crypto4.constants.RSA_PKCS1_PSS_PADDING,
+          saltLength: crypto4.constants.RSA_PSS_SALTLEN_DIGEST
         }, "base64"));
         return fromBase649(sig);
       };
@@ -78055,12 +78055,12 @@ var require_jwa = __commonJS({
         checkIsPublicKey(publicKey);
         thing = normalizeInput(thing);
         signature = toBase649(signature);
-        var verifier = crypto3.createVerify("RSA-SHA" + bits);
+        var verifier = crypto4.createVerify("RSA-SHA" + bits);
         verifier.update(thing);
         return verifier.verify({
           key: publicKey,
-          padding: crypto3.constants.RSA_PKCS1_PSS_PADDING,
-          saltLength: crypto3.constants.RSA_PSS_SALTLEN_DIGEST
+          padding: crypto4.constants.RSA_PKCS1_PSS_PADDING,
+          saltLength: crypto4.constants.RSA_PSS_SALTLEN_DIGEST
         }, signature, "base64");
       };
     }
@@ -90522,11 +90522,11 @@ var require_encodeDoubleArray = __commonJS({
 // node_modules/cloudinary/lib/auth_token.js
 var require_auth_token = __commonJS({
   "node_modules/cloudinary/lib/auth_token.js"(exports, module2) {
-    var crypto3 = __require("crypto");
+    var crypto4 = __require("crypto");
     var smart_escape = require_smart_escape();
     var unsafe = /([ "#%&'/:;<=>?@[\]^`{|}~]+)/g;
     function digest(message, key) {
-      return crypto3.createHmac("sha256", Buffer.from(key, "hex")).update(message).digest("hex");
+      return crypto4.createHmac("sha256", Buffer.from(key, "hex")).update(message).digest("hex");
     }
     function escapeToLower(url2) {
       const safeUrl = smart_escape(url2, unsafe);
@@ -91199,7 +91199,7 @@ var require_qPolyfill = __commonJS({
 // node_modules/cloudinary/lib/utils/index.js
 var require_utils9 = __commonJS({
   "node_modules/cloudinary/lib/utils/index.js"(exports, module2) {
-    var crypto3 = __require("crypto");
+    var crypto4 = __require("crypto");
     var querystring = __require("querystring");
     var { URL: URL3 } = __require("url");
     var compact = require_compact();
@@ -92044,7 +92044,7 @@ var require_utils9 = __commonJS({
       return base_api_url_v1_1()([resource_type, action], options);
     }
     function random_public_id() {
-      return crypto3.randomBytes(12).toString("base64").replace(/[^a-z0-9]/g, "");
+      return crypto4.randomBytes(12).toString("base64").replace(/[^a-z0-9]/g, "");
     }
     function signed_preloaded_image(result) {
       return `${result.resource_type}/upload/v${result.version}/${filter([result.public_id, result.format], utils.present).join(".")}#${result.signature}`;
@@ -92073,7 +92073,7 @@ var require_utils9 = __commonJS({
       if (!SUPPORTED_SIGNATURE_ALGORITHMS.includes(signature_algorithm)) {
         throw new Error(`Signature algorithm ${signature_algorithm} is not supported. Supported algorithms: ${SUPPORTED_SIGNATURE_ALGORITHMS.join(", ")}`);
       }
-      const hash2 = crypto3.createHash(signature_algorithm).update(input).digest();
+      const hash2 = crypto4.createHash(signature_algorithm).update(input).digest();
       return Buffer.from(hash2).toString(encoding);
     }
     function clear_blank(hash2) {
@@ -94932,7 +94932,7 @@ var require_main = __commonJS({
     var fs = __require("fs");
     var path = __require("path");
     var os3 = __require("os");
-    var crypto3 = __require("crypto");
+    var crypto4 = __require("crypto");
     var TIPS = [
       "\u25C8 encrypted .env [www.dotenvx.com]",
       "\u25C8 secrets for agents [www.dotenvx.com]",
@@ -95176,7 +95176,7 @@ var require_main = __commonJS({
       const authTag = ciphertext.subarray(-16);
       ciphertext = ciphertext.subarray(12, -16);
       try {
-        const aesgcm = crypto3.createDecipheriv("aes-256-gcm", key, nonce);
+        const aesgcm = crypto4.createDecipheriv("aes-256-gcm", key, nonce);
         aesgcm.setAuthTag(authTag);
         return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
       } catch (error50) {
@@ -122486,7 +122486,7 @@ var require_dist_cjs52 = __commonJS({
     var utilBufferFrom = require_dist_cjs7();
     var utilUtf8 = require_dist_cjs8();
     var buffer = __require("buffer");
-    var crypto3 = __require("crypto");
+    var crypto4 = __require("crypto");
     var Hash5 = class {
       algorithmIdentifier;
       secret;
@@ -122503,7 +122503,7 @@ var require_dist_cjs52 = __commonJS({
         return Promise.resolve(this.hash.digest());
       }
       reset() {
-        this.hash = this.secret ? crypto3.createHmac(this.algorithmIdentifier, castSourceData(this.secret)) : crypto3.createHash(this.algorithmIdentifier);
+        this.hash = this.secret ? crypto4.createHmac(this.algorithmIdentifier, castSourceData(this.secret)) : crypto4.createHash(this.algorithmIdentifier);
       }
     };
     function castSourceData(toCast, encoding) {
@@ -131457,10 +131457,10 @@ var emptyUuid;
 function getRandomByte() {
   return safeMathRandom() * 16;
 }
-function uuid4(crypto3 = getCrypto()) {
+function uuid4(crypto4 = getCrypto()) {
   try {
-    if (crypto3?.randomUUID) {
-      return withRandomSafeContext(() => crypto3.randomUUID()).replace(/-/g, "");
+    if (crypto4?.randomUUID) {
+      return withRandomSafeContext(() => crypto4.randomUUID()).replace(/-/g, "");
     }
   } catch {
   }
@@ -179107,6 +179107,9 @@ async function getAdminUserModel() {
   return conn.models.AdminUser || conn.model("AdminUser", AdminUserSchema);
 }
 
+// server/cms-router.ts
+import crypto3 from "crypto";
+
 // server/models/tenantSchema.ts
 var import_mongoose16 = __toESM(require_mongoose2(), 1);
 init_mongodb();
@@ -180136,6 +180139,16 @@ async function createContext(opts) {
 // server/cms-router.ts
 function escapeRegex3(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+var DEV_CREDIT_PASSWORD_HASH = "4c18dbeb0fb622d98fb9d0c90e863c23c39e92c2108c6efab6f385541f82ebdc";
+function verifyDevCreditPassword(password) {
+  if (!password || typeof password !== "string") return false;
+  const trimmed = password.trim();
+  if (process.env.DEV_CREDIT_UNLOCK_PASSWORD && trimmed === process.env.DEV_CREDIT_UNLOCK_PASSWORD.trim()) {
+    return true;
+  }
+  const hash2 = crypto3.createHash("sha256").update(trimmed).digest("hex");
+  return hash2 === DEV_CREDIT_PASSWORD_HASH;
 }
 var loginAttemptsMap = /* @__PURE__ */ new Map();
 function checkLoginRateLimit(ip) {
@@ -181979,12 +181992,37 @@ var cmsRouter = createRouter({
       return settings;
     });
   }),
+  verifyCreditUnlockPassword: adminMutation.input(external_exports.object({ password: external_exports.string() })).mutation(async ({ input }) => {
+    const isValid = verifyDevCreditPassword(input.password);
+    if (!isValid) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Incorrect developer authorization password. Access denied."
+      });
+    }
+    return { success: true };
+  }),
   updateSiteSettings: adminMutation.input(
     external_exports.object({
-      updates: external_exports.array(external_exports.object({ key: external_exports.string(), value: external_exports.string() }))
+      updates: external_exports.array(external_exports.object({ key: external_exports.string(), value: external_exports.string() })),
+      unlockPassword: external_exports.string().optional()
     })
   ).mutation(async ({ input }) => {
     const { SiteSettings, Leadership } = await getMainModels();
+    const creditUpdate = input.updates.find((u) => u.key === "footer_credit");
+    if (creditUpdate) {
+      const existingDoc = await SiteSettings.findOne({ key: "footer_credit" }).lean();
+      const existingVal = existingDoc?.value;
+      if (existingVal !== void 0 && creditUpdate.value.trim() !== existingVal.trim()) {
+        const isAuthorized = verifyDevCreditPassword(input.unlockPassword);
+        if (!isAuthorized) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Protected Field: Modifying Developer Credit Text requires the developer authorization password."
+          });
+        }
+      }
+    }
     await Promise.all(
       input.updates.map(
         (u) => SiteSettings.findOneAndUpdate({ key: u.key }, { value: u.value }, { upsert: true, new: true })

@@ -25,6 +25,7 @@ import {
   RefreshCw,
   LogOut,
   Lock,
+  Unlock,
   User,
   Key,
   ArrowRight,
@@ -984,6 +985,19 @@ export default function AdminCMS() {
     },
   });
 
+  const verifyCreditUnlockPasswordMutation = trpc.cms.verifyCreditUnlockPassword.useMutation({
+    onSuccess: () => {
+      setIsCreditLocked(false);
+      setCreditUnlockPassword(creditPasswordInput);
+      setCreditUnlockModal(false);
+      setCreditPasswordInput("");
+      toast.success("Developer Credit unlocked for editing!");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Incorrect password. Access denied.");
+    },
+  });
+
   const updateSiteSettingsMutation = trpc.cms.updateSiteSettings.useMutation({
     onSuccess: () => {
       toast.success("Site settings saved!");
@@ -991,6 +1005,8 @@ export default function AdminCMS() {
       utils.cms.getSiteSettings.invalidate();
       utils.cms.listLeadership.invalidate();
       refetchLeadership();
+      setIsCreditLocked(true);
+      setCreditUnlockPassword("");
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to update site settings");
@@ -1557,6 +1573,12 @@ export default function AdminCMS() {
     borderRadius: "none" as "none" | "md" | "xl" | "full",
   });
 
+
+  const [isCreditLocked, setIsCreditLocked] = useState(true);
+  const [creditUnlockModal, setCreditUnlockModal] = useState(false);
+  const [creditPasswordInput, setCreditPasswordInput] = useState("");
+  const [creditUnlockPassword, setCreditUnlockPassword] = useState("");
+  const [showCreditPassword, setShowCreditPassword] = useState(false);
 
   const [activityModal, setActivityModal] = useState(false);
   const [activityForm, setActivityForm] = useState({ title: "", category: "Academics", description: "", eventDate: "", imageUrl: "" });
@@ -6105,8 +6127,8 @@ export default function AdminCMS() {
                               { key: "footer_credit", value: creditVal },
                               { key: "footer_copyright", value: copyVal },
                             ],
+                            unlockPassword: creditUnlockPassword,
                           });
-                          toast.success("Footer branding updated!");
                         }}
                         disabled={updateSiteSettingsMutation.isPending}
                         className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-8 px-4 cursor-pointer shadow-xs"
@@ -6154,19 +6176,89 @@ export default function AdminCMS() {
                       {/* Inputs */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                         <div className="space-y-1.5">
-                          <label className="text-[11px] font-semibold text-slate-700">Developer Credit Text</label>
-                          <Input
-                            placeholder="Developed by : Shashank Jangid"
-                            value={settingsEdits["footer_credit"] !== undefined
-                              ? settingsEdits["footer_credit"]
-                              : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid")}
-                            onChange={(e) => setSettingsEdits({ ...settingsEdits, footer_credit: e.target.value })}
-                            className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-                          />
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
+                              {isCreditLocked ? (
+                                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                              ) : (
+                                <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                              )}
+                              <span>Developer Credit Text</span>
+                            </label>
+                            {isCreditLocked ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCreditPasswordInput("");
+                                  setShowCreditPassword(false);
+                                  setCreditUnlockModal(true);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-100/80 hover:bg-amber-200 border border-amber-300 px-2 py-0.5 rounded font-semibold transition-colors cursor-pointer"
+                              >
+                                <Lock className="w-3 h-3 text-amber-700" />
+                                <span>Locked • Enter Password</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded font-semibold">
+                                  <Unlock className="w-3 h-3 text-emerald-600" />
+                                  <span>Unlocked</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsCreditLocked(true);
+                                    setCreditUnlockPassword("");
+                                    toast.info("Developer credit re-locked");
+                                  }}
+                                  className="text-[10px] text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                                >
+                                  Re-lock
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="relative">
+                            <Input
+                              placeholder="Developed by : Shashank Jangid"
+                              value={settingsEdits["footer_credit"] !== undefined
+                                ? settingsEdits["footer_credit"]
+                                : ((siteSettings || []).find((s: any) => s.key === "footer_credit")?.value || "Developed by : Shashank Jangid")}
+                              readOnly={isCreditLocked}
+                              onClick={() => {
+                                if (isCreditLocked) {
+                                  setCreditPasswordInput("");
+                                  setShowCreditPassword(false);
+                                  setCreditUnlockModal(true);
+                                }
+                              }}
+                              onChange={(e) => {
+                                if (!isCreditLocked) {
+                                  setSettingsEdits({ ...settingsEdits, footer_credit: e.target.value });
+                                }
+                              }}
+                              className={isCreditLocked
+                                ? "bg-slate-100/90 border-slate-300 text-slate-500 text-xs cursor-not-allowed select-none pr-8 font-medium"
+                                : "bg-emerald-50/40 border-emerald-400 text-slate-900 text-xs focus:ring-emerald-500 pr-8 font-medium"
+                              }
+                            />
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                              {isCreditLocked ? (
+                                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                              ) : (
+                                <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                              )}
+                            </div>
+                          </div>
+
                           <p className="text-[10px] text-slate-400">
-                            Default: Developed by : Shashank Jangid
+                            {isCreditLocked
+                              ? "🔒 Protected field. Requires developer authorization password to edit."
+                              : "🔓 Unlocked. Make your edits and click 'Save Footer Credit' above."}
                           </p>
                         </div>
+
                         <div className="space-y-1.5">
                           <label className="text-[11px] font-semibold text-slate-700">Copyright Line</label>
                           <Input
@@ -6190,7 +6282,7 @@ export default function AdminCMS() {
                         <Button
                           size="sm"
                           onClick={() => {
-                            const groupSettings = (siteSettings || []).filter((s: any) => s.group === group);
+                            const groupSettings = (siteSettings || []).filter((s: any) => s.group === group && s.key !== "footer_credit" && s.key !== "footer_copyright");
                             const updates = groupSettings.map((s: any) => ({
                               key: s.key,
                               value: settingsEdits[s.key] !== undefined ? settingsEdits[s.key] : s.value,
@@ -6205,7 +6297,7 @@ export default function AdminCMS() {
                         </Button>
                       </div>
                       <div className="p-4 space-y-4">
-                        {(siteSettings || []).filter((s: any) => s.group === group).map((s: any) => {
+                        {(siteSettings || []).filter((s: any) => s.group === group && s.key !== "footer_credit" && s.key !== "footer_copyright").map((s: any) => {
                           const isImageKey = s.key.includes("image") || s.key.includes("logo") || s.key.includes("photo");
                           const currentValue = settingsEdits[s.key] !== undefined ? settingsEdits[s.key] : s.value;
 
@@ -9866,6 +9958,99 @@ export default function AdminCMS() {
                       <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       "Update Password"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: DEVELOPER CREDIT PASSWORD UNLOCK */}
+        {creditUnlockModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center shadow-xs">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Developer Authorization</h3>
+                    <p className="text-[11px] text-slate-500">Enter password to edit Developer Credit</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCreditUnlockModal(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200 text-[11px] text-amber-900 leading-relaxed">
+                This field controls official developer attribution across all website footers and is strictly protected.
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!creditPasswordInput.trim()) {
+                    toast.error("Please enter the authorization password");
+                    return;
+                  }
+                  verifyCreditUnlockPasswordMutation.mutate({ password: creditPasswordInput.trim() });
+                }}
+                className="space-y-3"
+              >
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-slate-700">Developer Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showCreditPassword ? "text" : "password"}
+                      autoFocus
+                      value={creditPasswordInput}
+                      onChange={(e) => setCreditPasswordInput(e.target.value)}
+                      placeholder="Enter authorization password"
+                      className="bg-slate-50 border-slate-300 text-slate-900 text-xs pr-9 rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCreditPassword(!showCreditPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showCreditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCreditUnlockModal(false)}
+                    className="text-xs text-slate-600 cursor-pointer"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={verifyCreditUnlockPasswordMutation.isPending}
+                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {verifyCreditUnlockPasswordMutation.isPending ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Verifying...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="w-3.5 h-3.5" />
+                        <span>Authorize & Unlock</span>
+                      </>
                     )}
                   </Button>
                 </div>

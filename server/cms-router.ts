@@ -12,6 +12,7 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, publicMutation, adminMutation, adminQuery } from "./middleware";
 import { getMainModels, getGalleryModels, getTcModels, createImmutableAuditLog, checkPersistentRateLimit } from "./models/cmsSchemas";
 import { getAdminUserModel } from "./models/adminUserSchema";
+import crypto from "crypto";
 import { getTenantModel } from "./models/tenantSchema";
 import { seedDatabase } from "./lib/seedDatabase";
 import { convertImageToWebP } from "./utils/mediaConverter";
@@ -20,6 +21,20 @@ import { getJwtSecret } from "./context";
 
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Secure SHA-256 hash of developer authorization password
+// Plaintext is NEVER committed to repository
+const DEV_CREDIT_PASSWORD_HASH = "4c18dbeb0fb622d98fb9d0c90e863c23c39e92c2108c6efab6f385541f82ebdc";
+
+export function verifyDevCreditPassword(password?: string): boolean {
+  if (!password || typeof password !== "string") return false;
+  const trimmed = password.trim();
+  if (process.env.DEV_CREDIT_UNLOCK_PASSWORD && trimmed === process.env.DEV_CREDIT_UNLOCK_PASSWORD.trim()) {
+    return true;
+  }
+  const hash = crypto.createHash("sha256").update(trimmed).digest("hex");
+  return hash === DEV_CREDIT_PASSWORD_HASH;
 }
 
 // Login rate limiter: Max 5 failed attempts per 10 minutes per IP (In-memory + MongoDB TTL Distributed)
@@ -2152,14 +2167,45 @@ export const cmsRouter = createRouter({
 
     });
   }),
+  verifyCreditUnlockPassword: adminMutation
+    .input(z.object({ password: z.string() }))
+    .mutation(async ({ input }) => {
+      const isValid = verifyDevCreditPassword(input.password);
+      if (!isValid) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Incorrect developer authorization password. Access denied.",
+        });
+      }
+      return { success: true };
+    }),
+
   updateSiteSettings: adminMutation
     .input(
       z.object({
         updates: z.array(z.object({ key: z.string(), value: z.string() })),
+        unlockPassword: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
       const { SiteSettings, Leadership } = await getMainModels();
+
+      // Guard footer_credit: if value is modified from current DB setting, verify developer authorization password
+      const creditUpdate = input.updates.find((u) => u.key === "footer_credit");
+      if (creditUpdate) {
+        const existingDoc = await SiteSettings.findOne({ key: "footer_credit" }).lean();
+        const existingVal = (existingDoc as any)?.value;
+        if (existingVal !== undefined && creditUpdate.value.trim() !== existingVal.trim()) {
+          const isAuthorized = verifyDevCreditPassword(input.unlockPassword);
+          if (!isAuthorized) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Protected Field: Modifying Developer Credit Text requires the developer authorization password.",
+            });
+          }
+        }
+      }
+
       await Promise.all(
         input.updates.map((u) =>
           SiteSettings.findOneAndUpdate({ key: u.key }, { value: u.value }, { upsert: true, new: true })
