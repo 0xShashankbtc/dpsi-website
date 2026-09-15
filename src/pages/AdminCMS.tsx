@@ -3978,7 +3978,19 @@ export default function AdminCMS() {
                         <div>
                           <div className="h-40 w-full overflow-hidden bg-slate-900 relative">
                             {v.thumbnailUrl ? (
-                              <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                              <img 
+                                src={v.thumbnailUrl.includes("hqdefault.jpg") ? v.thumbnailUrl.replace("hqdefault.jpg", "maxresdefault.jpg") : v.thumbnailUrl} 
+                                alt={v.title} 
+                                className="w-full h-full object-cover" 
+                                onError={(e) => { 
+                                  const target = e.target as HTMLImageElement;
+                                  if (target.src.includes("maxresdefault.jpg")) {
+                                    target.src = target.src.replace("maxresdefault.jpg", "hqdefault.jpg");
+                                  } else {
+                                    target.style.display = "none"; 
+                                  }
+                                }} 
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-800 text-xs">No Thumbnail</div>
                             )}
@@ -7547,7 +7559,7 @@ export default function AdminCMS() {
                     const match = val.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?(?:.*&)?v=))([\w-]{11})/i);
                     const vid = match ? match[1] : val.trim().length === 11 && /^[\w-]{11}$/.test(val.trim()) ? val.trim() : "";
                     if (vid) {
-                      thumbUrl = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+                      thumbUrl = `https://img.youtube.com/vi/${vid}/maxresdefault.jpg`;
                     }
                     setVideoForm({ ...videoForm, youtubeUrl: val, thumbnailUrl: thumbUrl });
                   }}

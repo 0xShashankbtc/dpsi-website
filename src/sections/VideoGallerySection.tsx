@@ -18,7 +18,8 @@ function extractYoutubeInfo(url: string) {
   return {
     id,
     embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&enablejsapi=1`,
-    thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+    thumbnail: `https://img.youtube.com/vi/${id}/maxresdefault.jpg`,
+    hqThumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
   };
 }
 
@@ -28,8 +29,8 @@ export const DEFAULT_CAMPUS_VIDEOS = [
   {
     id: "campus-tour-main",
     title: "DPS Indirapuram Virtual Campus Tour & Infrastructure",
-    url: "/videos/campus_hero.mp4",
-    thumbnail: "/images/dps/slider_1.webp",
+    url: "https://res.cloudinary.com/uqty03zf/video/upload/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4",
+    thumbnail: "https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg",
     isDirectVideo: true,
   },
 ];
@@ -51,11 +52,21 @@ export default function VideoGallerySection() {
       const targetUrl = (v.youtubeUrl || v.videoUrl || "").trim();
       const yt = targetUrl ? extractYoutubeInfo(targetUrl) : null;
       if (yt) {
+        let preferredThumb = v.thumbnailUrl || yt.thumbnail;
+        let fallbackThumb = yt.hqThumbnail || preferredThumb;
+        
+        // Upgrade legacy hqdefault thumbnails in DB to maxresdefault
+        if (preferredThumb && preferredThumb.includes("hqdefault.jpg")) {
+          preferredThumb = preferredThumb.replace("hqdefault.jpg", "maxresdefault.jpg");
+          fallbackThumb = preferredThumb.replace("maxresdefault.jpg", "hqdefault.jpg");
+        }
+        
         return {
           id: v._id ? String(v._id) : yt.id || `yt-${i}`,
           title: v.title,
           url: yt.embedUrl,
-          thumbnail: v.thumbnailUrl || yt.thumbnail,
+          thumbnail: preferredThumb,
+          hqThumbnail: fallbackThumb,
           isDirectVideo: false,
         };
       }
@@ -234,6 +245,14 @@ export default function VideoGallerySection() {
                       className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-700 ease-out"
                       loading="lazy"
                       decoding="async"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        // @ts-ignore
+                        if (activeVideo.hqThumbnail && target.src !== activeVideo.hqThumbnail) {
+                          // @ts-ignore
+                          target.src = activeVideo.hqThumbnail;
+                        }
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent flex flex-col justify-between p-4 sm:p-6">
                       {/* Top Title Overlay */}
@@ -297,7 +316,19 @@ export default function VideoGallerySection() {
                     : "border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100"
                 }`}
               >
-                <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                <img
+                  src={vid.thumbnail}
+                  alt={vid.title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    if (vid.hqThumbnail && target.src !== vid.hqThumbnail) {
+                      target.src = vid.hqThumbnail;
+                    }
+                  }}
+                />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <Play className="w-4 h-4 fill-white text-white" />
                 </div>
