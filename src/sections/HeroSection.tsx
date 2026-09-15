@@ -147,11 +147,6 @@ export default function HeroSection() {
       }
 
       if (isInView && document.visibilityState === "visible") {
-        video.muted = isMuted;
-        video.defaultMuted = true;
-        video.playsInline = true;
-        video.setAttribute("playsinline", "true");
-        video.setAttribute("webkit-playsinline", "true");
         if (video.paused && !userPausedRef.current) {
           video.play().then(() => setIsPlayingVideo(true)).catch(() => {
             video.muted = true;

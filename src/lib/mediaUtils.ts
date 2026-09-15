@@ -39,7 +39,7 @@ export function optimizeMediaUrl(
     if (isMobile) {
       return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:eco,vc_auto,w_720,c_limit/${cleanPath}`;
     }
-    return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:best,vc_auto,w_1920,c_limit/${cleanPath}`;
+    return `${clean.substring(0, uploadIdx)}/video/upload/q_auto:good,vc_auto,w_1920,c_limit/${cleanPath}`;
   }
 
   // Cloudinary Image Optimization
