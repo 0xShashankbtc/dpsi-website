@@ -365,7 +365,7 @@ export default function Facilities() {
         description="Explore our 40-acre campus with AI Robotics Lab, 25m heated Olympic pool, and 1200-seat auditorium at DPS Indirapuram."
       />
       {/* 1. HERO SECTION WITH CINEMATIC GLOW & CAMPUS STATS */}
-      <section className="relative py-20 sm:py-28 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 text-white overflow-hidden border-b border-emerald-950/60">
+      <section className="relative py-20 sm:py-28 bg-gradient-to-br from-slate-50 via-white to-emerald-50 text-slate-900 overflow-hidden border-b border-slate-200">
         {/* Dynamic Background Mesh Orbs */}
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
@@ -380,37 +380,37 @@ export default function Facilities() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold uppercase tracking-wider mb-5 shadow-sm">
+            <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider mb-5 shadow-sm">
               DPS Indirapuram • Campus Infrastructure
             </span>
 
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight text-white drop-shadow-md">
-              World-Class <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-amber-300 bg-clip-text text-transparent">Facilities</span>
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight text-slate-900 drop-shadow-sm">
+              World-Class <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-amber-500 bg-clip-text text-transparent">Facilities</span>
             </h1>
 
-            <div className="w-24 h-1.5 bg-gradient-to-r from-emerald-400 to-amber-400 mx-auto rounded-full mb-6" />
+            <div className="w-24 h-1.5 bg-gradient-to-r from-emerald-500 to-amber-500 mx-auto rounded-full mb-6" />
 
-            <p className="text-base sm:text-xl text-slate-300 font-normal leading-relaxed max-w-3xl mx-auto mb-10">
+            <p className="text-base sm:text-xl text-slate-600 font-normal leading-relaxed max-w-3xl mx-auto mb-10">
               Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities.
             </p>
 
             {/* Overview Metric Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4 border-t border-emerald-900/40">
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
-                <p className="text-2xl sm:text-3xl font-black text-emerald-400">40+ Acres</p>
-                <p className="text-xs font-medium text-slate-400 mt-0.5">Lush Green Campus</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4 border-t border-slate-200">
+              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-black text-emerald-700">40+ Acres</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">Lush Green Campus</p>
               </div>
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
-                <p className="text-2xl sm:text-3xl font-black text-amber-400">12+ Studios</p>
-                <p className="text-xs font-medium text-slate-400 mt-0.5">Labs & Arenas</p>
+              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-black text-amber-600">12+ Studios</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">Labs & Arenas</p>
               </div>
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
-                <p className="text-2xl sm:text-3xl font-black text-emerald-300">25m Heated</p>
-                <p className="text-xs font-medium text-slate-400 mt-0.5">Olympic Pool</p>
+              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-black text-emerald-600">25m Heated</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">Olympic Pool</p>
               </div>
-              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-inner">
-                <p className="text-2xl sm:text-3xl font-black text-amber-300">100% Safe</p>
-                <p className="text-xs font-medium text-slate-400 mt-0.5">AI Surveillance & GPS</p>
+              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-black text-amber-500">100% Safe</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">AI Surveillance & GPS</p>
               </div>
             </div>
           </div>

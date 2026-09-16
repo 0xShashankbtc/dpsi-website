@@ -165,8 +165,7 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 1000,
-    sourcemap: "hidden", // Hidden sourcemaps: uploaded to Sentry, not served publicly
+    sourcemap: Boolean(process.env.SENTRY_AUTH_TOKEN), // Disable sourcemap reference comments in client bundle unless uploading to Sentry
     rollupOptions: {
       output: {
         manualChunks(id) {

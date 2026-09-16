@@ -623,29 +623,29 @@ export default function Navbar() {
               )}
 
               <motion.button
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={() => setIsDark(!isDark)}
-                className="p-1.5 sm:p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
+                className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0 touch-manipulation"
                 aria-label="Toggle dark mode"
               >
                 {isDark ? (
-                  <Sun className="w-4 h-4 text-amber-400" />
+                  <Sun className="w-5 h-5 text-amber-400" />
                 ) : (
-                  <Moon className="w-4 h-4 text-slate-600" />
+                  <Moon className="w-5 h-5 text-slate-700 dark:text-slate-200" />
                 )}
               </motion.button>
 
               <motion.button
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
-                className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
+                className="lg:hidden w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0 touch-manipulation"
                 aria-label="Toggle navigation menu"
               >
                 {isMobileOpen ? (
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 ) : (
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-6 h-6" />
                 )}
               </motion.button>
             </div>

@@ -121,7 +121,7 @@ export default function QuickStats() {
               {/* Underline accent with smooth expansion */}
               <div className="w-8 h-0.5 bg-slate-900 dark:bg-white rounded-full mb-2 group-hover:w-14 transition-all duration-300" />
 
-              <p className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <p className="text-[11px] sm:text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 {stat.label}
               </p>
             </motion.div>

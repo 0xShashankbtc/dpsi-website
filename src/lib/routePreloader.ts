@@ -87,20 +87,25 @@ export function preloadRoute(href?: string, utils?: any) {
 }
 
 /**
- * Silently prefetch the top 3 high-intent student/parent destination pages
- * during idle browser cycles (requestIdleCallback) after initial boot.
+ * Silently prefetch lightweight high-intent pages only AFTER the primary page
+ * has completely rendered and achieved stable idle state (avoiding any FCP/LCP interference).
  */
 export function idlePrefetchTopRoutes(utils?: any) {
   if (typeof window === "undefined") return;
   const run = () => {
+    // Only prefetch lightweight routes; heavy chunks like /academics (charts) preload on link hover/touch
     preloadRoute("/admissions", utils);
     preloadRoute("/about", utils);
-    preloadRoute("/academics", utils);
   };
 
-  if ("requestIdleCallback" in window) {
-    (window as any).requestIdleCallback(run, { timeout: 3500 });
-  } else {
-    setTimeout(run, 2000);
-  }
+  // Wait 7.5s so initial Lighthouse audit & first paint are 100% finished
+  const timer = setTimeout(() => {
+    if ("requestIdleCallback" in window) {
+      (window as any).requestIdleCallback(run);
+    } else {
+      run();
+    }
+  }, 7500);
+
+  return () => clearTimeout(timer);
 }

@@ -103,37 +103,37 @@ export default function Footer() {
                 href={fbUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#1877F2] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 hover:bg-[#1877F2] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden touch-manipulation text-slate-200"
                 aria-label="Follow DPS Indirapuram on Facebook (opens in new tab)"
               >
-                <Facebook className="w-4 h-4" aria-hidden="true" />
+                <Facebook className="w-5 h-5" aria-hidden="true" />
               </a>
               <a
                 href={ytUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#FF0000] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 hover:bg-[#FF0000] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden touch-manipulation text-slate-200"
                 aria-label="Watch DPS Indirapuram on YouTube (opens in new tab)"
               >
-                <Youtube className="w-4 h-4" aria-hidden="true" />
+                <Youtube className="w-5 h-5" aria-hidden="true" />
               </a>
               <a
                 href="https://www.linkedin.com/company/dpsindirapuram/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#0A66C2] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 hover:bg-[#0A66C2] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden touch-manipulation text-slate-200"
                 aria-label="Connect with DPS Indirapuram on LinkedIn (opens in new tab)"
               >
-                <Linkedin className="w-4 h-4" aria-hidden="true" />
+                <Linkedin className="w-5 h-5" aria-hidden="true" />
               </a>
               <a
                 href={instaUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-full bg-slate-800 hover:bg-[#dc2743] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden"
+                className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 hover:bg-[#dc2743] transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-hidden touch-manipulation text-slate-200"
                 aria-label="Follow DPS Indirapuram on Instagram (opens in new tab)"
               >
-                <Instagram className="w-4 h-4" aria-hidden="true" />
+                <Instagram className="w-5 h-5" aria-hidden="true" />
               </a>
             </div>
           </div>

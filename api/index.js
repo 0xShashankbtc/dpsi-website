@@ -157659,6 +157659,8 @@ var bufferToFormData = (arrayBuffer, contentType) => {
 };
 
 // node_modules/hono/dist/utils/body.js
+var MAX_NESTING_DEPTH = 32;
+var MAX_NESTED_OBJECTS = 1e4;
 var isRawRequest = (request2) => "headers" in request2;
 var parseBody = async (request2, options = /* @__PURE__ */ Object.create(null)) => {
   const { all = false, dot = false } = options;
@@ -157691,6 +157693,7 @@ async function parseFormData(request2, options) {
 }
 function convertFormDataToBodyData(formData, options) {
   const form = /* @__PURE__ */ Object.create(null);
+  const nestingState = { count: 0 };
   formData.forEach((value, key) => {
     const shouldParseAllValues = options.all || key.endsWith("[]");
     if (!shouldParseAllValues) {
@@ -157703,7 +157706,7 @@ function convertFormDataToBodyData(formData, options) {
     Object.entries(form).forEach(([key, value]) => {
       const shouldParseDotValues = key.includes(".");
       if (shouldParseDotValues) {
-        handleParsingNestedValues(form, key, value);
+        handleParsingNestedValues(form, key, value, nestingState);
         delete form[key];
       }
     });
@@ -157726,22 +157729,31 @@ var handleParsingAllValues = (form, key, value) => {
     }
   }
 };
-var handleParsingNestedValues = (form, key, value) => {
+var handleParsingNestedValues = (form, key, value, state2) => {
   if (/(?:^|\.)__proto__\./.test(key)) {
     return;
   }
   let nestedForm = form;
-  const keys = key.split(".");
+  const keys = key.split(".", MAX_NESTING_DEPTH + 2);
+  if (keys.length > MAX_NESTING_DEPTH + 1) {
+    throwNestingLimitExceeded();
+  }
   keys.forEach((key2, index) => {
     if (index === keys.length - 1) {
       nestedForm[key2] = value;
     } else {
       if (!nestedForm[key2] || typeof nestedForm[key2] !== "object" || Array.isArray(nestedForm[key2]) || nestedForm[key2] instanceof File) {
+        if (state2.count++ >= MAX_NESTED_OBJECTS) {
+          throwNestingLimitExceeded();
+        }
         nestedForm[key2] = /* @__PURE__ */ Object.create(null);
       }
       nestedForm = nestedForm[key2];
     }
   });
+};
+var throwNestingLimitExceeded = () => {
+  throw new Error("Nesting limit exceeded");
 };
 
 // node_modules/hono/dist/utils/url.js
@@ -157874,6 +157886,10 @@ var _decodeURI = (value) => {
   return tryDecodeURIComponent(value);
 };
 var _getQueryParam = (url2, key, multiple) => {
+  const hashIndex = url2.indexOf("#", 8);
+  if (hashIndex !== -1) {
+    url2 = url2.slice(0, hashIndex);
+  }
   let encoded;
   if (!multiple && key && key.indexOf("%") === -1 && key.indexOf("+") === -1) {
     let keyIndex2 = url2.indexOf("?", 8);
@@ -157990,13 +158006,13 @@ var HonoRequest = class {
     return key ? this.#getDecodedParam(key) : this.#getAllDecodedParams();
   }
   #getDecodedParam(key) {
-    const paramKey = this.#matchResult[0][this.routeIndex][1][key];
+    const paramKey = this.#matchResult[0][this.routeIndex]?.[1][key];
     const param = this.#getParamValue(paramKey);
     return param && tryDecodeURIComponent(param);
   }
   #getAllDecodedParams() {
     const decoded = {};
-    const keys = Object.keys(this.#matchResult[0][this.routeIndex][1]);
+    const keys = Object.keys(this.#matchResult[0][this.routeIndex]?.[1] ?? {});
     for (const key of keys) {
       const value = this.#getParamValue(this.#matchResult[0][this.routeIndex][1][key]);
       if (value !== void 0) {
@@ -158743,13 +158759,14 @@ var Hono = class _Hono {
     const allMethods = [...METHODS, METHOD_NAME_ALL_LOWERCASE];
     allMethods.forEach((method) => {
       this[method] = (args1, ...args) => {
+        const methodName = method.toUpperCase();
         if (typeof args1 === "string") {
           this.#path = args1;
         } else {
-          this.#addRoute(method, this.#path, args1);
+          this.#addRoute(methodName, this.#path, args1);
         }
         args.forEach((handler2) => {
-          this.#addRoute(method, this.#path, handler2);
+          this.#addRoute(methodName, this.#path, handler2);
         });
         return this;
       };
@@ -158758,9 +158775,10 @@ var Hono = class _Hono {
       for (const p2 of [path].flat()) {
         this.#path = p2;
         for (const m3 of [method].flat()) {
-          handlers3.map((handler2) => {
-            this.#addRoute(m3.toUpperCase(), this.#path, handler2);
-          });
+          const methodName = m3.toUpperCase();
+          for (const handler2 of handlers3) {
+            this.#addRoute(methodName, this.#path, handler2);
+          }
         }
       }
       return this;
@@ -158961,7 +158979,6 @@ var Hono = class _Hono {
     return this;
   }
   #addRoute(method, path, handler2, baseRoutePath) {
-    method = method.toUpperCase();
     path = mergePath(this._basePath, path);
     const r5 = {
       basePath: baseRoutePath !== void 0 ? mergePath(this._basePath, baseRoutePath) : this._basePath,
@@ -159083,6 +159100,9 @@ var Hono = class _Hono {
   };
 };
 
+// node_modules/hono/dist/router/utils.js
+var createNullObject = () => /* @__PURE__ */ Object.create(null);
+
 // node_modules/hono/dist/router/reg-exp-router/matcher.js
 var emptyParam = [];
 function match(method, path) {
@@ -159133,7 +159153,7 @@ var Node = class _Node {
   // handler index of a dynamic path, or -1 for a static path terminal
   #index;
   #varIndex;
-  #children = /* @__PURE__ */ Object.create(null);
+  #children = createNullObject();
   insert(tokens, index, paramMap, context2, isStatic) {
     let node2 = this;
     for (let i5 = 0, len = tokens.length; i5 < len; i5++) {
@@ -159217,7 +159237,7 @@ var Trie = class {
   #root = new Node();
   #index = 0;
   // dynamic path -> [handler index, param assoc]; static paths are not registered
-  paths = /* @__PURE__ */ Object.create(null);
+  paths = createNullObject();
   insert(path, isStatic) {
     if (isStatic) {
       this.#root.insert(path.split(""), 0, [], this.#context, true);
@@ -159276,22 +159296,16 @@ var Trie = class {
 };
 
 // node_modules/hono/dist/router/reg-exp-router/router.js
-var wildcardRegExpCache = /* @__PURE__ */ Object.create(null);
+var wildcardRegExpCache = createNullObject();
 function buildWildcardRegExp(path) {
   return wildcardRegExpCache[path] ??= new RegExp(
-    path === "*" ? "" : `^${path.replace(
-      /\/\*$|([.\\+*[^\]$()])/g,
-      (_, metaChar) => metaChar ? `\\${metaChar}` : "(?:|/.*)"
+    `^${path.replace(
+      /\/:[^/{}]+(?:\{\[\^\/]\+})?(?=[/{]|$)|\/?\*$|([.\\+*[^\]$()?{}|])/g,
+      (match2, metaChar) => metaChar ? `\\${metaChar}` : match2 === "/*" ? TAIL_WILDCARD_REG_EXP_STR : match2 === "*" ? ONLY_WILDCARD_REG_EXP_STR : `/:${LABEL_REG_EXP_STR}`
     )}$`
   );
 }
-function clearWildcardRegExpCache() {
-  wildcardRegExpCache = /* @__PURE__ */ Object.create(null);
-}
 function findMiddleware(middleware, path) {
-  if (!middleware) {
-    return void 0;
-  }
   for (const k6 of Object.keys(middleware).sort((a5, b6) => b6.length - a5.length)) {
     if (buildWildcardRegExp(k6).test(path)) {
       return [...middleware[k6]];
@@ -159305,8 +159319,8 @@ var RegExpRouter = class {
   #routes;
   #tries;
   constructor() {
-    this.#middleware = { [METHOD_NAME_ALL]: /* @__PURE__ */ Object.create(null) };
-    this.#routes = { [METHOD_NAME_ALL]: /* @__PURE__ */ Object.create(null) };
+    this.#middleware = { [METHOD_NAME_ALL]: createNullObject() };
+    this.#routes = { [METHOD_NAME_ALL]: createNullObject() };
     this.#tries = { [METHOD_NAME_ALL]: new Trie() };
   }
   #insertPath(method, path) {
@@ -159319,117 +159333,86 @@ var RegExpRouter = class {
   add(method, path, handler2) {
     const middleware = this.#middleware;
     const routes = this.#routes;
-    if (!middleware || !routes) {
+    if (!middleware) {
       throw new Error(MESSAGE_MATCHER_IS_ALREADY_BUILT);
     }
     if (!middleware[method]) {
       this.#tries[method] = new Trie();
-      [middleware, routes].forEach((handlerMap) => {
-        handlerMap[method] = /* @__PURE__ */ Object.create(null);
-        Object.keys(handlerMap[METHOD_NAME_ALL]).forEach((p2) => {
+      for (const handlerMap of [middleware, routes]) {
+        handlerMap[method] = createNullObject();
+        for (const p2 in handlerMap[METHOD_NAME_ALL]) {
           handlerMap[method][p2] = [...handlerMap[METHOD_NAME_ALL][p2]];
           this.#insertPath(method, p2);
-        });
-      });
+        }
+      }
     }
     if (path === "/*") {
       path = "*";
     }
-    const paramCount = (path.match(/\/:/g) || []).length;
+    const methods = method === METHOD_NAME_ALL ? Object.keys(middleware) : [method];
     if (/\*$/.test(path)) {
       const re2 = buildWildcardRegExp(path);
-      Object.keys(middleware).forEach((m3) => {
-        if ((method === METHOD_NAME_ALL || method === m3) && !middleware[m3][path]) {
+      for (const m3 of methods) {
+        if (!middleware[m3][path]) {
           this.#insertPath(m3, path);
           middleware[m3][path] = findMiddleware(middleware[m3], path) || findMiddleware(middleware[METHOD_NAME_ALL], path) || [];
         }
-      });
-      Object.keys(middleware).forEach((m3) => {
-        if (method === METHOD_NAME_ALL || method === m3) {
-          Object.keys(middleware[m3]).forEach((p2) => {
-            re2.test(p2) && middleware[m3][p2].push([handler2, paramCount]);
-          });
+      }
+      for (const handlerMap of [middleware, routes]) {
+        for (const m3 of methods) {
+          for (const p2 in handlerMap[m3]) {
+            re2.test(p2) && handlerMap[m3][p2].push([handler2, path]);
+          }
         }
-      });
-      Object.keys(routes).forEach((m3) => {
-        if (method === METHOD_NAME_ALL || method === m3) {
-          Object.keys(routes[m3]).forEach(
-            (p2) => re2.test(p2) && routes[m3][p2].push([handler2, paramCount])
-          );
-        }
-      });
+      }
       return;
     }
     const paths = checkOptionalParameter(path) || [path];
-    for (let i5 = 0, len = paths.length; i5 < len; i5++) {
-      const path2 = paths[i5];
-      Object.keys(routes).forEach((m3) => {
-        if (method === METHOD_NAME_ALL || method === m3) {
-          if (!routes[m3][path2]) {
-            this.#insertPath(m3, path2);
-            routes[m3][path2] = [
-              ...findMiddleware(middleware[m3], path2) || findMiddleware(middleware[METHOD_NAME_ALL], path2) || []
-            ];
-          }
-          routes[m3][path2].push([handler2, paramCount - len + i5 + 1]);
+    for (const path2 of paths) {
+      for (const m3 of methods) {
+        if (!routes[m3][path2]) {
+          this.#insertPath(m3, path2);
+          routes[m3][path2] = findMiddleware(middleware[m3], path2) || findMiddleware(middleware[METHOD_NAME_ALL], path2) || [];
         }
-      });
+        routes[m3][path2].push([handler2, path2]);
+      }
     }
   }
   match = match;
   buildAllMatchers() {
-    const matchers = /* @__PURE__ */ Object.create(null);
-    Object.keys(this.#routes).concat(Object.keys(this.#middleware)).forEach((method) => {
-      matchers[method] ||= this.#buildMatcher(method);
-    });
+    const matchers = createNullObject();
+    for (const method of Object.keys(this.#routes)) {
+      matchers[method] = this.#buildMatcher(method);
+    }
     this.#middleware = this.#routes = this.#tries = void 0;
-    clearWildcardRegExpCache();
+    wildcardRegExpCache = createNullObject();
     return matchers;
   }
   #buildMatcher(method) {
     const middleware = this.#middleware[method];
     const routes = this.#routes[method];
     const trie = this.#tries[method];
-    const staticMap = /* @__PURE__ */ Object.create(null);
+    const staticMap = createNullObject();
     const handlerData = [];
-    [middleware, routes].forEach((r5) => {
+    const [regexp, indexReplacementMap, paramReplacementMap] = trie.buildRegExp();
+    for (const r5 of [middleware, routes]) {
       for (const path in r5) {
         const handlers3 = r5[path];
         const pathData = trie.paths[path];
         if (!pathData) {
-          staticMap[path] = [handlers3.map(([h5]) => [h5, /* @__PURE__ */ Object.create(null)]), emptyParam];
+          staticMap[path] = [handlers3.map(([h5]) => [h5, createNullObject()]), emptyParam];
           continue;
         }
-        const paramAssoc = pathData[1];
-        handlerData[pathData[0]] = handlers3.map(([h5, paramCount]) => {
-          const paramIndexMap = /* @__PURE__ */ Object.create(null);
-          paramCount -= 1;
-          for (; paramCount >= 0; paramCount--) {
-            const [key, value] = paramAssoc[paramCount];
-            paramIndexMap[key] = value;
-          }
-          return [h5, paramIndexMap];
-        });
-      }
-    });
-    const [regexp, indexReplacementMap, paramReplacementMap] = trie.buildRegExp();
-    for (let i5 = 0, len = handlerData.length; i5 < len; i5++) {
-      for (let j5 = 0, len2 = handlerData[i5].length; j5 < len2; j5++) {
-        const map3 = handlerData[i5][j5]?.[1];
-        if (!map3) {
-          continue;
-        }
-        const keys = Object.keys(map3);
-        for (let k6 = 0, len3 = keys.length; k6 < len3; k6++) {
-          map3[keys[k6]] = paramReplacementMap[map3[keys[k6]]];
-        }
+        handlerData[pathData[0]] = handlers3.map(([h5, handlerPath]) => [
+          h5,
+          trie.paths[handlerPath][1].reduceRight((map3, [key], i5) => {
+            map3[key] = paramReplacementMap[pathData[1][i5][1]];
+            return map3;
+          }, createNullObject())
+        ]);
       }
     }
-    const handlerMap = [];
-    for (const i5 in indexReplacementMap) {
-      handlerMap[i5] = handlerData[indexReplacementMap[i5]];
-    }
-    return [regexp, handlerMap, staticMap];
+    return [regexp, indexReplacementMap.map((i5) => handlerData[i5]), staticMap];
   }
 };
 
@@ -159489,11 +159472,11 @@ var SmartRouter = class {
 };
 
 // node_modules/hono/dist/router/trie-router/node.js
-var emptyParams = /* @__PURE__ */ Object.create(null);
+var emptyParams = createNullObject();
 var order = 0;
 var Node2 = class _Node2 {
   #methods = [];
-  #children = /* @__PURE__ */ Object.create(null);
+  #children = createNullObject();
   #patterns = [];
   #pattern;
   #params = emptyParams;
@@ -159530,7 +159513,7 @@ var Node2 = class _Node2 {
       const m3 = node2.#methods[i5];
       const handlerSet = m3[method] || m3[METHOD_NAME_ALL];
       if (handlerSet) {
-        handlerSet.params = /* @__PURE__ */ Object.create(null);
+        handlerSet.params = createNullObject();
         handlerSets.push(handlerSet);
         for (let i22 = 0, len2 = handlerSet.possibleKeys.length; i22 < len2; i22++) {
           const key = handlerSet.possibleKeys[i22];

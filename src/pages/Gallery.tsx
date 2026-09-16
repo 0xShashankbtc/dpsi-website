@@ -5,7 +5,8 @@ import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { trpc } from "@/providers/trpc";
 import VideoGallerySection from "@/sections/VideoGallerySection";
-import { CoverflowCarousel, type CoverflowSlide } from "@/components/ui/coverflow-carousel";
+
+import ParallaxGallery from "@/components/ui/3d-parallax-unfurling-gallery";
 import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export default function Gallery() {
@@ -53,19 +54,7 @@ export default function Gallery() {
     return liveItems.filter((g: any) => g.category?.toLowerCase() === selectedCategory.toLowerCase());
   }, [liveItems, selectedCategory]);
 
-  // Construct dynamic 3D Coverflow slides
-  const coverflowSlides: CoverflowSlide[] = useMemo(() => {
-    return liveItems.slice(0, 10).map((item: any) => ({
-      src: optimizeMediaUrl(item.imageUrl, { preset: "card" }),
-      alt: item.title,
-      title: item.title,
-      subtitle: item.category ? `Category: ${item.category}` : "Campus Showcase",
-      meta: [
-        { label: "Category", value: item.category || "General" },
-        { label: "Campus", value: "DPS Indirapuram" },
-      ],
-    }));
-  }, [liveItems]);
+
 
   return (
     <Layout>
@@ -108,35 +97,13 @@ export default function Gallery() {
         </div>
       </section>
 
-      {/* 3D COVERFLOW INTERACTIVE SHOWCASE */}
-      {coverflowSlides.length > 0 && (
-        <section className="py-12 sm:py-16 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-white overflow-hidden border-b border-slate-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-6">
-              <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
-                3D Coverflow Perspective
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                Drag or Click to Navigate
-              </h2>
-            </div>
 
-            <div className="w-full max-w-5xl mx-auto">
-              <CoverflowCarousel
-                slides={coverflowSlides}
-                showCaption={true}
-                showNavigation={true}
-                showPagination={true}
-                cardWidth="clamp(180px, 28vw, 320px)"
-                rotate={42}
-                depth={0.7}
-                perspective={3.2}
-                className="py-4"
-                cardClassName="border-2 border-emerald-500/30 shadow-2xl rounded-3xl"
-              />
-            </div>
-          </div>
-        </section>
+
+      {/* 3D PARALLAX UNFURLING GALLERY */}
+      {liveItems.length > 0 && (
+        <ParallaxGallery 
+          images={liveItems.map((item: any) => optimizeMediaUrl(item.imageUrl, { preset: "card" }))} 
+        />
       )}
 
       <section className="py-20 bg-white dark:bg-slate-900 min-h-[40vh]">

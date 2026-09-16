@@ -25,10 +25,10 @@
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
     </noscript>
-    <!-- Preload Critical Above-The-Fold Hero Video, Poster & Brand Logo for Sub-Second LCP -->
+    <!-- Responsive LCP Hero Image Preload (Crisp 720w on mobile, 1920w on desktop) -->
     <link rel="preload" as="image" href="/images/dps/logo.webp" type="image/webp" fetchpriority="high" />
-    <link rel="preload" as="image" href="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" fetchpriority="high" />
-    <link rel="preload" as="video" href="https://res.cloudinary.com/uqty03zf/video/upload/q_auto:good,vc_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4" type="video/mp4" crossorigin="anonymous" fetchpriority="high" />
+    <link rel="preload" as="image" href="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto:good,f_auto,w_720,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" media="(max-width: 768px)" fetchpriority="high" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preload" as="image" href="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto:good,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" media="(min-width: 769px)" fetchpriority="high" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
   </head>
   <body>

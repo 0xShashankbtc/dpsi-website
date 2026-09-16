@@ -332,7 +332,9 @@ export default function HeroSection() {
               muted={isMuted}
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
               disablePictureInPicture
               disableRemotePlayback
               onLoadedMetadata={(e) => {
@@ -359,13 +361,13 @@ export default function HeroSection() {
                   setIsMuted(videoRef.current.muted);
                 }
               }}
-              className="w-full h-full object-cover object-center will-change-transform"
+              className="w-full h-full object-cover pointer-events-none transform-gpu scale-[1.01]"
             />
           ) : (
             <img
-              src={effectivePoster || "/images/dps/logo.webp"}
+              src={effectivePoster || slide.image}
               alt={slide.title}
-              className="w-full h-full object-cover object-center will-change-transform"
+              className="w-full h-full object-cover"
               loading="eager"
               fetchPriority="high"
               decoding="async"
@@ -384,7 +386,7 @@ export default function HeroSection() {
         Delhi Public School Indirapuram — Premier CBSE School in Ghaziabad
       </h1>
 
-      {/* TOP PORTION: ADMISSIONS OPEN BADGE (86% TRANSPARENT GLASSMORPHISM) */}
+      {/* TOP PORTION: ADMISSIONS OPEN BADGE (HIGH CONTRAST GLASSMORPHISM) */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -392,79 +394,92 @@ export default function HeroSection() {
         className="absolute top-5 sm:top-7 inset-x-0 z-20 flex justify-center items-center px-4 pointer-events-auto"
       >
         <div
-          style={{ backgroundColor: "rgba(255, 255, 255, 0.14)" }}
-          className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full backdrop-blur-xl border border-white/30 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/10 cursor-default transition-all"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
+          className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 rounded-full backdrop-blur-xl border border-white/40 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/20 cursor-default transition-all"
         >
-          <span>{slide.badge || "Admissions Open 2026-27"}</span>
-          <span className="text-white/40">|</span>
-          <span className="text-[11px] sm:text-xs text-white/85">CBSE Affiliation No. 2130541</span>
+          <span className="text-white font-bold">{slide.badge || "Admissions Open 2026-27"}</span>
+          <span className="text-white/70" aria-hidden="true">•</span>
+          <span className="text-[11px] sm:text-xs text-slate-100 font-medium">CBSE Affiliation No. 2130541</span>
         </div>
       </motion.div>
 
-      {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM) */}
+      {/* MINIMALIST INTERACTIVE CONTROLS DOCK (BOTTOM - 48PX ACCESSIBLE TOUCH TARGETS) */}
       <div className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] inset-x-0 z-20 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6 pointer-events-none">
         {/* Left: Video Play & Audio Controls */}
         {hasVideo && (
-          <div className="flex items-center gap-2 pointer-events-auto">
+          <div className="flex items-center gap-2.5 pointer-events-auto">
             <button
               type="button"
               onClick={toggleVideoPlayback}
-              className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-full bg-black/55 hover:bg-black/75 active:scale-95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm touch-manipulation"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-full bg-black/70 hover:bg-black/85 active:scale-95 backdrop-blur-md border border-white/30 text-white text-xs font-semibold transition-all cursor-pointer shadow-md touch-manipulation"
               title={isPlayingVideo ? "Pause Video" : "Play Video"}
+              aria-label={isPlayingVideo ? "Pause Video" : "Play Video"}
             >
-              {isPlayingVideo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              {isPlayingVideo ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               <span className="hidden sm:inline">{isPlayingVideo ? "Pause" : "Play"}</span>
             </button>
 
             <button
               type="button"
               onClick={toggleMute}
-              className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-full bg-black/55 hover:bg-black/75 active:scale-95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs font-medium transition-all cursor-pointer shadow-sm touch-manipulation"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-3.5 py-2 rounded-full bg-black/70 hover:bg-black/85 active:scale-95 backdrop-blur-md border border-white/30 text-white text-xs font-semibold transition-all cursor-pointer shadow-md touch-manipulation"
               title={isMuted ? "Unmute Video Audio" : "Mute Video Audio"}
+              aria-label={isMuted ? "Unmute Video Audio" : "Mute Video Audio"}
             >
-              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
               <span className="hidden sm:inline">{isMuted ? "Sound Off" : "Sound On"}</span>
             </button>
 
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="p-2 sm:p-1.5 rounded-full bg-black/55 hover:bg-black/75 active:scale-95 backdrop-blur-md border border-white/20 text-white/90 hover:text-white text-xs transition-all cursor-pointer hidden md:inline-flex shadow-sm touch-manipulation"
+              className="min-h-[44px] min-w-[44px] p-2.5 rounded-full bg-black/70 hover:bg-black/85 active:scale-95 backdrop-blur-md border border-white/30 text-white text-xs transition-all cursor-pointer hidden md:inline-flex items-center justify-center shadow-md touch-manipulation"
               title="Toggle Fullscreen"
+              aria-label="Toggle Fullscreen"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
+              <Maximize2 className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {/* Right: Slide Controls (If Multiple Slides) */}
         {activeSlides.length > 1 && (
-          <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 ml-auto shadow-sm pointer-events-auto">
+          <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2 py-1 rounded-full border border-white/30 ml-auto shadow-md pointer-events-auto">
             <button
+              type="button"
               onClick={handlePrevSlide}
-              className="p-1.5 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer touch-manipulation active:scale-90"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-white hover:text-amber-300 transition-colors cursor-pointer touch-manipulation active:scale-90"
               title="Previous Slide"
+              aria-label="Previous Slide"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-1.5 px-1">
+            <div className="flex items-center gap-1 px-1">
               {activeSlides.map((_: any, idx: number) => (
                 <button
                   key={idx}
+                  type="button"
                   onClick={() => setCurrentSlide(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer touch-manipulation ${
-                    safeSlideIndex === idx ? "w-5 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
-                  }`}
+                  className="min-h-[44px] min-w-[28px] flex items-center justify-center cursor-pointer touch-manipulation"
                   title={`Go to slide ${idx + 1}`}
-                />
+                  aria-label={`Go to slide ${idx + 1}`}
+                >
+                  <span
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      safeSlideIndex === idx ? "w-6 bg-amber-400" : "w-2 bg-white/70 hover:bg-white"
+                    }`}
+                  />
+                </button>
               ))}
             </div>
             <button
+              type="button"
               onClick={handleNextSlide}
-              className="p-1.5 rounded-full text-white/80 hover:text-white transition-colors cursor-pointer touch-manipulation active:scale-90"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-white hover:text-amber-300 transition-colors cursor-pointer touch-manipulation active:scale-90"
               title="Next Slide"
+              aria-label="Next Slide"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         )}

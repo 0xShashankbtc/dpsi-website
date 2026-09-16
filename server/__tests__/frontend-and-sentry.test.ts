@@ -22,7 +22,7 @@ describe("Frontend Core & Instrumentation Unit Tests", () => {
     it("transforms raw Cloudinary video URLs into high-quality 1080p stream URLs", () => {
       const rawCloudinary = "https://res.cloudinary.com/dpsi/video/upload/v12345/campus_tour.mp4";
       const optimized = optimizeMediaUrl(rawCloudinary);
-      expect(optimized).toContain("/video/upload/q_auto:best,vc_auto,w_1920,c_limit/");
+      expect(optimized).toContain("/video/upload/q_auto:good,vc_auto,w_1920,c_limit/");
       expect(optimized).toContain("campus_tour.mp4");
     });
 

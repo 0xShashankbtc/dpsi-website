@@ -8,7 +8,6 @@ import { trpc } from "@/providers/trpc";
 
 // Below-fold sections: lazy-loaded to defer JS parsing until needed
 // This removes ~120KB from the critical-path bundle
-const InteractiveFacilitiesSection = lazy(() => import("@/sections/InteractiveFacilitiesSection"));
 const NewsHighlights = lazy(() => import("@/sections/NewsHighlights"));
 const PrincipalMessage = lazy(() => import("@/sections/PrincipalMessage"));
 const AchievementsSection = lazy(() => import("@/sections/AchievementsSection"));
@@ -27,27 +26,31 @@ export default function Home() {
   const utils = trpc.useUtils();
 
   useEffect(() => {
-    // Eagerly prefetch all Home page queries in a single batched HTTP request
-    // This primes the TanStack Query cache before the user scrolls, eliminating all loading delays
+    // Eagerly prefetch only critical above-the-fold queries
     utils.cms.getSiteSettings.prefetch();
     utils.cms.listMenus.prefetch({ location: "header" });
-    utils.cms.listMenus.prefetch({ location: "footer_quick" });
-    utils.cms.listMenus.prefetch({ location: "footer_resources" });
     utils.cms.listMarquees.prefetch();
     utils.announcements.list.prefetch();
     utils.stats.list.prefetch();
     utils.cms.listSliders.prefetch();
-    utils.cms.listFacilities.prefetch();
-    utils.cms.listActivities.prefetch();
-    utils.events.list.prefetch();
-    utils.news.featured.prefetch();
-    utils.achievements.list.prefetch();
-    utils.testimonials.featured.prefetch();
-    utils.cms.listVideos.prefetch();
 
-    // Preload below-fold section components during initial idle so scrolling down has ZERO skeleton delays
-    const preloadSections = () => {
-      import("@/sections/InteractiveFacilitiesSection");
+    // Defer below-fold data queries and components until after critical rendering completes or user scrolls
+    let hasLoadedBelowFold = false;
+    const loadBelowFold = () => {
+      if (hasLoadedBelowFold) return;
+      hasLoadedBelowFold = true;
+
+      // Prefetch below-fold API queries
+      utils.events.list.prefetch();
+      utils.news.featured.prefetch();
+      utils.achievements.list.prefetch();
+      utils.testimonials.featured.prefetch();
+      utils.cms.listVideos.prefetch();
+      utils.cms.listActivities.prefetch();
+      utils.cms.listMenus.prefetch({ location: "footer_quick" });
+      utils.cms.listMenus.prefetch({ location: "footer_resources" });
+
+      // Dynamically load below-fold code chunks
       import("@/sections/NewsHighlights");
       import("@/sections/PrincipalMessage");
       import("@/sections/AchievementsSection");
@@ -57,11 +60,29 @@ export default function Home() {
     };
 
     if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(preloadSections, { timeout: 1500 });
-      } else {
-        setTimeout(preloadSections, 250);
-      }
+      const handleScroll = () => {
+        loadBelowFold();
+        window.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("touchstart", handleScroll);
+      };
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      window.addEventListener("touchstart", handleScroll, { passive: true });
+
+      // Fallback: If no user scroll, silently load after 4.5s
+      const timer = setTimeout(() => {
+        if ("requestIdleCallback" in window) {
+          (window as any).requestIdleCallback(loadBelowFold);
+        } else {
+          loadBelowFold();
+        }
+      }, 4500);
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("touchstart", handleScroll);
+        clearTimeout(timer);
+      };
     }
   }, [utils]);
 
@@ -80,11 +101,6 @@ export default function Home() {
         {/* Near-fold: eager */}
         <AnnouncementsBar />
         <QuickStats />
-
-        {/* Below-fold: lazy-loaded — GSAP pin support, no content-visibility wrapper */}
-        <Suspense fallback={<SectionSkeleton height="h-[70vh]" />}>
-          <InteractiveFacilitiesSection />
-        </Suspense>
 
         <Suspense fallback={<SectionSkeleton height="h-96" />}>
           <div className="content-visibility-auto">
