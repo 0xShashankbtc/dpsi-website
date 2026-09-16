@@ -18,8 +18,6 @@ export default defineConfig({
         "favicon.ico",
         "favicon.png",
         "apple-touch-icon.png",
-        "images/**/*",
-        "videos/**/*",
       ],
       manifest: {
         name: "DPS Indirapuram",
@@ -46,12 +44,23 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,woff,woff2,ttf}"],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        globPatterns: ["**/*.{css,html,ico,png,svg}"],
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
         clientsClaim: true,
         skipWaiting: true,
         navigateFallback: "/index.html",
         runtimeCaching: [
+          {
+            urlPattern: /\.(?:js)$/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "static-js-assets",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
