@@ -14,8 +14,16 @@ import {
   Globe,
   Zap,
 } from "lucide-react";
-import { InteractiveHoverLinks } from "@/components/ui/interactive-hover-links";
-import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
+const InteractiveHoverLinks = React.lazy(() =>
+  import("@/components/ui/interactive-hover-links").then((m) => ({
+    default: m.InteractiveHoverLinks,
+  }))
+);
+const LiquidMetalButton = React.lazy(() =>
+  import("@/components/ui/liquid-metal-button").then((m) => ({
+    default: m.LiquidMetalButton,
+  }))
+);
 import { preloadRoute } from "@/lib/routePreloader";
 
 
@@ -591,13 +599,15 @@ export default function Navbar() {
               {/* Interactive Liquid Metal Explore Trigger */}
               {exploreEnabled && (
                 <div className="hidden md:flex items-center shrink-0 my-auto">
-                  <LiquidMetalButton
-                    label={exploreLabel}
-                    viewMode={exploreMode}
-                    onClick={handleExploreClick}
-                    title="Explore Campus Facilities & Key Links"
-                    icon={<Compass className="w-3.5 h-3.5 text-emerald-400" />}
-                  />
+                  <React.Suspense fallback={null}>
+                    <LiquidMetalButton
+                      label={exploreLabel}
+                      viewMode={exploreMode}
+                      onClick={handleExploreClick}
+                      title="Explore Campus Facilities & Key Links"
+                      icon={<Compass className="w-3.5 h-3.5 text-emerald-400" />}
+                    />
+                  </React.Suspense>
                 </div>
               )}
 
@@ -842,7 +852,9 @@ export default function Navbar() {
                     <Sparkles className="w-3 h-3 text-amber-500" />
                     <span>Explore Key Portals</span>
                   </p>
-                  <InteractiveHoverLinks onLinkClick={() => setIsMobileOpen(false)} />
+                  <React.Suspense fallback={null}>
+                    <InteractiveHoverLinks onLinkClick={() => setIsMobileOpen(false)} />
+                  </React.Suspense>
                 </div>
 
                 {/* Accreditations at Drawer Bottom */}
@@ -930,7 +942,9 @@ export default function Navbar() {
 
               {/* Interactive Links Container - Scrollable without visible scrollbar bar */}
               <div data-lenis-prevent className="overflow-y-auto max-h-[calc(85vh-100px)] px-6 sm:px-10 py-3 sm:py-5 no-scrollbar flex-1">
-                <InteractiveHoverLinks onLinkClick={() => setIsExploreOpen(false)} />
+                <React.Suspense fallback={null}>
+                  <InteractiveHoverLinks onLinkClick={() => setIsExploreOpen(false)} />
+                </React.Suspense>
               </div>
             </motion.div>
           </motion.div>

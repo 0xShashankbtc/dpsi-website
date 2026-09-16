@@ -199,6 +199,15 @@ export default defineConfig({
             if (id.includes("framer-motion")) {
               return "framer-motion";
             }
+            if (id.includes("@sentry")) {
+              return "sentry-vendor";
+            }
+            if (id.includes("@radix-ui")) {
+              return "radix-vendor";
+            }
+            if (id.includes("lenis")) {
+              return "lenis-vendor";
+            }
             if (id.includes("@trpc") || id.includes("@tanstack/react-query") || id.includes("superjson")) {
               return "trpc-vendor";
             }
