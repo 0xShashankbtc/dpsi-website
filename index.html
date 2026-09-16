@@ -20,19 +20,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
-    </noscript>
-    <!-- Responsive LCP Hero Image Preload (Crisp 720w on mobile, 1920w on desktop) -->
-    <link rel="preload" as="image" href="/images/dps/logo.webp" type="image/webp" fetchpriority="high" />
-    <link rel="preload" as="image" href="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto:good,f_auto,w_720,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" media="(max-width: 768px)" fetchpriority="high" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="preload" as="image" href="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto:good,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" media="(min-width: 769px)" fetchpriority="high" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    <!-- Responsive LCP Hero Image Preload (Matches exact mediaUtils URL) -->
+    <link rel="preload" as="image" href="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_720,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" media="(max-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" media="(min-width: 769px)" fetchpriority="high" />
 
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant First-Paint Shell for Sub-Second FCP & LCP before React Hydrates -->
+      <div style="position:fixed;inset:0;background:#022c22;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:0;">
+        <picture style="position:absolute;inset:0;width:100%;height:100%;">
+          <source media="(max-width: 768px)" srcset="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_720,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" />
+          <img src="https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg" alt="DPS Indirapuram" style="width:100%;height:100%;object-fit:cover;" fetchpriority="high" decoding="sync" />
+        </picture>
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.35), transparent, rgba(0,0,0,0.45));"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
