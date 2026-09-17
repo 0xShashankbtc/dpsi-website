@@ -334,7 +334,6 @@ export default function HeroSection() {
               playsInline
               preload="metadata"
               crossOrigin="anonymous"
-              referrerPolicy="no-referrer"
               disablePictureInPicture
               disableRemotePlayback
               onLoadedMetadata={(e) => {

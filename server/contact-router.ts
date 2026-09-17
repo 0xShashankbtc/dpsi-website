@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicMutation, adminQuery, adminMutation } from "./middleware";
 import { getMainModels, checkPersistentRateLimit, createImmutableAuditLog } from "./models/cmsSchemas";
+import { getClientIp } from "./context";
 
 export const contactRouter = createRouter({
   create: publicMutation
@@ -16,7 +17,7 @@ export const contactRouter = createRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+      const clientIp = getClientIp(ctx?.req);
       const allowed = await checkPersistentRateLimit(`contact:${clientIp}`, 10, 60);
       if (!allowed) {
         throw new TRPCError({
@@ -26,7 +27,7 @@ export const contactRouter = createRouter({
       }
 
       try {
-        const { ContactMessage } = await getMainModels();
+        const { ContactMessage, SiteSettings } = await getMainModels();
         const doc = await ContactMessage.create({
           name: input.name.trim(),
           email: input.email.trim().toLowerCase(),
@@ -37,13 +38,143 @@ export const contactRouter = createRouter({
           isDeleted: false,
         });
 
-        return { success: true, id: doc._id.toString() };
+        // Forward to Web3Forms so administration receives email notifications at it@dpsindirapuram.com
+        let web3formsResult: { delivered: boolean; message?: string } = { delivered: false };
+        try {
+          const settings = await SiteSettings.find({
+            key: { $in: ["contact_notification_email", "web3forms_access_key", "web3forms_enabled"] },
+          }).lean();
+
+          const getVal = (k: string, fallback: string) => {
+            const found = settings.find((s: any) => s.key === k);
+            return found?.value?.trim() || fallback;
+          };
+
+          const notificationEmail = getVal("contact_notification_email", "it@dpsindirapuram.com");
+          const accessKey = getVal("web3forms_access_key", "") || (process.env.WEB3FORMS_ACCESS_KEY || "").trim();
+          const isEnabled = getVal("web3forms_enabled", "true") !== "false";
+
+          if (isEnabled && accessKey) {
+            const payload = {
+              access_key: accessKey,
+              name: input.name.trim(),
+              email: input.email.trim().toLowerCase(),
+              phone: input.phone?.trim() || "Not provided",
+              subject: input.subject?.trim() || `New Contact Inquiry: ${input.name.trim()} - DPS Indirapuram`,
+              message: input.message.trim(),
+              from_name: "DPS Indirapuram Contact Portal",
+              replyto: input.email.trim().toLowerCase(),
+              to_email: notificationEmail,
+              recipient: notificationEmail,
+            };
+
+            const response = await fetch("https://api.web3forms.com/submit", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(payload),
+            });
+
+            const data = (await response.json()) as any;
+            if (data.success) {
+              web3formsResult = { delivered: true, message: "Delivered via Web3Forms" };
+            } else {
+              web3formsResult = { delivered: false, message: data.message || "Web3Forms non-success response" };
+              console.warn("[Web3Forms] Forwarding returned:", data);
+            }
+          } else if (!accessKey) {
+            web3formsResult = { delivered: false, message: "Web3Forms key not configured yet" };
+          }
+        } catch (w3err: any) {
+          console.error("[Web3Forms] Error forwarding contact submission:", w3err?.message);
+          web3formsResult = { delivered: false, message: w3err?.message };
+        }
+
+        return { success: true, id: doc._id.toString(), web3forms: web3formsResult };
       } catch (err: any) {
         if (err instanceof TRPCError) throw err;
         console.error("[Contact Form] Failed to save contact submission:", err?.message);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to send your message. Please try again or call the school office directly.",
+        });
+      }
+    }),
+
+  testWeb3Forms: adminMutation
+    .input(
+      z.object({
+        accessKey: z.string().optional(),
+        notificationEmail: z.string().email().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { SiteSettings } = await getMainModels();
+      const settings = await SiteSettings.find({
+        key: { $in: ["contact_notification_email", "web3forms_access_key"] },
+      }).lean();
+
+      const getVal = (k: string, fallback: string) => {
+        const found = settings.find((s: any) => s.key === k);
+        return found?.value?.trim() || fallback;
+      };
+
+      const notificationEmail = input.notificationEmail?.trim() || getVal("contact_notification_email", "it@dpsindirapuram.com");
+      const accessKey = input.accessKey?.trim() || getVal("web3forms_access_key", "") || (process.env.WEB3FORMS_ACCESS_KEY || "").trim();
+
+      if (!accessKey) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No Web3Forms Access Key configured. Please enter an access key first.",
+        });
+      }
+
+      try {
+        const response = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            access_key: accessKey,
+            name: "DPS Indirapuram Admin Test",
+            email: "admin@dpsindirapuram.com",
+            phone: "+91-0120-4660000",
+            subject: "🧪 Web3Forms Connectivity Test — DPS Indirapuram",
+            message: `This is a test notification dispatched from the DPS Indirapuram Admin Panel.\nConfigured Recipient: ${notificationEmail}\nTimestamp: ${new Date().toISOString()}\nExecuted By: ${ctx.user?.username || "Admin"}`,
+            from_name: "DPS Indirapuram Admin Portal",
+            to_email: notificationEmail,
+            recipient: notificationEmail,
+          }),
+        });
+
+        const data = (await response.json()) as any;
+        if (!data.success) {
+          return {
+            success: false,
+            message: data.message || "Web3Forms rejected the request. Please verify your access key.",
+          };
+        }
+
+        await createImmutableAuditLog({
+          action: "TEST_WEB3FORMS_SUBMISSION",
+          module: "Contact",
+          performedBy: ctx.user?.username || "Admin",
+          details: `Dispatched Web3Forms test email to ${notificationEmail}`,
+        });
+
+        return {
+          success: true,
+          message: `Test email successfully dispatched to ${notificationEmail} via Web3Forms!`,
+        };
+      } catch (err: any) {
+        console.error("[Web3Forms] Test delivery failed:", err?.message);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to connect to Web3Forms: ${err?.message}`,
         });
       }
     }),
