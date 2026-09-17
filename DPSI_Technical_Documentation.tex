@@ -21,7 +21,7 @@
 \usepackage[
   top    = 2.5cm,
   bottom = 2.5cm,
-  left   = 3.0cm,
+  left   = 2.5cm,
   right  = 2.5cm,
   headheight = 16pt,
   headsep    = 14pt,
@@ -406,6 +406,7 @@ systemic limitations:
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
+  scale=0.92, every node/.style={transform shape},
   x=1.3cm, y=0.85cm,
   bar/.style  = {rectangle, draw=none, rounded corners=3pt},
   axis/.style = {thick, -{Stealth[scale=0.9]}}
@@ -912,7 +913,7 @@ The data tier is engineered on \textbf{MongoDB Atlas (v7.5+)}, providing:
 
 \section{Complete 31-Collection Schema Catalogue}
 
-\begin{longtable}{C{0.5cm} L{4.2cm} L{8.0cm}}
+\begin{longtable}{C{0.8cm} L{4.6cm} L{9.8cm}}
 \caption{Complete MongoDB Mongoose Schema Catalogue (31 Collections)}
 \label{tab:all-schemas}\\
 \toprule
@@ -1032,8 +1033,8 @@ real-time email dispatch via the \textbf{Web3Forms API}
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  node distance=1.6cm and 1.8cm,
-  every node/.style={font=\footnotesize},
+  scale=0.82, every node/.style={transform shape, font=\footnotesize},
+  node distance=1.3cm and 1.4cm,
   pipebox/.style={rectangle, rounded corners=4pt, draw=dpsgreen, fill=dpsgreen!8, thick, minimum width=2.4cm, minimum height=1.0cm, align=center},
   gatebox/.style={diamond, draw=dpsgold, fill=dpsgold!15, thick, aspect=1.8, inner sep=1pt, align=center},
   databox/.style={cylinder, shape border rotate=90, draw=dpsnavy, fill=dpsnavy!10, thick, minimum width=2.0cm, minimum height=1.1cm, align=center},
@@ -1042,11 +1043,11 @@ real-time email dispatch via the \textbf{Web3Forms API}
 ]
 
   \node[pipebox] (client) {Client Browser\\(Contact Form)};
-  \node[pipebox, right=1.2cm of client] (trpc) {tRPC Endpoint\\(\texttt{contact.create})};
-  \node[gatebox, right=1.2cm of trpc] (rate) {Rate Limit\\$\leq 10$\,req/min?};
+  \node[pipebox, right=1.0cm of client] (trpc) {tRPC Endpoint\\(\texttt{contact.create})};
+  \node[gatebox, right=1.0cm of trpc] (rate) {Rate Limit\\$\leq 10$\,req/min?};
   \node[databox, below=1.2cm of rate] (mongo) {MongoDB Atlas\\(\texttt{ContactMessage})};
-  \node[pipebox, right=1.4cm of rate] (w3fbridge) {Web3Forms\\Payload Builder};
-  \node[cloudbox, right=1.2cm of w3fbridge] (w3fapi) {Web3Forms API\\(\texttt{api.web3forms.com})};
+  \node[pipebox, right=1.0cm of rate] (w3fbridge) {Web3Forms\\Payload Builder};
+  \node[cloudbox, right=1.0cm of w3fbridge] (w3fapi) {Web3Forms API\\(\texttt{api.web3forms.com})};
   \node[pipebox, below=1.2cm of w3fapi] (inbox) {Admin Mailbox\\(\texttt{it@dpsindirapuram.com})};
 
   \draw[arr] (client) -- node[above]{\scriptsize Zod Payload} (trpc);
@@ -1371,21 +1372,21 @@ rendering throughput.
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  node distance=1.5cm and 1.8cm,
-  every node/.style={font=\footnotesize},
-  statebox/.style={rectangle, rounded corners=5pt, draw=dpsnavy, fill=dpsnavy!8, thick, minimum width=2.6cm, minimum height=1.0cm, align=center},
+  scale=0.82, every node/.style={transform shape, font=\footnotesize},
+  node distance=1.1cm and 1.2cm,
+  statebox/.style={rectangle, rounded corners=5pt, draw=dpsnavy, fill=dpsnavy!8, thick, minimum width=2.5cm, minimum height=1.0cm, align=center},
   decbox/.style={diamond, draw=dpsgold, fill=dpsgold!15, thick, aspect=1.8, inner sep=1pt, align=center},
   actbox/.style={rectangle, rounded corners=4pt, draw=dpsgreen, fill=dpsgreen!10, thick, minimum width=2.4cm, minimum height=1.0cm, align=center},
   arr/.style={-{Stealth[length=5pt]}, thick, draw=dpsnavy}
 ]
 
   \node[statebox] (scroll) {Passive Scroll /\\ Resize Event};
-  \node[actbox, right=1.2cm of scroll] (raf) {rAF Throttler\\(Zero Thrashing)};
-  \node[decbox, right=1.2cm of raf] (check) {Hero in\\Viewport?};
-  \node[actbox, above right=0.8cm and 1.2cm of check] (play) {Resume Video\\(\texttt{video.play()})};
-  \node[actbox, below right=0.8cm and 1.2cm of check] (pause) {Pause Video\\(\texttt{video.pause()})};
-  \node[statebox, right=1.2cm of play] (gpuon) {Active Decode\\(60 FPS)};
-  \node[statebox, right=1.2cm of pause] (gpuoff) {0\% GPU / CPU\\Battery Saved};
+  \node[actbox, right=1.0cm of scroll] (raf) {rAF Throttler\\(Zero Thrashing)};
+  \node[decbox, right=1.0cm of raf] (check) {Hero in\\Viewport?};
+  \node[actbox, above right=0.7cm and 1.0cm of check] (play) {Resume Video\\(\texttt{video.play()})};
+  \node[actbox, below right=0.7cm and 1.0cm of check] (pause) {Pause Video\\(\texttt{video.pause()})};
+  \node[statebox, right=1.0cm of play] (gpuon) {Active Decode\\(60 FPS)};
+  \node[statebox, right=1.0cm of pause] (gpuoff) {0\% GPU / CPU\\Battery Saved};
 
   \draw[arr] (scroll) -- (raf);
   \draw[arr] (raf) -- (check);
@@ -1479,7 +1480,7 @@ and verified by the automated unit test suite.
 
 \section{OWASP Top 10 Compliance Matrix}
 
-\begin{longtable}{L{3.8cm} L{7.2cm} C{2.0cm}}
+\begin{longtable}{L{4.2cm} L{8.8cm} C{2.2cm}}
 \caption{OWASP Top 10 (2021) Compliance Verification}
 \label{tab:owasp-matrix}\\
 \toprule
@@ -1643,7 +1644,7 @@ sub-second feedback cycles during development.
 
 \section{Infrastructure Cost Breakdown}
 
-\begin{longtable}{L{3.5cm} L{3.0cm} R{2.5cm} L{4.8cm}}
+\begin{longtable}{L{4.2cm} L{3.2cm} R{2.6cm} L{5.2cm}}
 \caption{Detailed Annual Infrastructure Cost Breakdown}
 \label{tab:annual-cost}\\
 \toprule
@@ -1694,7 +1695,8 @@ a comprehensive audit of engineering effort:
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  sprintbox/.style={rectangle, rounded corners=4pt, draw=dpsnavy!80, fill=dpsnavy!6, thick, text width=3.2cm, minimum height=3.5cm, align=left, font=\scriptsize, inner sep=6pt},
+  scale=0.88, every node/.style={transform shape},
+  sprintbox/.style={rectangle, rounded corners=4pt, draw=dpsnavy!80, fill=dpsnavy!6, thick, text width=3.1cm, minimum height=3.5cm, align=left, font=\scriptsize, inner sep=6pt},
   arr/.style={-{Stealth[length=4pt]}, thick, draw=dpsnavy!60}
 ]
 
