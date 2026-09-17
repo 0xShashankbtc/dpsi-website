@@ -177,29 +177,41 @@
 
 \begin{titlepage}
   \begin{center}
-    \vspace*{1.0cm}
+    \vspace*{0.3cm}
 
-    {\LARGE\bfseries\textcolor{sectioncol}{DELHI PUBLIC SCHOOL\\[8pt] INDIRAPURAM}\par}
-    \vspace{0.4cm}
+    % Official Institutional School Crest / Logo
+    \IfFileExists{dpsi_crest.png}{%
+      \includegraphics[height=2.6cm,keepaspectratio]{dpsi_crest.png}\par
+      \vspace{0.35cm}
+    }{%
+      \IfFileExists{dpsi_logo.png}{%
+        \includegraphics[width=6.5cm,keepaspectratio]{dpsi_logo.png}\par
+        \vspace{0.35cm}
+      }{%
+        \vspace*{0.4cm}
+      }%
+    }
+
+    {\LARGE\bfseries\textcolor{sectioncol}{DELHI PUBLIC SCHOOL\\[6pt] INDIRAPURAM}\par}
+    \vspace{0.25cm}
     {\large\bfseries\textcolor{dpsgreen}{Premier K--12 Digital Educational Infrastructure}\par}
-    \vspace{0.2cm}
+    \vspace{0.15cm}
     {\normalsize Affiliated to the Central Board of Secondary Education (CBSE), New Delhi\par}
 
-    \vspace{1.0cm}
-
+    \vspace{0.55cm}
     \rule{\textwidth}{1.8pt}\par
-    \vspace{0.4cm}
+    \vspace{0.35cm}
     {\huge\bfseries\textcolor{sectioncol}{%
       Comprehensive Technical Documentation\\[0.3cm]\&
       Engineering Architecture Report}\par}
-    \vspace{0.35cm}
+    \vspace{0.3cm}
     {\large Next-Generation Web Portal,\ Multi-Tenant CMS,\
       VR\,360$^\circ$ Campus Tour,\\[0.2cm]%
       Conversational RAG\,AI System\ \&\ Cyber Resilience Framework\par}
-    \vspace{0.4cm}
+    \vspace{0.35cm}
     \rule{\textwidth}{1.8pt}\par
 
-    \vspace{1.4cm}
+    \vspace{0.75cm}
 
     \begin{tabular}{@{}ll@{}}
       \textbf{Project Name}          & DPS Indirapuram Web Platform \& Enterprise CMS \\[3pt]
