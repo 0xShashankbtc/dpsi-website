@@ -208,7 +208,7 @@
       \textbf{Legacy Website}        & \url{https://dpsindirapuram.com}\ (PHP\,/\,WordPress) \\[3pt]
       \textbf{Version Control}       & \url{https://github.com/0xShashankbtc/dpsi-website} \\[3pt]
       \textbf{System Version}        & Version 2.0.0\ (Production Release) \\[3pt]
-      \textbf{Security Rating}       & Grade A\ (96\,/\,100)\ ---\ 87\,/\,87 Tests Passed \\[3pt]
+      \textbf{Security Rating}       & Grade A\ (96\,/\,100)\ ---\ 150\,/\,150 Tests Passed \\[3pt]
       \textbf{Prepared by}           & Shashank Jangid \\[3pt]
       \textbf{Compiled}              & September 2026 \\
     \end{tabular}
@@ -268,7 +268,7 @@ Content Management System (CMS) with multi-tenant institutional isolation.
   % ── Bottom Row: Engineering Foundations & Data Tier ────────────────────────
   \node[box] (trpc) at (0, 0)   {\textbf{tRPC v11 API Layer}\\[2pt]\footnotesize 12 Routers, 100+\\[1pt]\footnotesize Type-Safe Procedures};
   \node[box] (db)   at (4.8, 0) {\textbf{MongoDB Multi-Tenant}\\[2pt]\footnotesize 31 Mongoose Schemas,\\[1pt]\footnotesize SHA-256 Audit Ledger};
-  \node[box] (sec)  at (9.6, 0) {\textbf{Security Rating A}\\[2pt]\footnotesize OWASP Compliant,\\[1pt]\footnotesize 87/87 Automated Tests};
+  \node[box] (sec)  at (9.6, 0) {\textbf{Security Rating A}\\[2pt]\footnotesize OWASP Compliant,\\[1pt]\footnotesize 150/150 Automated Tests};
 
   % ── Clean Direct Connectors (No crossing or slicing through boxes) ────────
   \draw[line] (ux)   -- (trpc);
@@ -1348,7 +1348,7 @@ Testing is managed via \textbf{Vitest v4.1.5}, executing directly against
 TypeScript modules without a preliminary compilation step, delivering
 sub-second feedback cycles during development.
 
-\section{Test Execution Results: 87\,/\,87 Passed}
+\section{Test Execution Results: 150\,/\,150 Passed}
 
 \begin{table}[H]
 \centering
@@ -1358,14 +1358,17 @@ sub-second feedback cycles during development.
 \toprule
 \textbf{Test Suite File} & \textbf{Total} & \textbf{Passed} & \textbf{Duration} \\
 \midrule
-\texttt{server/\_\_tests\_\_/security.test.ts}           & 29 & 29 & 441\,ms \\
-\texttt{server/\_\_tests\_\_/cms-functionality.test.ts}  & 26 & 26 &  29\,ms \\
-\texttt{server/\_\_tests\_\_/ai-and-voice.test.ts}       & 13 & 13 &  12\,ms \\
-\texttt{server/\_\_tests\_\_/full-system-audit.test.ts}  & 10 & 10 &  16\,ms \\
-\texttt{server/\_\_tests\_\_/database-models.test.ts}    &  5 &  5 &   9\,ms \\
-\texttt{server/\_\_tests\_\_/multi-tenancy.test.ts}      &  4 &  4 &   3\,ms \\
+\texttt{server/\_\_tests\_\_/security.test.ts}                   & 35 & 35 & 457\,ms \\
+\texttt{server/\_\_tests\_\_/cms-functionality.test.ts}          & 29 & 29 &  26\,ms \\
+\texttt{server/\_\_tests\_\_/frontend-and-sentry.test.ts}        & 27 & 27 &  12\,ms \\
+\texttt{server/\_\_tests\_\_/tc-and-caching.test.ts}             & 20 & 20 & 867\,ms \\
+\texttt{server/\_\_tests\_\_/ai-and-voice.test.ts}               & 13 & 13 &  11\,ms \\
+\texttt{server/\_\_tests\_\_/full-system-audit.test.ts}          & 10 & 10 &  24\,ms \\
+\texttt{server/\_\_tests\_\_/db-performance-and-cleanup.test.ts} &  7 &  7 &  58\,ms \\
+\texttt{server/\_\_tests\_\_/database-models.test.ts}            &  5 &  5 &   9\,ms \\
+\texttt{server/\_\_tests\_\_/multi-tenancy.test.ts}              &  4 &  4 &   4\,ms \\
 \midrule
-\textbf{Total} & \textbf{87} & \textbf{87} & \textbf{1.90\,s} \\
+\textbf{Total} & \textbf{150} & \textbf{150} & \textbf{2.13\,s} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -1389,7 +1392,7 @@ sub-second feedback cycles during development.
   arrow/.style   = {-{Stealth[scale=0.85]}, thick, draw=dpsgreen}
 ]
   \node[pipebox] (s1){\parbox{10.4cm}{\scriptsize\textbf{Step 1 — Git Push:}\ Developer pushes reviewed, tested commits to \texttt{origin/main} on GitHub.}};
-  \node[pipebox,  below=of s1](s2){\parbox{10.4cm}{\scriptsize\textbf{Step 2 — Automated Tests:}\ Vitest executes all 87 unit and security tests; deployment aborted on any failure.}};
+  \node[pipebox,  below=of s1](s2){\parbox{10.4cm}{\scriptsize\textbf{Step 2 — Automated Tests:}\ Vitest executes all 150 unit and security tests; deployment aborted on any failure.}};
   \node[pipebox,  below=of s2](s3){\parbox{10.4cm}{\scriptsize\textbf{Step 3 — Dual Bundling:}\ Vite packages the React client (3\,338 modules, \textasciitilde3.2\,MB); esbuild compiles the Node~20 serverless API bundle (\textasciitilde7\,MB).}};
   \node[pipebox,  below=of s3](s4){\parbox{10.4cm}{\scriptsize\textbf{Step 4 — PWA Workbox Generation:}\ Service worker \texttt{sw.js} generated; 109 static assets (4.25\,MB) added to precache manifest.}};
   \node[final, below=of s4](s5){\parbox{10.4cm}{\scriptsize\textbf{Step 5 — Global Edge Deployment:}\ Artefacts pushed to 300+ Vercel edge PoPs worldwide; automated Let's Encrypt SSL renewal; instant rollback available.}};
@@ -1695,7 +1698,7 @@ heuristic workers, the system provides automated early-warning telemetry:
 \midrule
 \texttt{npm run dev}   & Starts local development server with Vite HMR \\
 \texttt{npm run build} & Production dual-bundle: \texttt{vite build \&\& npm run build:api} \\
-\texttt{npm test}      & Vitest suite --- all 87 automated test cases \\
+\texttt{npm test}      & Vitest suite --- all 150 automated test cases \\
 \texttt{npm run lint}  & ESLint static analysis and code-quality verification \\
 \texttt{npm run check} & TypeScript strict type checking (\texttt{tsc -b}) \\
 \bottomrule
