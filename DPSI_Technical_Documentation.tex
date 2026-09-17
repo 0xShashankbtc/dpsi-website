@@ -16,6 +16,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
+\frenchspacing
 
 % ── Page Geometry ────────────────────────────────────────────────────────────
 \usepackage[
@@ -1071,12 +1072,12 @@ The \texttt{contact.create} mutation executes the following deterministic lifecy
         payload (\texttt{name} [2--255 chars], RFC-compliant \texttt{email}, optional
         \texttt{phone}, \texttt{subject}, and \texttt{message} [5--3000 chars]).
   \item \textbf{Persistent Rate Limiting:}\ Inbound IP addresses are monitored via
-        \texttt{checkPersistentRateLimit("contact:\$\{clientIp\}", 10, 60)},
-        enforcing a sliding window of at most 10 submissions per 60 seconds to thwart
-        automated spam and resource exhaustion.
+        \texttt{checkPersistentRateLimit} (keyed per client IP with a sliding
+        window of at most 10 submissions per 60 seconds) to thwart automated
+        spam and resource exhaustion.
   \item \textbf{Database Persistence:}\ The record is atomically inserted into MongoDB
-        under the \texttt{ContactMessage} model with flags \texttt{isRead: false} and
-        \texttt{isDeleted: false}.
+        under the \texttt{ContactMessage} model with initial states
+        \texttt{isRead:\,false} and \texttt{isDeleted:\,false}.
   \item \textbf{Asynchronous Web3Forms Forwarding:}\ The server checks dynamically
         configured site settings (\texttt{SiteSettings}) for \texttt{web3forms\_enabled}
         and \texttt{web3forms\_access\_key} (falling back to the server environment
@@ -1104,7 +1105,7 @@ await fetch("https://api.web3forms.com/submit", {
   \item \textbf{Fault Decoupling:}\ Network latency or third-party outages at Web3Forms
         do not compromise student or parent inquiries.  Should the external API request
         fail or timeout, the exception is caught, logged to telemetry, and the mutation
-        returns \texttt{\{ success: true, web3forms: \{ delivered: false, message: ... \} \}},
+        returns \texttt{\{ success:\,true, web3forms:\,\{ delivered:\,false \} \}},
         ensuring zero lead loss.
 \end{enumerate}
 
@@ -1452,7 +1453,7 @@ The subsystem applies \texttt{transformOrigin: 'bottom left'}, \texttt{force3D: 
 and CSS \texttt{transform-gpu} with \texttt{backfaceVisibility: hidden} to guarantee that
 rotations are executed directly on the device GPU rasterization layer without triggering
 software CPU reflows.  Additionally, the component respects user accessibility preferences:
-when \texttt{window.matchMedia('(prefers-reduced-motion: reduce)')} evaluates to true,
+when \texttt{prefers-reduced-motion} evaluates to true via \texttt{matchMedia},
 all rotational animations are bypassed, rendering clean flat transitions.
 
 \section{Procedural Footer Canvas Grid Simulation}
