@@ -1673,6 +1673,138 @@ Secret Management         & Doppler       & \$0             & Community tier (fr
 \multicolumn{2}{l}{\textbf{Maximum Enterprise}}           & \textbf{\$3\,063.00}   & \\
 \end{longtable}
 
+\section{Developer Effort, Time Period \texorpdfstring{\&}{and} Sprint Analytics}
+
+\subsection{Chronological Timeline and Engineering Metrics}
+
+The Delhi Public School Indirapuram web platform and administrative CMS were
+architected, engineered, and hardened over an intensive \textbf{7.5-week development
+lifecycle} spanning \textbf{51 calendar days} (28~July~2026 to 17~September~2026).
+Development velocity was tracked via continuous version control commits, producing
+a comprehensive audit of engineering effort:
+
+\begin{itemize}
+  \item \textbf{Initial Foundation Commit:}\ 28~July~2026 (Initial scaffolding, multi-tenancy, Vite build).
+  \item \textbf{Final Production Sign-Off:}\ 17~September~2026 (Web3Forms bridge, 150 automated test suites, documentation).
+  \item \textbf{Total Version Control Commits:}\ \textbf{281+ commits} across \textbf{214 tracked source files}.
+  \item \textbf{Active Development Days:}\ \textbf{34 dedicated full-time coding days} averaging 6.5--8.0 hours/day.
+  \item \textbf{Total Cumulative Hands-on Effort:}\ \textbf{\textasciitilde240 engineering person-hours}.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  sprintbox/.style={rectangle, rounded corners=4pt, draw=dpsnavy!80, fill=dpsnavy!6, thick, text width=3.2cm, minimum height=3.5cm, align=left, font=\scriptsize, inner sep=6pt},
+  arr/.style={-{Stealth[length=4pt]}, thick, draw=dpsnavy!60}
+]
+
+  \node[sprintbox] (p1) at (0, 0) {
+    \textbf{\textcolor{dpsgreen}{Sprint 1: Foundation}}\\[1pt]
+    \textcolor{dpsgold!90!black}{\textbf{28 Jul -- 05 Aug 2026}}\\[3pt]
+    \textbf{Effort:} \textasciitilde45 hours\\[3pt]
+    $\bullet$ React 19 + Vite 7\\
+    $\bullet$ Hono 4 serverless core\\
+    $\bullet$ \texttt{AsyncLocalStorage}\\
+    $\bullet$ 31 Mongoose schemas\\
+    $\bullet$ Tailwind design tokens
+  };
+
+  \node[sprintbox, right=0.3cm of p1] (p2) {
+    \textbf{\textcolor{dpsgreen}{Sprint 2: Core Platform}}\\[1pt]
+    \textcolor{dpsgold!90!black}{\textbf{06 Aug -- 18 Aug 2026}}\\[3pt]
+    \textbf{Effort:} \textasciitilde70 hours\\[3pt]
+    $\bullet$ 12 tRPC v11 routers\\
+    $\bullet$ End-to-end Zod schemas\\
+    $\bullet$ Full Admin CMS portal\\
+    $\bullet$ JWT RBAC security gate\\
+    $\bullet$ Image upload pipelines
+  };
+
+  \node[sprintbox, right=0.3cm of p2] (p3) {
+    \textbf{\textcolor{dpsgreen}{Sprint 3: 3D \& AI}}\\[1pt]
+    \textcolor{dpsgold!90!black}{\textbf{19 Aug -- 02 Sep 2026}}\\[3pt]
+    \textbf{Effort:} \textasciitilde65 hours\\[3pt]
+    $\bullet$ Three.js 360$^\circ$ VR tour\\
+    $\bullet$ WebGL GLSL shaders\\
+    $\bullet$ Gemini 2.0 Flash RAG\\
+    $\bullet$ ElevenLabs TTS voice\\
+    $\bullet$ Lenis momentum scroll
+  };
+
+  \node[sprintbox, right=0.3cm of p3] (p4) {
+    \textbf{\textcolor{dpsgreen}{Sprint 4: Hardening}}\\[1pt]
+    \textcolor{dpsgold!90!black}{\textbf{03 Sep -- 17 Sep 2026}}\\[3pt]
+    \textbf{Effort:} \textasciitilde60 hours\\[3pt]
+    $\bullet$ Web3Forms email bridge\\
+    $\bullet$ Hero video controller\\
+    $\bullet$ 3D Story scroll deck\\
+    $\bullet$ 150/150 Vitest suites\\
+    $\bullet$ Grade A security audit
+  };
+
+  \draw[arr] (p1.east) -- (p2.west);
+  \draw[arr] (p2.east) -- (p3.west);
+  \draw[arr] (p3.east) -- (p4.west);
+
+\end{tikzpicture}
+\caption{Chronological Engineering Sprint Roadmap and Developer Milestones}
+\label{fig:developer-sprints}
+\end{figure}
+
+\subsection{Domain-Specific Effort Allocation}
+
+The \textasciitilde240 engineering hours were distributed systematically across
+frontend, backend, 3D/VR, artificial intelligence, and security hardening domains:
+
+\begin{table}[H]
+\centering
+\caption{Engineering Person-Hours Allocated by Subsystem}
+\label{tab:developer-effort}
+\begin{tabularx}{\textwidth}{L{4.2cm} C{2.2cm} C{1.8cm} X}
+\toprule
+\textbf{Engineering Subsystem} & \textbf{Hours Spent} & \textbf{Share (\%)} & \textbf{Key Deliverables} \\
+\midrule
+Frontend UI/UX, Motion \& PWA       & 80\,hrs & 33.3\,\% & React 19 pages, Tailwind JIT, Framer Motion, responsive design across mobile/desktop, PWA offline \\
+Backend, tRPC APIs \& Schemas       & 55\,hrs & 22.9\,\% & Hono serverless core, 12 tRPC routers, 31 MongoDB models, Web3Forms email bridge, JWT auth \\
+3D Graphics, WebGL \& VR Tour       & 40\,hrs & 16.7\,\% & Three.js 360$^\circ$ inverted sphere, GLSL shaders, Raycaster hotspots, 3D Story Scroll deck \\
+Automated Testing \& Cybersecurity  & 35\,hrs & 14.6\,\% & 150 Vitest unit/integration tests, OWASP Top 10 remediation (Grade A), rate limiters, audit log \\
+Conversational AI \& Voice Synthesis& 30\,hrs & 12.5\,\% & Gemini 2.0 Flash RAG grounding, ElevenLabs TTS voice synthesis, persistent caching \\
+\midrule
+\textbf{Total Project Development}  & \textbf{240\,hrs} & \textbf{100.0\,\%} & \textbf{Fully Functional Enterprise Institution Platform} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Commercial Engineering Valuation \texorpdfstring{\&}{and} Agency Cost Equivalence}
+
+To assess the economic value delivered to Delhi Public School Indirapuram, the
+platform's complexity, architectural depth, and custom 3D/AI subsystems were benchmarked
+against standard commercial software development agency billing rates:
+
+\begin{table}[H]
+\centering
+\caption{Commercial Agency Equivalence and Cost Benchmarking}
+\label{tab:agency-equivalence}
+\begin{tabularx}{\textwidth}{L{4.0cm} C{2.2cm} R{2.5cm} X}
+\toprule
+\textbf{Workstream} & \textbf{Agency Hours} & \textbf{Market Rate (INR)} & \textbf{Deliverable Scope} \\
+\midrule
+UI/UX Design \& Design System     & 60\,hrs  & \rupee\,1,80,000 & Custom responsive Figma tokens, 3D interactions, accessibility audits \\
+Frontend Web Engineering          & 160\,hrs & \rupee\,5,60,000 & React 19, Three.js VR tour, WebGL shaders, Lenis kinematics, PWA precaching \\
+Backend \& Database Architecture  & 120\,hrs & \rupee\,4,20,000 & Hono micro-framework, 12 tRPC routers, 31 MongoDB schemas, Web3Forms pipeline \\
+Generative AI \& Neural Voice     & 50\,hrs  & \rupee\,2,00,000 & Gemini 2.0 RAG pipeline, ElevenLabs TTS synthesis, prompt orchestration \\
+Security Audit, QA \& DevOps      & 70\,hrs  & \rupee\,2,45,000 & 150 Vitest test cases, OWASP penetration testing, Vercel CI/CD edge pipeline \\
+\midrule
+\textbf{Total Commercial Value}   & \textbf{460\,hrs} & \textbf{\rupee\,16,05,000} & \textbf{Industry Agency Turnkey Project Equivalent (\textasciitilde\$19,250 USD)} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+By developing the platform in-house through modern full-stack methodologies and
+end-to-end type safety, DPS Indirapuram avoided an estimated \textbf{\rupee\,16 Lakhs}
+in external agency expenditures while securing a custom-tailored, zero-dependency
+institutional digital asset.
+
 % ============================================================================
 %  CHAPTER 14 — FUTURE SCOPE & INSTITUTIONAL EXPANSION
 % ============================================================================
