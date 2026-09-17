@@ -17,7 +17,7 @@ import { getTenantModel } from "./models/tenantSchema";
 import { seedDatabase } from "./lib/seedDatabase";
 import { convertImageToWebP } from "./utils/mediaConverter";
 import { withCache, invalidateCache } from "./lib/cache";
-import { getJwtSecret } from "./context";
+import { getJwtSecret, getClientIp } from "./context";
 
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -79,11 +79,7 @@ export const cmsRouter = createRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const clientIp =
-        ctx?.req?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        ctx?.req?.headers?.get("x-real-ip") ||
-        ctx?.req?.headers?.get("cf-connecting-ip") ||
-        "admin-login-ip";
+      const clientIp = getClientIp(ctx?.req);
 
       // 1. Check Distributed Persistent Rate Limiting (Serverless & Cold-Start Safe)
       const isPersistentAllowed = await checkPersistentRateLimit(`login_ip:${clientIp}`, 10, 600, "dpsi");
@@ -251,7 +247,7 @@ export const cmsRouter = createRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+      const clientIp = getClientIp(ctx?.req);
       const rateLimit = checkLoginRateLimit(clientIp);
       if (!rateLimit.allowed) {
         const minsLeft = Math.ceil((rateLimit.remainingWaitMs || 0) / 60000);
@@ -2100,6 +2096,9 @@ export const cmsRouter = createRouter({
           { key: "school_tagline", value: "Excellence in Education — CBSE Affiliated", label: "Tagline", group: "general" },
           { key: "contact_phone", value: "+91-0120-4660000", label: "Contact Phone", group: "contact" },
           { key: "contact_email", value: "info@dpsindirapuram.com", label: "Contact Email", group: "contact" },
+          { key: "contact_notification_email", value: "it@dpsindirapuram.com", label: "Contact Notification Email (Web3Forms Recipient)", group: "contact" },
+          { key: "web3forms_access_key", value: "8b37ec47-e3a0-491e-877f-a438c19794fa", label: "Web3Forms Access Key", group: "contact" },
+          { key: "web3forms_enabled", value: "true", label: "Enable Web3Forms Email Delivery", group: "contact" },
           { key: "contact_address", value: "526/1 Ahinsa Khand-II, Indirapuram, Ghaziabad, UP 201014", label: "Address", group: "contact" },
           { key: "admission_status", value: "Open for 2026-27", label: "Admission Status", group: "admissions" },
           { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
@@ -2136,6 +2135,9 @@ export const cmsRouter = createRouter({
       // Check if any button or secondary logo settings are missing in existing database and insert them
       const existingKeys = new Set(settings.map((s: any) => s.key));
       const missingDefaults = [
+        { key: "contact_notification_email", value: "it@dpsindirapuram.com", label: "Contact Notification Email (Web3Forms Recipient)", group: "contact" },
+        { key: "web3forms_access_key", value: "8b37ec47-e3a0-491e-877f-a438c19794fa", label: "Web3Forms Access Key", group: "contact" },
+        { key: "web3forms_enabled", value: "true", label: "Enable Web3Forms Email Delivery", group: "contact" },
         { key: "explore_button_text", value: "Explore", label: "Explore Button Label", group: "buttons" },
         { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
         { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },

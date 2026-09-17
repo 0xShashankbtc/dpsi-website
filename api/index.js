@@ -177441,6 +177441,84 @@ var adminMutation = t.procedure.use(enforceAdmin);
 
 // server/admission-router.ts
 init_cmsSchemas();
+
+// server/context.ts
+var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
+function getClientIp(req) {
+  if (!req) return "127.0.0.1";
+  if (typeof req.headers?.get === "function") {
+    const xff = req.headers.get("x-forwarded-for");
+    const cf = req.headers.get("cf-connecting-ip");
+    const real = req.headers.get("x-real-ip");
+    return (xff ? xff.split(",")[0].trim() : "") || cf || real || "127.0.0.1";
+  }
+  if (req.headers && typeof req.headers === "object") {
+    const xff = req.headers["x-forwarded-for"];
+    const cf = req.headers["cf-connecting-ip"];
+    const real = req.headers["x-real-ip"];
+    return (typeof xff === "string" ? xff.split(",")[0].trim() : "") || (typeof cf === "string" ? cf : "") || (typeof real === "string" ? real : "") || req.ip || "127.0.0.1";
+  }
+  return req.ip || "127.0.0.1";
+}
+function getJwtSecret() {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.trim().length > 0) {
+    return process.env.JWT_SECRET.trim();
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[Security FATAL] JWT_SECRET environment variable is mandatory in production.");
+  }
+  return "dpsi_cms_super_secret_jwt_key_2026_dev";
+}
+var JWT_SECRET = process.env.JWT_SECRET && process.env.JWT_SECRET.trim() || (process.env.NODE_ENV === "production" ? "" : "dpsi_cms_super_secret_jwt_key_2026_dev");
+async function createContext(opts) {
+  let user = null;
+  const rawHeaderTenant = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") || "";
+  const authHeader = opts.req.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    try {
+      const secret = getJwtSecret();
+      const decoded = import_jsonwebtoken.default.verify(token, secret, { algorithms: ["HS256"] });
+      user = {
+        id: decoded.id,
+        username: decoded.username,
+        role: decoded.role,
+        tenantId: decoded.tenantId || "dpsi"
+      };
+    } catch {
+    }
+  }
+  const isDevEnvironment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+  if (!user && isDevEnvironment && process.env.ENABLE_DEV_ADMIN === "true") {
+    const adminHeader = opts.req.headers.get("x-admin-auth");
+    if (adminHeader === "true") {
+      user = {
+        id: "admin-master",
+        username: "Admin",
+        role: "superadmin",
+        tenantId: "all"
+      };
+    }
+  }
+  let resolvedTenantId = "dpsi";
+  if (user) {
+    if (user.role === "superadmin") {
+      resolvedTenantId = rawHeaderTenant && rawHeaderTenant !== "all" ? rawHeaderTenant : user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
+    } else {
+      resolvedTenantId = user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
+    }
+  } else {
+    resolvedTenantId = rawHeaderTenant || "dpsi";
+  }
+  return {
+    req: opts.req,
+    resHeaders: opts.resHeaders,
+    user,
+    tenantId: resolvedTenantId
+  };
+}
+
+// server/admission-router.ts
 var admissionRouter = createRouter({
   create: publicMutation.input(
     external_exports.object({
@@ -177458,7 +177536,7 @@ var admissionRouter = createRouter({
       message: external_exports.string().max(3e3).optional()
     })
   ).mutation(async ({ input, ctx }) => {
-    const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+    const clientIp = getClientIp(ctx?.req);
     const allowed = await checkPersistentRateLimit(`admission:${clientIp}`, 10, 60);
     if (!allowed) {
       throw new TRPCError({
@@ -178103,7 +178181,7 @@ var contactRouter = createRouter({
       message: external_exports.string().min(5).max(3e3)
     })
   ).mutation(async ({ input, ctx }) => {
-    const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+    const clientIp = getClientIp(ctx?.req);
     const allowed = await checkPersistentRateLimit(`contact:${clientIp}`, 10, 60);
     if (!allowed) {
       throw new TRPCError({
@@ -178112,7 +178190,7 @@ var contactRouter = createRouter({
       });
     }
     try {
-      const { ContactMessage } = await getMainModels();
+      const { ContactMessage, SiteSettings } = await getMainModels();
       const doc = await ContactMessage.create({
         name: input.name.trim(),
         email: input.email.trim().toLowerCase(),
@@ -178122,13 +178200,129 @@ var contactRouter = createRouter({
         isRead: false,
         isDeleted: false
       });
-      return { success: true, id: doc._id.toString() };
+      let web3formsResult = { delivered: false };
+      try {
+        const settings = await SiteSettings.find({
+          key: { $in: ["contact_notification_email", "web3forms_access_key", "web3forms_enabled"] }
+        }).lean();
+        const getVal = (k6, fallback) => {
+          const found = settings.find((s) => s.key === k6);
+          return found?.value?.trim() || fallback;
+        };
+        const notificationEmail = getVal("contact_notification_email", "it@dpsindirapuram.com");
+        const accessKey = getVal("web3forms_access_key", "") || (process.env.WEB3FORMS_ACCESS_KEY || "").trim();
+        const isEnabled3 = getVal("web3forms_enabled", "true") !== "false";
+        if (isEnabled3 && accessKey) {
+          const payload2 = {
+            access_key: accessKey,
+            name: input.name.trim(),
+            email: input.email.trim().toLowerCase(),
+            phone: input.phone?.trim() || "Not provided",
+            subject: input.subject?.trim() || `New Contact Inquiry: ${input.name.trim()} - DPS Indirapuram`,
+            message: input.message.trim(),
+            from_name: "DPS Indirapuram Contact Portal",
+            replyto: input.email.trim().toLowerCase(),
+            to_email: notificationEmail,
+            recipient: notificationEmail
+          };
+          const response = await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json"
+            },
+            body: JSON.stringify(payload2)
+          });
+          const data2 = await response.json();
+          if (data2.success) {
+            web3formsResult = { delivered: true, message: "Delivered via Web3Forms" };
+          } else {
+            web3formsResult = { delivered: false, message: data2.message || "Web3Forms non-success response" };
+            console.warn("[Web3Forms] Forwarding returned:", data2);
+          }
+        } else if (!accessKey) {
+          web3formsResult = { delivered: false, message: "Web3Forms key not configured yet" };
+        }
+      } catch (w3err) {
+        console.error("[Web3Forms] Error forwarding contact submission:", w3err?.message);
+        web3formsResult = { delivered: false, message: w3err?.message };
+      }
+      return { success: true, id: doc._id.toString(), web3forms: web3formsResult };
     } catch (err) {
       if (err instanceof TRPCError) throw err;
       console.error("[Contact Form] Failed to save contact submission:", err?.message);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to send your message. Please try again or call the school office directly."
+      });
+    }
+  }),
+  testWeb3Forms: adminMutation.input(
+    external_exports.object({
+      accessKey: external_exports.string().optional(),
+      notificationEmail: external_exports.string().email().optional()
+    })
+  ).mutation(async ({ input, ctx }) => {
+    const { SiteSettings } = await getMainModels();
+    const settings = await SiteSettings.find({
+      key: { $in: ["contact_notification_email", "web3forms_access_key"] }
+    }).lean();
+    const getVal = (k6, fallback) => {
+      const found = settings.find((s) => s.key === k6);
+      return found?.value?.trim() || fallback;
+    };
+    const notificationEmail = input.notificationEmail?.trim() || getVal("contact_notification_email", "it@dpsindirapuram.com");
+    const accessKey = input.accessKey?.trim() || getVal("web3forms_access_key", "") || (process.env.WEB3FORMS_ACCESS_KEY || "").trim();
+    if (!accessKey) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "No Web3Forms Access Key configured. Please enter an access key first."
+      });
+    }
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: accessKey,
+          name: "DPS Indirapuram Admin Test",
+          email: "admin@dpsindirapuram.com",
+          phone: "+91-0120-4660000",
+          subject: "\u{1F9EA} Web3Forms Connectivity Test \u2014 DPS Indirapuram",
+          message: `This is a test notification dispatched from the DPS Indirapuram Admin Panel.
+Configured Recipient: ${notificationEmail}
+Timestamp: ${(/* @__PURE__ */ new Date()).toISOString()}
+Executed By: ${ctx.user?.username || "Admin"}`,
+          from_name: "DPS Indirapuram Admin Portal",
+          to_email: notificationEmail,
+          recipient: notificationEmail
+        })
+      });
+      const data2 = await response.json();
+      if (!data2.success) {
+        return {
+          success: false,
+          message: data2.message || "Web3Forms rejected the request. Please verify your access key."
+        };
+      }
+      await createImmutableAuditLog({
+        action: "TEST_WEB3FORMS_SUBMISSION",
+        module: "Contact",
+        performedBy: ctx.user?.username || "Admin",
+        details: `Dispatched Web3Forms test email to ${notificationEmail}`
+      });
+      return {
+        success: true,
+        message: `Test email successfully dispatched to ${notificationEmail} via Web3Forms!`
+      };
+    } catch (err) {
+      console.error("[Web3Forms] Test delivery failed:", err?.message);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to connect to Web3Forms: ${err?.message}`
       });
     }
   }),
@@ -178840,7 +179034,7 @@ var aiRouter = createRouter({
       history: external_exports.array(external_exports.object({ role: external_exports.enum(["user", "assistant"]), text: external_exports.string().max(1500) })).optional()
     })
   ).mutation(async ({ input, ctx }) => {
-    const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+    const clientIp = getClientIp(ctx?.req);
     const isAllowed = checkRateLimit(clientIp, 60, 6e4) && await checkPersistentRateLimit(`chat:${clientIp}`, 60, 60, ctx.tenantId);
     if (!isAllowed) {
       return {
@@ -178954,7 +179148,7 @@ ${config2.systemPrompt}`;
       voiceId: external_exports.string().optional()
     })
   ).mutation(async ({ input, ctx }) => {
-    const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+    const clientIp = getClientIp(ctx?.req);
     const isTtsAllowed = checkRateLimit(`tts:${clientIp}`, 20, 6e4) && await checkPersistentRateLimit(`tts:${clientIp}`, 20, 60, ctx.tenantId);
     if (!isTtsAllowed) {
       return { audioBase64: null };
@@ -180061,66 +180255,6 @@ async function convertImageToWebP(inputBuffer, quality = 80, maxWidth) {
   };
 }
 
-// server/context.ts
-var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
-function getJwtSecret() {
-  if (process.env.JWT_SECRET && process.env.JWT_SECRET.trim().length > 0) {
-    return process.env.JWT_SECRET.trim();
-  }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("[Security FATAL] JWT_SECRET environment variable is mandatory in production.");
-  }
-  return "dpsi_cms_super_secret_jwt_key_2026_dev";
-}
-var JWT_SECRET = process.env.JWT_SECRET && process.env.JWT_SECRET.trim() || (process.env.NODE_ENV === "production" ? "" : "dpsi_cms_super_secret_jwt_key_2026_dev");
-async function createContext(opts) {
-  let user = null;
-  const rawHeaderTenant = opts.req.headers.get("x-tenant-id")?.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") || "";
-  const authHeader = opts.req.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
-    try {
-      const secret = getJwtSecret();
-      const decoded = import_jsonwebtoken.default.verify(token, secret, { algorithms: ["HS256"] });
-      user = {
-        id: decoded.id,
-        username: decoded.username,
-        role: decoded.role,
-        tenantId: decoded.tenantId || "dpsi"
-      };
-    } catch {
-    }
-  }
-  const isDevEnvironment = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
-  if (!user && isDevEnvironment && process.env.ENABLE_DEV_ADMIN === "true") {
-    const adminHeader = opts.req.headers.get("x-admin-auth");
-    if (adminHeader === "true") {
-      user = {
-        id: "admin-master",
-        username: "Admin",
-        role: "superadmin",
-        tenantId: "all"
-      };
-    }
-  }
-  let resolvedTenantId = "dpsi";
-  if (user) {
-    if (user.role === "superadmin") {
-      resolvedTenantId = rawHeaderTenant && rawHeaderTenant !== "all" ? rawHeaderTenant : user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
-    } else {
-      resolvedTenantId = user.tenantId && user.tenantId !== "all" ? user.tenantId : "dpsi";
-    }
-  } else {
-    resolvedTenantId = rawHeaderTenant || "dpsi";
-  }
-  return {
-    req: opts.req,
-    resHeaders: opts.resHeaders,
-    user,
-    tenantId: resolvedTenantId
-  };
-}
-
 // server/cms-router.ts
 function escapeRegex3(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -180170,7 +180304,7 @@ var cmsRouter = createRouter({
       schoolCode: external_exports.string().optional()
     })
   ).mutation(async ({ input, ctx }) => {
-    const clientIp = ctx?.req?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() || ctx?.req?.headers?.get("x-real-ip") || ctx?.req?.headers?.get("cf-connecting-ip") || "admin-login-ip";
+    const clientIp = getClientIp(ctx?.req);
     const isPersistentAllowed = await checkPersistentRateLimit(`login_ip:${clientIp}`, 10, 600, "dpsi");
     const inMemoryRate = checkLoginRateLimit(clientIp);
     if (!isPersistentAllowed || !inMemoryRate.allowed) {
@@ -180307,7 +180441,7 @@ var cmsRouter = createRouter({
       schoolCode: external_exports.string().optional()
     })
   ).mutation(async ({ input, ctx }) => {
-    const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+    const clientIp = getClientIp(ctx?.req);
     const rateLimit = checkLoginRateLimit(clientIp);
     if (!rateLimit.allowed) {
       const minsLeft = Math.ceil((rateLimit.remainingWaitMs || 0) / 6e4);
@@ -181913,6 +182047,9 @@ var cmsRouter = createRouter({
           { key: "school_tagline", value: "Excellence in Education \u2014 CBSE Affiliated", label: "Tagline", group: "general" },
           { key: "contact_phone", value: "+91-0120-4660000", label: "Contact Phone", group: "contact" },
           { key: "contact_email", value: "info@dpsindirapuram.com", label: "Contact Email", group: "contact" },
+          { key: "contact_notification_email", value: "it@dpsindirapuram.com", label: "Contact Notification Email (Web3Forms Recipient)", group: "contact" },
+          { key: "web3forms_access_key", value: "8b37ec47-e3a0-491e-877f-a438c19794fa", label: "Web3Forms Access Key", group: "contact" },
+          { key: "web3forms_enabled", value: "true", label: "Enable Web3Forms Email Delivery", group: "contact" },
           { key: "contact_address", value: "526/1 Ahinsa Khand-II, Indirapuram, Ghaziabad, UP 201014", label: "Address", group: "contact" },
           { key: "admission_status", value: "Open for 2026-27", label: "Admission Status", group: "admissions" },
           { key: "social_facebook", value: "https://facebook.com/dpsindirapuram", label: "Facebook URL", group: "social" },
@@ -181948,6 +182085,9 @@ var cmsRouter = createRouter({
       }
       const existingKeys = new Set(settings.map((s) => s.key));
       const missingDefaults = [
+        { key: "contact_notification_email", value: "it@dpsindirapuram.com", label: "Contact Notification Email (Web3Forms Recipient)", group: "contact" },
+        { key: "web3forms_access_key", value: "8b37ec47-e3a0-491e-877f-a438c19794fa", label: "Web3Forms Access Key", group: "contact" },
+        { key: "web3forms_enabled", value: "true", label: "Enable Web3Forms Email Delivery", group: "contact" },
         { key: "explore_button_text", value: "Explore", label: "Explore Button Label", group: "buttons" },
         { key: "explore_button_link", value: "#interactive-facilities", label: "Explore Button Link / Target", group: "buttons" },
         { key: "explore_action_type", value: "modal", label: "Explore Action Type (modal/link)", group: "buttons" },

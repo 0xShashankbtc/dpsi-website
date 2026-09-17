@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "lenis/dist/lenis.css";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 declare global {
   interface Window {
@@ -62,6 +68,21 @@ export default function SmoothScroll() {
 
     window.__lenis = lenis;
 
+    // Synchronize Lenis scroll ticks with GSAP ScrollTrigger
+    const handleLenisScroll = () => {
+      ScrollTrigger.update();
+    };
+    lenis.on("scroll", handleLenisScroll);
+
+    // Drive Lenis via GSAP's central ticker so both render on the exact same frame clock
+    const updateTicker = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+    gsap.ticker.add(updateTicker);
+
+    // Disable GSAP lag smoothing to eliminate catch-up hitching/rubber-banding during scroll
+    gsap.ticker.lagSmoothing(0);
+
     // Toggle .is-scrolling class on documentElement so heavy WebGL/shaders can throttle during scroll
     let scrollTimeout: any = null;
     const handleScrollActivity = () => {
@@ -72,13 +93,6 @@ export default function SmoothScroll() {
       }, 150);
     };
     lenis.on("scroll", handleScrollActivity);
-
-    let rafId: number;
-    function raf(time: number) {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    }
-    rafId = requestAnimationFrame(raf);
 
     // Smooth anchor link click handler for desktop Lenis
     const handleAnchorClick = (e: MouseEvent) => {
@@ -102,9 +116,10 @@ export default function SmoothScroll() {
     return () => {
       document.removeEventListener("click", handleAnchorClick);
       lenis.off("scroll", handleScrollActivity);
+      lenis.off("scroll", handleLenisScroll);
       clearTimeout(scrollTimeout);
       document.documentElement.classList.remove("is-scrolling");
-      cancelAnimationFrame(rafId);
+      gsap.ticker.remove(updateTicker);
       lenis.destroy();
       delete window.__lenis;
     };

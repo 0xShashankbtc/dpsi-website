@@ -421,8 +421,9 @@ export default function InteractiveFacilitiesSection() {
                       src={facility.image}
                       alt={facility.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                      loading="lazy"
+                      loading={idx === 0 ? "eager" : "lazy"}
                       decoding="async"
+                      fetchPriority={idx === 0 ? "high" : "auto"}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
@@ -431,7 +432,7 @@ export default function InteractiveFacilitiesSection() {
                       {facility.highlights.slice(0, 2).map((hl, hIdx) => (
                         <span
                           key={hIdx}
-                          className="px-2 py-0.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold border border-white/20"
+                          className="px-2 py-0.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-slate-950/85 text-white text-[10px] sm:text-xs font-bold border border-white/20 shadow-xs"
                         >
                           {hl}
                         </span>
@@ -445,7 +446,7 @@ export default function InteractiveFacilitiesSection() {
                         </p>
                         <p className="text-sm sm:text-xl font-black truncate">{facility.tagline}</p>
                       </div>
-                      <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-white/20 text-white text-[10px] sm:text-xs font-bold backdrop-blur-sm border border-white/30 shrink-0">
+                      <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-slate-950/75 text-white text-[10px] sm:text-xs font-bold border border-white/25 shrink-0">
                         <ShieldCheck className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${theme.catColor}`} /> Certified
                       </span>
                     </div>

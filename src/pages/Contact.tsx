@@ -26,20 +26,67 @@ export default function Contact() {
   const email = getSetting("contact_email", "info@dpsindirapuram.com");
   const officeHours = getSetting("office_hours", "Monday – Saturday: 8:00 AM – 3:00 PM (Second & Fourth Saturdays Closed)");
 
-  const mutation = trpc.contact.create.useMutation({
-    onSuccess: () => {
-      setSubmitted(true);
-      setErrorMessage(null);
-    },
-    onError: (err) => {
-      setErrorMessage(err.message || "Failed to send message. Please try again.");
-    },
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const mutation = trpc.contact.create.useMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-    mutation.mutate(form);
+    setIsSubmitting(true);
+
+    const accessKey = getSetting("web3forms_access_key", "8b37ec47-e3a0-491e-877f-a438c19794fa");
+    const isWeb3Enabled = getSetting("web3forms_enabled", "true") !== "false";
+    const notificationEmail = getSetting("contact_notification_email", "it@dpsindirapuram.com");
+
+    let clientDispatched = false;
+
+    // 1. Direct Web3Forms submission from browser
+    if (isWeb3Enabled && accessKey) {
+      try {
+        const formData = new FormData();
+        formData.append("access_key", accessKey);
+        formData.append("name", form.name.trim());
+        formData.append("email", form.email.trim());
+        if (form.phone?.trim()) formData.append("phone", form.phone.trim());
+        if (form.subject?.trim()) formData.append("subject", form.subject.trim());
+        formData.append("message", form.message.trim());
+        formData.append("from_name", "DPS Indirapuram Contact Portal");
+        formData.append("replyto", form.email.trim());
+        if (notificationEmail) {
+          formData.append("to_email", notificationEmail);
+          formData.append("recipient", notificationEmail);
+        }
+
+        const response = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json().catch(() => null);
+        if (response.ok && data?.success) {
+          clientDispatched = true;
+        }
+      } catch (clientErr) {
+        console.warn("[Web3Forms Client] Error sending via browser fetch:", clientErr);
+      }
+    }
+
+    // 2. Save to database / CMS dashboard via backend tRPC
+    try {
+      await mutation.mutateAsync(form);
+      setSubmitted(true);
+      setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+    } catch (backendErr: any) {
+      if (clientDispatched) {
+        // Web3Forms email sent successfully, consider submission successful
+        setSubmitted(true);
+        setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+      } else {
+        setErrorMessage(backendErr?.message || "Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -169,8 +216,8 @@ export default function Contact() {
                     <Label htmlFor="message">Message *</Label>
                     <Textarea id="message" required rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
                   </div>
-                  <Button type="submit" className="w-full bg-emerald-700 hover:bg-emerald-800" disabled={mutation.isPending}>
-                    {mutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</> : <><Send className="w-4 h-4 mr-2" /> Send Message</>}
+                  <Button type="submit" className="w-full bg-emerald-700 hover:bg-emerald-800" disabled={isSubmitting || mutation.isPending}>
+                    {isSubmitting || mutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</> : <><Send className="w-4 h-4 mr-2" /> Send Message</>}
                   </Button>
                 </form>
               )}

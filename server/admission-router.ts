@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, publicMutation, adminQuery, adminMutation } from "./middleware";
 import { getMainModels, checkPersistentRateLimit, createImmutableAuditLog } from "./models/cmsSchemas";
+import { getClientIp } from "./context";
 
 export const admissionRouter = createRouter({
   create: publicMutation
@@ -23,7 +24,7 @@ export const admissionRouter = createRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+      const clientIp = getClientIp(ctx?.req);
       const allowed = await checkPersistentRateLimit(`admission:${clientIp}`, 10, 60);
       if (!allowed) {
         throw new TRPCError({

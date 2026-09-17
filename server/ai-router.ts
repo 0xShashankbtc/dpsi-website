@@ -7,6 +7,7 @@
 import { createRouter, publicQuery } from "./middleware";
 import { z } from "zod";
 import { getMainModels, checkPersistentRateLimit } from "./models/cmsSchemas";
+import { getClientIp } from "./context";
 
 interface GroqApiResponse {
   choices?: {
@@ -183,7 +184,7 @@ export const aiRouter = createRouter({
     )
     .mutation(async ({ input, ctx }) => {
       // Extract client identifier (IP or fallback)
-      const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+      const clientIp = getClientIp(ctx?.req);
       
       const isAllowed = checkRateLimit(clientIp, 60, 60000) && (await checkPersistentRateLimit(`chat:${clientIp}`, 60, 60, ctx.tenantId));
       if (!isAllowed) {
@@ -349,7 +350,7 @@ export const aiRouter = createRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const clientIp = ctx?.req?.headers?.get("x-forwarded-for") || ctx?.req?.headers?.get("cf-connecting-ip") || "global-client";
+      const clientIp = getClientIp(ctx?.req);
       
       // Rate limit for metered TTS voice synthesis
       const isTtsAllowed = checkRateLimit(`tts:${clientIp}`, 20, 60000) && (await checkPersistentRateLimit(`tts:${clientIp}`, 20, 60, ctx.tenantId));

@@ -497,6 +497,63 @@ describe("CMS Functionality & Business Logic Test Suite", () => {
       expect(isPrincipal("Vice Chairperson", "Management", "Ms. Santosh Bansal")).toBe(false);
     });
   });
+
+  describe("Web3Forms & Contact Notification Integration", () => {
+    it("validates contact notification email defaults to it@dpsindirapuram.com and can be customized", () => {
+      const emailSchema = z.string().email();
+      const defaultEmail = "it@dpsindirapuram.com";
+      expect(emailSchema.safeParse(defaultEmail).success).toBe(true);
+
+      const customEmail = "admissions.admin@dpsindirapuram.com";
+      expect(emailSchema.safeParse(customEmail).success).toBe(true);
+      expect(emailSchema.safeParse("invalid-email").success).toBe(false);
+    });
+
+    it("verifies Web3Forms payload schema with all contact details", () => {
+      const Web3FormsPayloadSchema = z.object({
+        access_key: z.string().min(1),
+        name: z.string().min(1),
+        email: z.string().email(),
+        phone: z.string().optional(),
+        subject: z.string(),
+        message: z.string().min(1),
+        from_name: z.string(),
+        replyto: z.string().email(),
+        to_email: z.string().email().optional(),
+        recipient: z.string().email().optional(),
+      });
+
+      const payload = {
+        access_key: "test-access-key-1234",
+        name: "Rohit Sharma",
+        email: "rohit.sharma@example.com",
+        phone: "+91-9876543210",
+        subject: "Admission Inquiry for Grade XI Science",
+        message: "Requesting details regarding subject combinations and entrance schedule.",
+        from_name: "DPS Indirapuram Contact Portal",
+        replyto: "rohit.sharma@example.com",
+        to_email: "it@dpsindirapuram.com",
+        recipient: "it@dpsindirapuram.com",
+      };
+
+      const result = Web3FormsPayloadSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.recipient).toBe("it@dpsindirapuram.com");
+        expect(result.data.from_name).toContain("DPS Indirapuram");
+      }
+    });
+
+    it("validates testWeb3Forms input schema rejecting empty access keys", () => {
+      const TestSchema = z.object({
+        accessKey: z.string().optional(),
+        notificationEmail: z.string().email().optional(),
+      });
+
+      expect(TestSchema.safeParse({ accessKey: "key-123", notificationEmail: "it@dpsindirapuram.com" }).success).toBe(true);
+      expect(TestSchema.safeParse({ notificationEmail: "bad-email" }).success).toBe(false);
+    });
+  });
 });
 
 

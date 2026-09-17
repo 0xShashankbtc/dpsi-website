@@ -57,6 +57,11 @@ import {
   TrendingUp,
   Zap,
   Bell,
+  Mail,
+  Phone,
+  Send,
+  KeyRound,
+  Loader2,
 } from "lucide-react";
 
 import { trpc } from "@/providers/trpc";
@@ -105,13 +110,18 @@ type TabType =
   | "board_results"
   | "site_settings"
   | "ai_settings"
-  | "audit_logs";
+  | "audit_logs"
+  | "contact_messages";
 
 export default function AdminCMS() {
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [tabSearch, setTabSearch] = useState("");
   const [navSearch, setNavSearch] = useState("");
+  const [showWeb3Key, setShowWeb3Key] = useState(false);
+  const [web3TestStatus, setWeb3TestStatus] = useState<{ loading: boolean; success?: boolean; message?: string }>({ loading: false });
+  const [contactSearch, setContactSearch] = useState("");
+  const [selectedContactMessage, setSelectedContactMessage] = useState<any | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return !!localStorage.getItem("dpsi_admin_token") || localStorage.getItem("dpsi_admin_auth") === "true";
@@ -215,6 +225,9 @@ export default function AdminCMS() {
     enabled: isAuthenticated,
   });
   const { data: siteSettings, refetch: refetchSiteSettings } = trpc.cms.getSiteSettings.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const { data: contactMessagesList, refetch: refetchContactMessages } = trpc.contact.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
   const { data: aiConfig, refetch: refetchAiConfig } = trpc.cms.getAiConfig.useQuery(undefined, {
@@ -1010,6 +1023,73 @@ export default function AdminCMS() {
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to update site settings");
+    },
+  });
+
+  const markContactReadMutation = trpc.contact.markRead.useMutation({
+    onSuccess: () => {
+      refetchContactMessages();
+      toast.success("Inquiry marked as read");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to mark as read");
+    },
+  });
+
+  const deleteContactMutation = trpc.contact.delete.useMutation({
+    onSuccess: () => {
+      refetchContactMessages();
+      toast.success("Inquiry removed");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete inquiry");
+    },
+  });
+
+  const testWeb3FormsMutation = trpc.contact.testWeb3Forms.useMutation({
+    onSuccess: (data: any) => {
+      setWeb3TestStatus({ loading: false, success: data.success, message: data.message });
+      if (data.success) {
+        toast.success(data.message || "Test email dispatched to it@dpsindirapuram.com via Web3Forms!");
+      } else {
+        toast.error(data.message || "Web3Forms returned an issue");
+      }
+    },
+    onError: async (err: any) => {
+      try {
+        const notifEmail = settingsEdits["contact_notification_email"] !== undefined
+          ? settingsEdits["contact_notification_email"]
+          : ((siteSettings || []).find((s: any) => s.key === "contact_notification_email")?.value || "it@dpsindirapuram.com");
+        const keyVal = settingsEdits["web3forms_access_key"] !== undefined
+          ? settingsEdits["web3forms_access_key"]
+          : ((siteSettings || []).find((s: any) => s.key === "web3forms_access_key")?.value || "8b37ec47-e3a0-491e-877f-a438c19794fa");
+
+        if (keyVal) {
+          const fd = new FormData();
+          fd.append("access_key", keyVal);
+          fd.append("name", "DPS Indirapuram Admin Test");
+          fd.append("email", "admin@dpsindirapuram.com");
+          fd.append("phone", "+91-0120-4660000");
+          fd.append("subject", "Web3Forms Test Verification — DPS Indirapuram");
+          fd.append("message", `This is a test notification dispatched from the DPS Indirapuram Admin Panel.\nRecipient: ${notifEmail}\nTimestamp: ${new Date().toISOString()}`);
+          if (notifEmail) {
+            fd.append("to_email", notifEmail);
+            fd.append("recipient", notifEmail);
+          }
+
+          const res = await fetch("https://api.web3forms.com/submit", { method: "POST", body: fd });
+          const json = await res.json().catch(() => null);
+          if (res.ok && json?.success) {
+            setWeb3TestStatus({ loading: false, success: true, message: `Test email dispatched to ${notifEmail} successfully!` });
+            toast.success(`Test email dispatched to ${notifEmail} via Web3Forms!`);
+            return;
+          }
+        }
+      } catch (subErr: any) {
+        console.warn("[Admin Test Email] Direct dispatch fallback notice:", subErr);
+      }
+      setWeb3TestStatus({ loading: false, success: false, message: err.message });
+      toast.error(err.message || "Failed to test Web3Forms delivery");
     },
   });
 
@@ -1916,6 +1996,7 @@ export default function AdminCMS() {
     { id: "faqs", label: "Admissions FAQs", icon: <HelpCircle className="w-4 h-4" />, count: faqsList?.length ?? 0 },
     { id: "stats_metrics", label: "Quick Stats & Counters", icon: <BarChart3 className="w-4 h-4" />, count: statsMetricsList?.length ?? 0 },
     { id: "attachments", label: "Attachments", icon: <Paperclip className="w-4 h-4" />, count: attachmentsList?.length ?? stats?.attachments ?? 0 },
+    { id: "contact_messages", label: "Contact Inquiries", icon: <Mail className="w-4 h-4" />, count: (contactMessagesList || []).filter((c: any) => !c.isRead).length || null },
     { id: "tc", label: "Transfer Certificate", icon: <Award className="w-4 h-4" />, count: stats?.transferCertificates ?? 0 },
     { id: "mun", label: "MUN Registration", icon: <Globe2 className="w-4 h-4" />, count: stats?.munRegistrations ?? 0 },
     { id: "site_settings", label: "Site Settings", icon: <Settings className="w-4 h-4" />, count: siteSettings?.length ?? null },
@@ -1952,6 +2033,7 @@ export default function AdminCMS() {
   ], []);
 
   const admissionsPortalTabIds = useMemo(() => [
+    "contact_messages",
     "admission_steps",
     "faqs",
     "stats_metrics",
@@ -2826,6 +2908,191 @@ export default function AdminCMS() {
                         No gallery images yet. Upload any JPEG or PNG to auto-convert to WebP.
                       </div>
                     )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* CONTACT INQUIRIES & MESSAGES TAB */}
+              {activeTab === "contact_messages" && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-slate-900">Contact Us Inquiries</h2>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          {(contactMessagesList || []).filter((c: any) => !c.isRead).length} Unread
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Inquiries submitted via website form • Auto-forwarded to <strong className="text-emerald-700">it@dpsindirapuram.com</strong>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <div className="relative flex-1 sm:w-64">
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+                        <Input
+                          placeholder="Search name, email, subject..."
+                          value={contactSearch}
+                          onChange={(e) => setContactSearch(e.target.value)}
+                          className="pl-8 bg-white border-slate-200 text-slate-900 text-xs h-8"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => refetchContactMessages()}
+                        className="border-slate-200 text-slate-700 text-xs h-8"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 mr-1" /> Refresh
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => setActiveTab("site_settings")}
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-8 cursor-pointer shadow-xs"
+                      >
+                        <Settings className="w-3.5 h-3.5 mr-1" /> Configure Web3Forms
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Forwarding Status Notification Banner */}
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-white border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-emerald-950">
+                    <div className="flex items-center gap-2.5">
+                      <Mail className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <div>
+                        <span className="font-bold">Real-time Web3Forms Email Routing: </span>
+                        <span>All inquiries below are automatically dispatched to </span>
+                        <code className="bg-emerald-100 px-1.5 py-0.5 rounded font-bold text-emerald-800">
+                          {((siteSettings || []).find((s: any) => s.key === "contact_notification_email")?.value || "it@dpsindirapuram.com")}
+                        </code>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("site_settings")}
+                      className="text-emerald-800 hover:underline font-bold text-xs shrink-0 cursor-pointer"
+                    >
+                      Change Email →
+                    </button>
+                  </div>
+
+                  {/* Inquiries Table */}
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                    {(() => {
+                      const filtered = (contactMessagesList || []).filter((msg: any) => {
+                        if (!contactSearch.trim()) return true;
+                        const q = contactSearch.toLowerCase();
+                        return (
+                          msg.name?.toLowerCase().includes(q) ||
+                          msg.email?.toLowerCase().includes(q) ||
+                          msg.phone?.toLowerCase().includes(q) ||
+                          msg.subject?.toLowerCase().includes(q) ||
+                          msg.message?.toLowerCase().includes(q)
+                        );
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="p-12 text-center text-slate-400">
+                            <Mail className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                            <p className="text-sm font-semibold">No contact inquiries found</p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {contactSearch ? "Try adjusting your search query." : "Inquiries from the Contact Us page will appear here."}
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="divide-y divide-slate-100">
+                          {filtered.map((msg: any) => (
+                            <div
+                              key={msg.id || msg._id}
+                              className={`p-4 transition-colors hover:bg-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                                !msg.isRead ? "bg-emerald-50/40" : ""
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs font-bold text-slate-900">{msg.name}</span>
+                                  {!msg.isRead ? (
+                                    <span className="px-2 py-0.2 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500 text-white shadow-2xs">
+                                      New
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.2 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
+                                      Read
+                                    </span>
+                                  )}
+                                  <span className="text-[11px] text-slate-400">
+                                    {msg.createdAt ? new Date(msg.createdAt).toLocaleString("en-IN") : "Recent"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
+                                  <a href={`mailto:${msg.email}`} className="text-emerald-700 hover:underline flex items-center gap-1 font-medium">
+                                    <Mail className="w-3 h-3" /> {msg.email}
+                                  </a>
+                                  {msg.phone && (
+                                    <a href={`tel:${msg.phone}`} className="text-slate-600 hover:underline flex items-center gap-1">
+                                      <Phone className="w-3 h-3" /> {msg.phone}
+                                    </a>
+                                  )}
+                                </div>
+
+                                <p className="text-xs font-semibold text-slate-800 truncate">
+                                  Subject: {msg.subject || "Website Inquiry"}
+                                </p>
+                                <p className="text-xs text-slate-500 line-clamp-2">
+                                  {msg.message}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedContactMessage(msg);
+                                    if (!msg.isRead) {
+                                      markContactReadMutation.mutate({ id: msg.id || msg._id });
+                                    }
+                                  }}
+                                  className="text-xs h-7 px-2.5 text-slate-700 border-slate-200 hover:bg-slate-100 cursor-pointer"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" /> View Full
+                                </Button>
+                                {!msg.isRead && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => markContactReadMutation.mutate({ id: msg.id || msg._id })}
+                                    disabled={markContactReadMutation.isPending}
+                                    className="text-xs h-7 px-2.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50 cursor-pointer"
+                                  >
+                                    <CheckCircle className="w-3 h-3 mr-1" /> Mark Read
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (window.confirm(`Delete inquiry from ${msg.name}?`)) {
+                                      deleteContactMutation.mutate({ id: msg.id || msg._id });
+                                    }
+                                  }}
+                                  disabled={deleteContactMutation.isPending}
+                                  className="text-xs h-7 px-2 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </motion.div>
               )}
@@ -6282,6 +6549,228 @@ export default function AdminCMS() {
                             className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
                           />
                           <p className="text-[10px] text-slate-400">Standard legal copyright notice</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* WEB3FORMS & CONTACT US EMAIL DELIVERY CUSTOMIZER */}
+                  <div className="bg-white border-2 border-emerald-600/30 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-gradient-to-r from-emerald-900 to-slate-900 px-5 py-4 border-b border-emerald-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                          <Mail className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
+                              Web3Forms & Contact Email Delivery
+                            </h3>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                              Instant Dispatch
+                            </span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-slate-300">
+                            Receive every website Contact Us submission directly in your inbox at <strong className="text-emerald-300">it@dpsindirapuram.com</strong>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          type="button"
+                          onClick={() => {
+                            const notifEmail = settingsEdits["contact_notification_email"] !== undefined
+                              ? settingsEdits["contact_notification_email"]
+                              : ((siteSettings || []).find((s: any) => s.key === "contact_notification_email")?.value || "it@dpsindirapuram.com");
+                            const keyVal = settingsEdits["web3forms_access_key"] !== undefined
+                              ? settingsEdits["web3forms_access_key"]
+                              : ((siteSettings || []).find((s: any) => s.key === "web3forms_access_key")?.value || "");
+
+                            setWeb3TestStatus({ loading: true });
+                            testWeb3FormsMutation.mutate({
+                              accessKey: keyVal,
+                              notificationEmail: notifEmail,
+                            });
+                          }}
+                          disabled={testWeb3FormsMutation.isPending}
+                          className="bg-amber-600 hover:bg-amber-500 text-white text-xs h-8 px-3.5 shadow-xs cursor-pointer"
+                        >
+                          {testWeb3FormsMutation.isPending ? (
+                            <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Testing...</>
+                          ) : (
+                            <><Send className="w-3.5 h-3.5 mr-1.5" /> Send Test Email</>
+                          )}
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          type="button"
+                          onClick={() => {
+                            const notifEmail = settingsEdits["contact_notification_email"] !== undefined
+                              ? settingsEdits["contact_notification_email"]
+                              : ((siteSettings || []).find((s: any) => s.key === "contact_notification_email")?.value || "it@dpsindirapuram.com");
+                            const keyVal = settingsEdits["web3forms_access_key"] !== undefined
+                              ? settingsEdits["web3forms_access_key"]
+                              : ((siteSettings || []).find((s: any) => s.key === "web3forms_access_key")?.value || "");
+                            const enabledVal = settingsEdits["web3forms_enabled"] !== undefined
+                              ? settingsEdits["web3forms_enabled"]
+                              : ((siteSettings || []).find((s: any) => s.key === "web3forms_enabled")?.value || "true");
+
+                            updateSiteSettingsMutation.mutate({
+                              updates: [
+                                { key: "contact_notification_email", value: notifEmail },
+                                { key: "web3forms_access_key", value: keyVal },
+                                { key: "web3forms_enabled", value: enabledVal },
+                              ],
+                            });
+                          }}
+                          disabled={updateSiteSettingsMutation.isPending}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8 px-3.5 shadow-xs cursor-pointer"
+                        >
+                          <Save className="w-3.5 h-3.5 mr-1.5" />
+                          <span>{updateSiteSettingsMutation.isPending ? "Saving..." : "Save Delivery Settings"}</span>
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-4 bg-white">
+                      {/* Active Status Banner */}
+                      <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-emerald-900">
+                              Active Notification Recipient:{" "}
+                              <span className="font-mono underline text-emerald-800">
+                                {settingsEdits["contact_notification_email"] !== undefined
+                                  ? settingsEdits["contact_notification_email"]
+                                  : ((siteSettings || []).find((s: any) => s.key === "contact_notification_email")?.value || "it@dpsindirapuram.com")}
+                              </span>
+                            </p>
+                            <p className="text-[11px] text-emerald-700">
+                              Every parent or student inquiry submitted through Contact Us will be forwarded to this inbox immediately.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href="https://web3forms.com/#generate-key"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 underline cursor-pointer flex items-center gap-1"
+                          >
+                            Get Free Web3Forms Key <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Live Test Status Message */}
+                      {web3TestStatus.message && (
+                        <div className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 border ${
+                          web3TestStatus.success
+                            ? "bg-emerald-100 text-emerald-900 border-emerald-300"
+                            : "bg-rose-50 text-rose-900 border-rose-300"
+                        }`}>
+                          {web3TestStatus.success ? <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+                          <span>{web3TestStatus.message}</span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* 1. Recipient Email Field */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Target Notification Email (Editable)</span>
+                          </label>
+                          <Input
+                            type="email"
+                            placeholder="it@dpsindirapuram.com"
+                            value={
+                              settingsEdits["contact_notification_email"] !== undefined
+                                ? settingsEdits["contact_notification_email"]
+                                : ((siteSettings || []).find((s: any) => s.key === "contact_notification_email")?.value || "it@dpsindirapuram.com")
+                            }
+                            onChange={(e) =>
+                              setSettingsEdits({ ...settingsEdits, contact_notification_email: e.target.value })
+                            }
+                            className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-mono font-bold focus:ring-emerald-500"
+                          />
+                          <p className="text-[10px] text-slate-500">
+                            Default: <strong className="text-emerald-700 font-semibold">it@dpsindirapuram.com</strong>. You can change this to any school email address.
+                          </p>
+                        </div>
+
+                        {/* 2. Web3Forms Access Key Field */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                              <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Web3Forms Access Key</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setShowWeb3Key(!showWeb3Key)}
+                              className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+                            >
+                              {showWeb3Key ? "Hide Key" : "Show Key"}
+                            </button>
+                          </div>
+                          <Input
+                            type={showWeb3Key ? "text" : "password"}
+                            placeholder="e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                            value={
+                              settingsEdits["web3forms_access_key"] !== undefined
+                                ? settingsEdits["web3forms_access_key"]
+                                : ((siteSettings || []).find((s: any) => s.key === "web3forms_access_key")?.value || "")
+                            }
+                            onChange={(e) =>
+                              setSettingsEdits({ ...settingsEdits, web3forms_access_key: e.target.value })
+                            }
+                            className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-mono focus:ring-amber-500"
+                          />
+                          <p className="text-[10px] text-slate-500">
+                            Enter the Web3Forms key created for <strong className="text-emerald-700 font-semibold">it@dpsindirapuram.com</strong>.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 3. Enable / Disable Toggle */}
+                      <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div>
+                          <label className="text-xs font-bold text-slate-800 block">
+                            Web3Forms Email Delivery Status
+                          </label>
+                          <p className="text-[10px] text-slate-500">
+                            When active, inquiries are dispatched immediately via Web3Forms and backed up to the database.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSettingsEdits({ ...settingsEdits, web3forms_enabled: "true" })}
+                            className={`px-3 py-1.5 text-xs rounded-lg font-bold border transition-all cursor-pointer ${
+                              (settingsEdits["web3forms_enabled"] !== undefined ? settingsEdits["web3forms_enabled"] : (siteSettings || []).find((s: any) => s.key === "web3forms_enabled")?.value || "true") === "true"
+                                ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            Enabled (Active)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSettingsEdits({ ...settingsEdits, web3forms_enabled: "false" })}
+                            className={`px-3 py-1.5 text-xs rounded-lg font-bold border transition-all cursor-pointer ${
+                              (settingsEdits["web3forms_enabled"] !== undefined ? settingsEdits["web3forms_enabled"] : (siteSettings || []).find((s: any) => s.key === "web3forms_enabled")?.value || "true") === "false"
+                                ? "bg-rose-600 text-white border-rose-600 shadow-xs"
+                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                            }`}
+                          >
+                            Disabled
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -10068,6 +10557,93 @@ export default function AdminCMS() {
                 </div>
               </form>
             </div>
+          </div>
+        )}
+
+        {/* Contact Message Full Detail Modal */}
+        {selectedContactMessage && (
+          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Inquiry Details</h3>
+                    <p className="text-[10px] text-slate-400">
+                      {selectedContactMessage.createdAt ? new Date(selectedContactMessage.createdAt).toLocaleString("en-IN") : "Recent"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedContactMessage(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">From</span>
+                    <p className="font-bold text-slate-800">{selectedContactMessage.name}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Email</span>
+                    <p className="font-bold text-emerald-700 break-all">{selectedContactMessage.email}</p>
+                  </div>
+                  {selectedContactMessage.phone && (
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Phone</span>
+                      <p className="font-bold text-slate-800">{selectedContactMessage.phone}</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Delivery</span>
+                    <p className="font-bold text-emerald-700">it@dpsindirapuram.com</p>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Subject</span>
+                  <p className="font-semibold text-slate-900 text-sm mt-0.5">{selectedContactMessage.subject || "Website Inquiry"}</p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Message</span>
+                  <div className="mt-1 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 whitespace-pre-wrap leading-relaxed text-xs max-h-60 overflow-y-auto">
+                    {selectedContactMessage.message}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedContactMessage(null)}
+                  className="text-xs cursor-pointer"
+                >
+                  Close
+                </Button>
+                <Button
+                  size="sm"
+                  asChild
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs cursor-pointer"
+                >
+                  <a href={`mailto:${selectedContactMessage.email}?subject=Re: ${encodeURIComponent(selectedContactMessage.subject || "DPS Indirapuram Inquiry")}`}>
+                    <Send className="w-3.5 h-3.5 mr-1" /> Reply via Email
+                  </a>
+                </Button>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>

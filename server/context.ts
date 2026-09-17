@@ -15,6 +15,27 @@ export type TrpcContext = {
   tenantId: string;
 };
 
+export function getClientIp(req: any): string {
+  if (!req) return "127.0.0.1";
+  if (typeof req.headers?.get === "function") {
+    const xff = req.headers.get("x-forwarded-for");
+    const cf = req.headers.get("cf-connecting-ip");
+    const real = req.headers.get("x-real-ip");
+    return (xff ? xff.split(",")[0].trim() : "") || cf || real || "127.0.0.1";
+  }
+  if (req.headers && typeof req.headers === "object") {
+    const xff = req.headers["x-forwarded-for"];
+    const cf = req.headers["cf-connecting-ip"];
+    const real = req.headers["x-real-ip"];
+    return (typeof xff === "string" ? xff.split(",")[0].trim() : "") ||
+           (typeof cf === "string" ? cf : "") ||
+           (typeof real === "string" ? real : "") ||
+           req.ip ||
+           "127.0.0.1";
+  }
+  return req.ip || "127.0.0.1";
+}
+
 export function getJwtSecret(): string {
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.trim().length > 0) {
     return process.env.JWT_SECRET.trim();
