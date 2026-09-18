@@ -13,10 +13,10 @@ const CACHE_STORAGE_KEY = "dpsi_query_cache_v4";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 1000, // 30s fresh cache for instant sub-page navigation
+      staleTime: 60 * 1000, // 60s fresh cache for instant sub-page navigation
       gcTime: 24 * 60 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: true, // Always revalidate in background on mount so fresh CMS updates appear
+      refetchOnMount: false, // Serve cached data instantly without duplicate background network calls
       refetchOnReconnect: true,
       retry: 1,
     },
@@ -110,7 +110,7 @@ const trpcClient = trpc.createClient({
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),
-          credentials: "include",
+          credentials: "same-origin",
         });
       },
     }),

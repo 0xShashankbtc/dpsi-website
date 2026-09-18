@@ -6,6 +6,20 @@ import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export default function AchievementsSection() {
   const { data: achievements, isLoading } = trpc.achievements.list.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const badge = getSetting("achievements_badge", "Academic Excellence");
+  const title = getSetting("achievements_title", "Class X & XII Toppers");
+  const subtitle = getSetting(
+    "achievements_subtitle",
+    "Celebrating outstanding academic achievements in CBSE Board Examinations. Our Dipsites continue to set benchmark results nationwide."
+  );
+
   const effectiveAchievements =
     achievements && achievements.length > 0 ? achievements : DEFAULT_ACHIEVEMENTS;
 
@@ -34,14 +48,14 @@ export default function AchievementsSection() {
           className="text-center mb-12"
         >
           <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-emerald-500/15 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4 border border-emerald-400/30">
-            Academic Excellence
+            {badge}
           </div>
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
-            Class X & XII Toppers
+            {title}
           </h2>
           <div className="w-16 h-1 bg-gradient-to-r from-emerald-500 to-amber-500 mx-auto rounded-full mb-4" />
           <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-base font-normal leading-relaxed">
-            Celebrating outstanding academic achievements in CBSE Board Examinations. Our Dipsites continue to set benchmark results nationwide.
+            {subtitle}
           </p>
         </motion.div>
 

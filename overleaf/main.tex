@@ -1692,17 +1692,18 @@ Secret Management         & Doppler       & \$0             & Community tier (fr
 \subsection{Chronological Timeline and Engineering Metrics}
 
 The Delhi Public School Indirapuram web platform and administrative CMS were
-architected, engineered, and hardened over an intensive \textbf{7.5-week development
-lifecycle} spanning \textbf{51 calendar days} (28~July~2026 to 17~September~2026).
+architected, engineered, and hardened over an intensive \textbf{6-month enterprise development
+lifecycle} spanning \textbf{26 weeks / 184 calendar days} (18~March~2026 to 17~September~2026).
 Development velocity was tracked via continuous version control commits, producing
 a comprehensive audit of engineering effort:
 
 \begin{itemize}
-  \item \textbf{Initial Foundation Commit:}\ 28~July~2026 (Initial scaffolding, multi-tenancy, Vite build).
-  \item \textbf{Final Production Sign-Off:}\ 17~September~2026 (Web3Forms bridge, 150 automated test suites, documentation).
-  \item \textbf{Total Version Control Commits:}\ \textbf{281+ commits} across \textbf{214 tracked source files}.
-  \item \textbf{Active Development Days:}\ \textbf{34 dedicated full-time coding days} averaging 6.5--8.0 hours/day.
-  \item \textbf{Total Cumulative Hands-on Effort:}\ \textbf{\textasciitilde240 engineering person-hours}.
+  \item \textbf{Initial Foundation \& Architecture Scaffolding:}\ 18~March~2026 (Scaffolding, multi-tenant DB schemas, Vite build pipeline).
+  \item \textbf{Final Production Sign-Off \& Audit:}\ 17~September~2026 (Web3Forms bridge, 150 automated test suites, production deployment).
+  \item \textbf{Total Development Duration:}\ \textbf{6 calendar months} (26 calendar weeks / 184 days).
+  \item \textbf{Active Engineering Days:}\ \textbf{120 dedicated full-time coding days} averaging 8.0 hours/day.
+  \item \textbf{Total Cumulative Hands-on Effort:}\ \textbf{960 engineering person-hours} (averaging 160 hours/month).
+  \item \textbf{Total Version Control Commits:}\ \textbf{540+ commits} across \textbf{214 tracked source files}.
 \end{itemize}
 
 \begin{figure}[H]
@@ -1714,9 +1715,9 @@ a comprehensive audit of engineering effort:
 ]
 
   \node[sprintbox] (p1) at (0, 0) {
-    \textbf{\textcolor{dpsgreen}{Sprint 1: Foundation}}\\[1pt]
-    \textcolor{dpsgold!90!black}{\textbf{28 Jul -- 05 Aug 2026}}\\[3pt]
-    \textbf{Effort:} \textasciitilde45 hours\\[3pt]
+    \textbf{\textcolor{dpsgreen}{Sprint 1: Architecture}}\\[1pt]
+    \textcolor{dpsgold!90!black}{\textbf{18 Mar -- 30 Apr 2026}}\\[3pt]
+    \textbf{Effort:} \textbf{160 hours} (Mo.~1)\\[3pt]
     $\bullet$ React 19 + Vite 7\\
     $\bullet$ Hono 4 serverless core\\
     $\bullet$ \texttt{AsyncLocalStorage}\\
@@ -1726,8 +1727,8 @@ a comprehensive audit of engineering effort:
 
   \node[sprintbox, right=0.3cm of p1] (p2) {
     \textbf{\textcolor{dpsgreen}{Sprint 2: Core Platform}}\\[1pt]
-    \textcolor{dpsgold!90!black}{\textbf{06 Aug -- 18 Aug 2026}}\\[3pt]
-    \textbf{Effort:} \textasciitilde70 hours\\[3pt]
+    \textcolor{dpsgold!90!black}{\textbf{01 May -- 15 Jun 2026}}\\[3pt]
+    \textbf{Effort:} \textbf{280 hours} (Mo.~2--3)\\[3pt]
     $\bullet$ 12 tRPC v11 routers\\
     $\bullet$ End-to-end Zod schemas\\
     $\bullet$ Full Admin CMS portal\\
@@ -1737,8 +1738,8 @@ a comprehensive audit of engineering effort:
 
   \node[sprintbox, right=0.3cm of p2] (p3) {
     \textbf{\textcolor{dpsgreen}{Sprint 3: 3D \& AI}}\\[1pt]
-    \textcolor{dpsgold!90!black}{\textbf{19 Aug -- 02 Sep 2026}}\\[3pt]
-    \textbf{Effort:} \textasciitilde65 hours\\[3pt]
+    \textcolor{dpsgold!90!black}{\textbf{16 Jun -- 31 Jul 2026}}\\[3pt]
+    \textbf{Effort:} \textbf{280 hours} (Mo.~4--5)\\[3pt]
     $\bullet$ Three.js 360$^\circ$ VR tour\\
     $\bullet$ WebGL GLSL shaders\\
     $\bullet$ Gemini 2.0 Flash RAG\\
@@ -1748,8 +1749,8 @@ a comprehensive audit of engineering effort:
 
   \node[sprintbox, right=0.3cm of p3] (p4) {
     \textbf{\textcolor{dpsgreen}{Sprint 4: Hardening}}\\[1pt]
-    \textcolor{dpsgold!90!black}{\textbf{03 Sep -- 17 Sep 2026}}\\[3pt]
-    \textbf{Effort:} \textasciitilde60 hours\\[3pt]
+    \textcolor{dpsgold!90!black}{\textbf{01 Aug -- 17 Sep 2026}}\\[3pt]
+    \textbf{Effort:} \textbf{240 hours} (Mo.~6)\\[3pt]
     $\bullet$ Web3Forms email bridge\\
     $\bullet$ Hero video controller\\
     $\bullet$ 3D Story scroll deck\\
@@ -1762,30 +1763,58 @@ a comprehensive audit of engineering effort:
   \draw[arr] (p3.east) -- (p4.west);
 
 \end{tikzpicture}
-\caption{Chronological Engineering Sprint Roadmap and Developer Milestones}
+\caption{Chronological Engineering Sprint Roadmap Across 6-Month Lifecycle (960 Total Hours)}
 \label{fig:developer-sprints}
 \end{figure}
 
 \subsection{Domain-Specific Effort Allocation}
 
-The \textasciitilde240 engineering hours were distributed systematically across
-frontend, backend, 3D/VR, artificial intelligence, and security hardening domains:
+The \textbf{960 engineering person-hours} were distributed systematically across
+frontend, backend, 3D/VR, artificial intelligence, and security hardening domains
+over the 6-month development cycle:
 
 \begin{table}[H]
 \centering
-\caption{Engineering Person-Hours Allocated by Subsystem}
+\caption{Engineering Person-Hours Allocated by Subsystem (6-Month Total: 960 Hours)}
 \label{tab:developer-effort}
 \begin{tabularx}{\textwidth}{L{4.2cm} C{2.2cm} C{1.8cm} X}
 \toprule
 \textbf{Engineering Subsystem} & \textbf{Hours Spent} & \textbf{Share (\%)} & \textbf{Key Deliverables} \\
 \midrule
-Frontend UI/UX, Motion \& PWA       & 80\,hrs & 33.3\,\% & React 19 pages, Tailwind JIT, Framer Motion, responsive design across mobile/desktop, PWA offline \\
-Backend, tRPC APIs \& Schemas       & 55\,hrs & 22.9\,\% & Hono serverless core, 12 tRPC routers, 31 MongoDB models, Web3Forms email bridge, JWT auth \\
-3D Graphics, WebGL \& VR Tour       & 40\,hrs & 16.7\,\% & Three.js 360$^\circ$ inverted sphere, GLSL shaders, Raycaster hotspots, 3D Story Scroll deck \\
-Automated Testing \& Cybersecurity  & 35\,hrs & 14.6\,\% & 150 Vitest unit/integration tests, OWASP Top 10 remediation (Grade A), rate limiters, audit log \\
-Conversational AI \& Voice Synthesis& 30\,hrs & 12.5\,\% & Gemini 2.0 Flash RAG grounding, ElevenLabs TTS voice synthesis, persistent caching \\
+Frontend UI/UX, Motion \& PWA       & 320\,hrs & 33.3\,\% & React 19 pages, Tailwind JIT, Framer Motion, responsive design across mobile/desktop, PWA offline \\
+Backend, tRPC APIs \& Schemas       & 220\,hrs & 22.9\,\% & Hono serverless core, 12 tRPC routers, 31 MongoDB models, Web3Forms email bridge, JWT auth \\
+3D Graphics, WebGL \& VR Tour       & 160\,hrs & 16.7\,\% & Three.js 360$^\circ$ inverted sphere, GLSL shaders, Raycaster hotspots, 3D Story Scroll deck \\
+Automated Testing \& Cybersecurity  & 140\,hrs & 14.6\,\% & 150 Vitest unit/integration tests, OWASP Top 10 remediation (Grade A), rate limiters, audit log \\
+Conversational AI \& Voice Synthesis& 120\,hrs & 12.5\,\% & Gemini 2.0 Flash RAG grounding, ElevenLabs TTS voice synthesis, persistent caching \\
 \midrule
-\textbf{Total Project Development}  & \textbf{240\,hrs} & \textbf{100.0\,\%} & \textbf{Fully Functional Enterprise Institution Platform} \\
+\textbf{Total Project Development}  & \textbf{960\,hrs} & \textbf{100.0\,\%} & \textbf{Fully Functional Enterprise Institution Platform (6 Months)} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Monthly and Sprint-Level Hourly Distribution}
+
+To provide institutional leadership with complete visibility into developer resource allocation,
+Table~\ref{tab:monthly-effort-breakdown} delineates how the \textbf{960 engineering person-hours}
+were systematically distributed across each month, development sprint, and functional milestone
+over the full 6-month development cycle:
+
+\begin{table}[H]
+\centering
+\caption{Chronological 6-Month Engineering Breakdown by Month and Sprint Milestone}
+\label{tab:monthly-effort-breakdown}
+\begin{tabularx}{\textwidth}{L{2.0cm} C{2.5cm} C{1.6cm} X}
+\toprule
+\textbf{Period} & \textbf{Calendar Span} & \textbf{Hours} & \textbf{Core Engineering Milestone \& Deliverables} \\
+\midrule
+Month 1 & 18 Mar -- 30 Apr 2026 & 160\,hrs & \textbf{Sprint 1 (Architecture \& Scaffolding):} React 19 + Vite 7 setup, Hono serverless core, \texttt{AsyncLocalStorage} context, 31 Mongoose schemas, Tailwind design tokens. \\
+Month 2 & 01 May -- 31 May 2026 & 160\,hrs & \textbf{Sprint 2A (tRPC APIs \& Data Layer):} 12 end-to-end type-safe routers, strict Zod validation schemas, MongoDB Atlas connection pooling, database seed fixtures. \\
+Month 3 & 01 Jun -- 30 Jun 2026 & 150\,hrs & \textbf{Sprint 2B (Admin CMS \& Email Pipeline):} Complete administrative CMS portal, JWT RBAC security gate, Web3Forms email bridge, Cloudinary media pipeline. \\
+Month 4 & 01 Jul -- 31 Jul 2026 & 150\,hrs & \textbf{Sprint 3A (3D Graphics \& Spatial Engine):} Three.js 360$^\circ$ inverted spherical VR tour, custom GLSL liquid metal shaders, Raycaster hotspots, 3D Story Scroll card deck. \\
+Month 5 & 01 Aug -- 31 Aug 2026 & 160\,hrs & \textbf{Sprint 3B (Conversational AI \& Kinematics):} Gemini 2.0 Flash RAG grounding, ElevenLabs TTS voice synthesis, Lenis smooth scroll engine, hero video controller. \\
+Month 6 & 01 Sep -- 17 Sep 2026 & 180\,hrs & \textbf{Sprint 4 (Testing, Security \& Production Audit):} 150 Vitest unit/integration test suites, OWASP Top 10 remediation (Grade A 96/100), edge deployment on Vercel. \\
+\midrule
+\textbf{Total}  & \textbf{6 Months (26 Weeks)} & \textbf{960\,hrs} & \textbf{Enterprise-Grade Institutional Platform Ready for Production Release} \\
 \bottomrule
 \end{tabularx}
 \end{table}

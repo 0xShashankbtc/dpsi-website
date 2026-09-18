@@ -1,6 +1,8 @@
 import re
+import sys
 
-with open('overleaf/main.tex', 'r', encoding='utf-8') as f:
+filename = sys.argv[1] if len(sys.argv) > 1 else 'overleaf/main.tex'
+with open(filename, 'r', encoding='utf-8') as f:
     content = f.read()
 
 begins = re.findall(r'\\begin\{([a-zA-Z*]+)\}', content)

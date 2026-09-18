@@ -32,6 +32,15 @@ const DEFAULT_HERO_SLIDES = [
 
 export default function HeroSection() {
   const { data: cmsSliders } = trpc.cms.listSliders.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const defaultBadge = getSetting("admission_badge", getSetting("admission_status", "Admissions Open 2026-27"));
+  const affiliationText = getSetting("school_affiliation", "CBSE Affiliation No. 2130541");
 
   const [cachedSliders, setCachedSliders] = useState<any[] | null>(() => {
     if (typeof window !== "undefined") {
@@ -94,7 +103,7 @@ export default function HeroSection() {
               mediaType: (isVideo ? "video" : "image") as "image" | "video",
               title: s.title || "Delhi Public School Indirapuram",
               subtitle: s.subtitle || "",
-              badge: s.subtitle ? "Excellence in Education" : "Admissions Open 2026-27",
+              badge: s.badge || (s.subtitle ? "Excellence in Education" : defaultBadge),
               buttonText: s.buttonText || "",
               buttonLink: s.buttonLink || "/admissions",
             };
@@ -116,7 +125,9 @@ export default function HeroSection() {
   const hasVideo = slide.mediaType === "video" && Boolean(effectiveRawVideo);
 
   const videoSource = hasVideo
-    ? optimizeMediaUrl(effectiveRawVideo, isMobile)
+    ? (isMobile
+        ? optimizeMediaUrl(effectiveRawVideo, { isMobile: true, quality: "best", width: 1080 })
+        : optimizeMediaUrl(effectiveRawVideo, { isMobile: false, quality: "best", width: 1920 }))
     : "";
 
   const videoPoster = (hasVideo && effectiveRawVideo) ? getVideoPosterUrl(effectiveRawVideo, isMobile) : "";
@@ -126,33 +137,26 @@ export default function HeroSection() {
       ? optimizeMediaUrl(slide.image, { isMobile, preset: "hero" })
       : "");
 
-  // High-performance visibility & scroll manager:
-  // - Plays video EVERY TIME hero is visible or scrolled back into view
-  // - Pauses immediately when user scrolls down past hero (saving 100% GPU/CPU)
-  // - Resumes on tab visibility, window focus, or mobile touch gesture
+  // High-performance visibility & viewport playback manager:
+  // - Offloads viewport detection to native IntersectionObserver (0 forced reflows, 0 scroll lag)
+  // - Automatically pauses video when out of viewport to free 100% GPU/CPU
+  // - Resumes playback instantly when hero re-enters viewport or user switches back to tab
   useEffect(() => {
     if (typeof window === "undefined" || !hasVideo) return;
 
-    const checkAndSyncPlayback = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let isIntersecting = true;
+
+    const syncPlayback = () => {
       const video = videoRef.current;
-      const container = containerRef.current;
       if (!video) return;
 
-      let isInView = true;
-      if (container) {
-        const rect = container.getBoundingClientRect();
-        isInView = rect.bottom > 60 && rect.top < window.innerHeight;
-      } else {
-        isInView = window.scrollY < 300;
-      }
-
-      if (isInView && document.visibilityState === "visible") {
+      if (isIntersecting && document.visibilityState === "visible") {
         if (video.paused && !userPausedRef.current) {
-          video.play().then(() => setIsPlayingVideo(true)).catch(() => {
-            video.muted = true;
-            setIsMuted(true);
-            video.play().then(() => setIsPlayingVideo(true)).catch(() => {});
-          });
+          video.muted = isMuted;
+          video.play().catch(() => {});
         }
       } else {
         if (!video.paused) {
@@ -161,59 +165,42 @@ export default function HeroSection() {
       }
     };
 
-    // Initial check on mount
-    checkAndSyncPlayback();
-
-    // Throttled scroll listener via requestAnimationFrame (0ms layout thrashing)
-    let rafId: number | null = null;
-    const handleScroll = () => {
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        checkAndSyncPlayback();
-      });
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll, { passive: true });
-
-    // IntersectionObserver with granular threshold for instant play/pause detection
     let observer: IntersectionObserver | null = null;
-    if ("IntersectionObserver" in window && containerRef.current) {
+    if ("IntersectionObserver" in window) {
       observer = new IntersectionObserver(
-        () => {
-          checkAndSyncPlayback();
+        ([entry]) => {
+          if (!entry) return;
+          isIntersecting = entry.isIntersecting;
+          syncPlayback();
         },
-        { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0] }
+        { threshold: 0.05 }
       );
-      observer.observe(containerRef.current);
+      observer.observe(container);
     }
 
-    // Page visibility (tab switch / unlock phone screen)
-    const handleVisibilityChange = () => {
-      checkAndSyncPlayback();
+    const onVisibilityChange = () => {
+      syncPlayback();
     };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", checkAndSyncPlayback);
 
-    // Mobile touch interaction triggers (ensures instant resume on mobile gestures)
-    const handleUserInteraction = () => {
-      checkAndSyncPlayback();
-    };
-    window.addEventListener("touchstart", handleUserInteraction, { passive: true });
-    window.addEventListener("click", handleUserInteraction, { passive: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pageshow", onVisibilityChange);
 
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", checkAndSyncPlayback);
-      window.removeEventListener("touchstart", handleUserInteraction);
-      window.removeEventListener("click", handleUserInteraction);
       observer?.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pageshow", onVisibilityChange);
     };
-  }, [hasVideo, videoSource, safeSlideIndex, isMuted]);
+  }, [hasVideo, videoSource, isMuted]);
+
+  // Ensure video starts playing immediately on load or slide change without re-rendering loop
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && hasVideo && !userPausedRef.current) {
+      video.muted = isMuted;
+      video.playsInline = true;
+      video.play().catch(() => {});
+    }
+  }, [videoSource, hasVideo, isMuted, safeSlideIndex]);
 
   const handleNextSlide = () => {
     if (activeSlides.length <= 1) return;
@@ -308,23 +295,11 @@ export default function HeroSection() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="absolute inset-0 z-1 overflow-hidden will-change-transform"
+          className="absolute inset-0 z-1 overflow-hidden"
         >
           {hasVideo && videoSource ? (
             <video
-              ref={(el) => {
-                videoRef.current = el;
-                if (el) {
-                  el.muted = isMuted;
-                  el.defaultMuted = true;
-                  el.playsInline = true;
-                  el.setAttribute("playsinline", "true");
-                  el.setAttribute("webkit-playsinline", "true");
-                  if (el.paused && !userPausedRef.current) {
-                    el.play().then(() => setIsPlayingVideo(true)).catch(() => {});
-                  }
-                }
-              }}
+              ref={videoRef}
               key={videoSource}
               src={videoSource}
               poster={effectivePoster || undefined}
@@ -332,21 +307,14 @@ export default function HeroSection() {
               muted={isMuted}
               loop
               playsInline
-              preload="metadata"
-              crossOrigin="anonymous"
+              preload="auto"
               disablePictureInPicture
               disableRemotePlayback
-              onLoadedMetadata={(e) => {
-                const v = e.currentTarget;
-                v.muted = isMuted;
-                if (!userPausedRef.current && v.paused) {
-                  v.play().then(() => setIsPlayingVideo(true)).catch(() => {});
-                }
-              }}
-              onCanPlay={(e) => {
-                const v = e.currentTarget;
-                if (!userPausedRef.current && v.paused) {
-                  v.play().then(() => setIsPlayingVideo(true)).catch(() => {});
+              onEnded={(e) => {
+                // Continuous hardware loop guarantee
+                e.currentTarget.currentTime = 0;
+                if (!userPausedRef.current) {
+                  e.currentTarget.play().catch(() => {});
                 }
               }}
               onPlay={() => setIsPlayingVideo(true)}
@@ -355,12 +323,7 @@ export default function HeroSection() {
                   setIsPlayingVideo(false);
                 }
               }}
-              onVolumeChange={() => {
-                if (videoRef.current) {
-                  setIsMuted(videoRef.current.muted);
-                }
-              }}
-              className="w-full h-full object-cover pointer-events-none transform-gpu scale-[1.01]"
+              className="w-full h-full object-cover pointer-events-none transform-gpu"
             />
           ) : (
             <img
@@ -396,9 +359,9 @@ export default function HeroSection() {
           style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
           className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 rounded-full backdrop-blur-xl border border-white/40 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/20 cursor-default transition-all"
         >
-          <span className="text-white font-bold">{slide.badge || "Admissions Open 2026-27"}</span>
+          <span className="text-white font-bold">{slide.badge || defaultBadge}</span>
           <span className="text-white/70" aria-hidden="true">•</span>
-          <span className="text-[11px] sm:text-xs text-slate-100 font-medium">CBSE Affiliation No. 2130541</span>
+          <span className="text-[11px] sm:text-xs text-slate-100 font-medium">{affiliationText}</span>
         </div>
       </motion.div>
 

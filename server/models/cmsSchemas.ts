@@ -143,6 +143,7 @@ const ActivitySchema = new Schema<IActivity>(
 export interface ISlider extends Document {
   title: string;
   subtitle?: string;
+  badge?: string;
   imageUrl?: string;
   videoUrl?: string;
   mobileVideoUrl?: string;
@@ -159,6 +160,7 @@ const SliderSchema = new Schema<ISlider>(
   {
     title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
+    badge: { type: String, default: "" },
     imageUrl: { type: String, default: "" },
     videoUrl: { type: String, default: "" },
     mobileVideoUrl: { type: String, default: "" },

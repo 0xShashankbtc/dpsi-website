@@ -319,7 +319,29 @@ const CATEGORIES = [
 
 export default function Facilities() {
   const { data: cmsFacilities } = trpc.cms.listFacilities.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
   const [selectedCategory, setSelectedCategory] = useState<string>("All Facilities");
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const heroBadge = getSetting("facilities_badge", "DPS Indirapuram • Campus Infrastructure");
+  const heroTitle = getSetting("facilities_title", "World-Class Facilities");
+  const heroSubtitle = getSetting(
+    "facilities_subtitle",
+    "Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities."
+  );
+
+  const m1Val = getSetting("facilities_metric_1_val", "40+ Acres");
+  const m1Label = getSetting("facilities_metric_1_label", "Lush Green Campus");
+  const m2Val = getSetting("facilities_metric_2_val", "12+ Studios");
+  const m2Label = getSetting("facilities_metric_2_label", "Labs & Arenas");
+  const m3Val = getSetting("facilities_metric_3_val", "25m Heated");
+  const m3Label = getSetting("facilities_metric_3_label", "Olympic Pool");
+  const m4Val = getSetting("facilities_metric_4_val", "100% Safe");
+  const m4Label = getSetting("facilities_metric_4_label", "AI Surveillance & GPS");
 
   const facilitiesList: FacilityDetail[] =
     cmsFacilities && cmsFacilities.length > 0
@@ -381,36 +403,36 @@ export default function Facilities() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider mb-5 shadow-sm">
-              DPS Indirapuram • Campus Infrastructure
+              {heroBadge}
             </span>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight text-slate-900 drop-shadow-sm">
-              World-Class <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-amber-500 bg-clip-text text-transparent">Facilities</span>
+              {heroTitle}
             </h1>
 
             <div className="w-24 h-1.5 bg-gradient-to-r from-emerald-500 to-amber-500 mx-auto rounded-full mb-6" />
 
             <p className="text-base sm:text-xl text-slate-600 font-normal leading-relaxed max-w-3xl mx-auto mb-10">
-              Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities.
+              {heroSubtitle}
             </p>
 
             {/* Overview Metric Badges */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4 border-t border-slate-200">
               <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                <p className="text-2xl sm:text-3xl font-black text-emerald-700">40+ Acres</p>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Lush Green Campus</p>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-700">{m1Val}</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">{m1Label}</p>
               </div>
               <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                <p className="text-2xl sm:text-3xl font-black text-amber-600">12+ Studios</p>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Labs & Arenas</p>
+                <p className="text-2xl sm:text-3xl font-black text-amber-600">{m2Val}</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">{m2Label}</p>
               </div>
               <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                <p className="text-2xl sm:text-3xl font-black text-emerald-600">25m Heated</p>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">Olympic Pool</p>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-600">{m3Val}</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">{m3Label}</p>
               </div>
               <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-                <p className="text-2xl sm:text-3xl font-black text-amber-500">100% Safe</p>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">AI Surveillance & GPS</p>
+                <p className="text-2xl sm:text-3xl font-black text-amber-500">{m4Val}</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">{m4Label}</p>
               </div>
             </div>
           </div>

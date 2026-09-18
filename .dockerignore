@@ -1,5 +1,9 @@
 node_modules
 dist
 .git
-*.swp
+.gitignore
+.env
+.env.local
+coverage
+.vercel
 *.log

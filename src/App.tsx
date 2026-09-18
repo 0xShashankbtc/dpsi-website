@@ -1,23 +1,70 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, type ComponentType } from 'react'
 import { Routes, Route, useLocation } from 'react-router'
 import ErrorBoundary from './components/ErrorBoundary'
 import { idlePrefetchTopRoutes } from './lib/routePreloader'
 import { trpc } from './providers/trpc'
 import { Toaster } from 'sonner'
 
-const Home = lazy(() => import('./pages/Home'))
-const About = lazy(() => import('./pages/About'))
-const Academics = lazy(() => import('./pages/Academics'))
-const Admissions = lazy(() => import('./pages/Admissions'))
-const Facilities = lazy(() => import('./pages/Facilities'))
-const NewsEvents = lazy(() => import('./pages/NewsEvents'))
-const Gallery = lazy(() => import('./pages/Gallery'))
-const Contact = lazy(() => import('./pages/Contact'))
-const DynamicPage = lazy(() => import('./pages/DynamicPage'))
-const TransferCertificate = lazy(() => import('./pages/TransferCertificate'))
-const Admin = lazy(() => import('./pages/AdminCMS'))
-const Login = lazy(() => import('./pages/Login'))
-const NotFound = lazy(() => import('./pages/NotFound'))
+/**
+ * Self-healing lazy loader for dynamic chunks.
+ * If a deployment replaces chunk hashes and a client has a stale cache or broken Service Worker,
+ * this catches the error, unregisters old workers, purges CacheStorage, and performs a single clean reload.
+ */
+function safeLazy<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+  return lazy(async () => {
+    try {
+      return await factory()
+    } catch (err: any) {
+      const isChunkOrFetchError =
+        err?.message?.includes('dynamically imported module') ||
+        err?.message?.includes('Loading chunk') ||
+        err?.message?.includes('Failed to fetch') ||
+        err?.message?.includes('MIME type')
+
+      if (isChunkOrFetchError && typeof window !== 'undefined') {
+        const retryKey = 'dpsi_chunk_retry_' + window.location.pathname
+        const lastRetry = sessionStorage.getItem(retryKey)
+        const now = Date.now()
+        if (!lastRetry || now - Number(lastRetry) > 15000) {
+          sessionStorage.setItem(retryKey, String(now))
+          if ('serviceWorker' in navigator) {
+            try {
+              const regs = await navigator.serviceWorker.getRegistrations()
+              for (const reg of regs) {
+                await reg.unregister()
+              }
+            } catch {}
+          }
+          if ('caches' in window) {
+            try {
+              const keys = await caches.keys()
+              for (const k of keys) {
+                await caches.delete(k)
+              }
+            } catch {}
+          }
+          window.location.reload()
+          return new Promise<{ default: T }>(() => {})
+        }
+      }
+      throw err
+    }
+  })
+}
+
+const Home = safeLazy(() => import('./pages/Home'))
+const About = safeLazy(() => import('./pages/About'))
+const Academics = safeLazy(() => import('./pages/Academics'))
+const Admissions = safeLazy(() => import('./pages/Admissions'))
+const Facilities = safeLazy(() => import('./pages/Facilities'))
+const NewsEvents = safeLazy(() => import('./pages/NewsEvents'))
+const Gallery = safeLazy(() => import('./pages/Gallery'))
+const Contact = safeLazy(() => import('./pages/Contact'))
+const DynamicPage = safeLazy(() => import('./pages/DynamicPage'))
+const TransferCertificate = safeLazy(() => import('./pages/TransferCertificate'))
+const Admin = safeLazy(() => import('./pages/AdminCMS'))
+const Login = safeLazy(() => import('./pages/Login'))
+const NotFound = safeLazy(() => import('./pages/NotFound'))
 
 // Smooth scroll to top or hash anchor on route change
 function ScrollToTop() {
@@ -78,7 +125,9 @@ export default function App() {
           <Route path="/tc" element={<TransferCertificate />} />
           <Route path="/transfer-certificate" element={<TransferCertificate />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/*" element={<Admin />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/login/*" element={<Login />} />
           <Route path="/page/:slug" element={<DynamicPage />} />
           <Route path="/:slug" element={<DynamicPage />} />
           <Route path="*" element={<NotFound />} />

@@ -55,12 +55,12 @@ export default function SmoothScroll() {
     }
 
     const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t) => 1 - Math.pow(1 - t, 3), // Silky cubic deceleration curve
+      duration: 0.82, // High-speed responsive deceleration curve
+      easing: (t) => 1 - Math.pow(1 - t, 3), // Silky cubic ease-out
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1.0,
+      wheelMultiplier: 1.22, // Faster, immediate response to user input
       touchMultiplier: 0,
       syncTouch: false,
       infinite: false,

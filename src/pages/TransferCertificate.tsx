@@ -19,10 +19,19 @@ import { Card } from "@/components/ui/card";
 import { formatISTDate } from "@/lib/dateUtils";
 
 export default function TransferCertificate() {
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
   const [admissionNumber, setAdmissionNumber] = useState("");
   const [dob, setDob] = useState("");
   const [verifiedResult, setVerifiedResult] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const contactEmail = getSetting("contact_email", "info@dpsindirapuram.com");
+  const contactPhone = getSetting("contact_phone", "+91-0120-4660000");
 
   const verifyMutation = trpc.cms.verifyTc.useMutation({
     onSuccess: (res) => {
@@ -159,7 +168,7 @@ export default function TransferCertificate() {
                   {errorMessage}
                 </p>
                 <p className="text-[11px] text-red-600 dark:text-red-400 mt-2">
-                  For administrative assistance, please contact the school office at info@dpsindirapuram.com or call +91-0120-4660000.
+                  For administrative assistance, please contact the school office at {contactEmail} or call {contactPhone}.
                 </p>
               </div>
             </motion.div>

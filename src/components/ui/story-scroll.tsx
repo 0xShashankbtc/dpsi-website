@@ -29,18 +29,20 @@ export const FlowSection: React.FC<FlowSectionProps> = ({
   <section
     data-flow-section
     aria-label={ariaLabel}
-    className={cx('relative min-h-[100dvh] w-full overflow-visible border-0 outline-none', className)}
+    className={cx('relative min-h-[85vh] sm:min-h-[82vh] lg:min-h-[80vh] w-full overflow-visible border-0 outline-none', className)}
+    style={{ contain: 'layout style' }}
   >
     <div
       data-flow-inner
       className={cx(
-        'flow-art-container relative flex min-h-[100dvh] w-full flex-col justify-between gap-3 sm:gap-6 px-3 sm:px-6 md:px-[4vw] pt-3 sm:pt-6 md:pt-[clamp(2rem,8vw,4vw)] pb-3 sm:pb-6 md:pb-[4vw] border-0 outline-none shadow-[0_-8px_30px_rgba(0,0,0,0.12),0_16px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 rounded-2xl sm:rounded-3xl',
-        'transform-gpu',
+        'flow-art-container relative flex min-h-[85vh] sm:min-h-[82vh] lg:min-h-[80vh] w-full flex-col justify-between gap-3 sm:gap-6 px-3 sm:px-6 md:px-[4vw] pt-3 sm:pt-5 md:pt-[clamp(1.5rem,3.5vw,2.75rem)] pb-3 sm:pb-5 md:pb-[2.5vw] border-0 outline-none shadow-xl ring-1 ring-black/5 dark:ring-white/10 rounded-2xl sm:rounded-3xl',
+        'transform-gpu will-change-transform',
       )}
       style={{
         transformOrigin: 'bottom left',
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
+        transformStyle: 'preserve-3d',
         ...style,
       }}
     >
@@ -106,8 +108,8 @@ export const FlowArt: React.FC<FlowArtProps> = ({
       const isMobile =
         typeof window !== 'undefined' && window.innerWidth < 768;
 
-      // Calibrated rotation angle: 6° on mobile for responsive 3D card tilt without clipping or lag; 14° on desktop for elegant card fan effect
-      const rotationAngle = isMobile ? 6 : 14;
+      // Streamlined rotation angle for natural card stacking without distortion or GPU strain
+      const rotationAngle = isMobile ? 2 : 3.5;
       const triggers: ScrollTrigger[] = [];
 
       sections.forEach((section, i) => {
@@ -116,22 +118,26 @@ export const FlowArt: React.FC<FlowArtProps> = ({
         const inner = section.querySelector<HTMLElement>('.flow-art-container');
         if (!inner) return;
 
-        // Animate non-first cards: enter tilted and smoothly rotate flat as they stack over the previous card
+        // Animate non-first cards: enter with subtle tilt, scale, and upward glide, then lock flat as they stack
         if (i > 0) {
           gsap.set(inner, {
             rotation: rotationAngle,
+            scale: isMobile ? 0.98 : 0.96,
+            yPercent: isMobile ? 4 : 6,
             transformOrigin: 'bottom left',
             force3D: true,
           });
 
           const tween = gsap.to(inner, {
             rotation: 0,
-            ease: 'none',
+            scale: 1,
+            yPercent: 0,
+            ease: 'power2.out',
             scrollTrigger: {
               trigger: section,
-              start: 'top bottom',
-              end: isMobile ? 'top 10%' : 'top 20%',
-              scrub: isMobile ? 0.05 : true,
+              start: 'top bottom-=30',
+              end: 'top top+=80',
+              scrub: isMobile ? 0.05 : 0.1,
               fastScrollEnd: true,
               preventOverlaps: true,
               invalidateOnRefresh: true,
@@ -140,16 +146,16 @@ export const FlowArt: React.FC<FlowArtProps> = ({
           if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
         }
 
-        // Viewport pinning for all cards except the last one (enabling 3D card stack on both mobile & desktop)
+        // Fast, snappy card progression: significantly reduced pin scroll distance
         if (i < sections.length - 1) {
           triggers.push(
             ScrollTrigger.create({
               trigger: section,
-              start: 'bottom bottom',
-              end: 'bottom top',
+              start: 'top top+=80',
+              end: () => `+=${section.offsetHeight * (isMobile ? 0.28 : 0.35)}`,
               pin: true,
               pinSpacing: false,
-              anticipatePin: 0,
+              anticipatePin: 1,
               fastScrollEnd: true,
               preventOverlaps: true,
               invalidateOnRefresh: true,

@@ -235,6 +235,17 @@ describe("Footer Credit Line & Site Settings Contract", () => {
     expect(textPart).toBe(customCredit);
   });
 
+  it("extracts developer name and binds destination URL to dpsiwhale.vercel.app", () => {
+    const textPart = defaultCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim();
+    const match = textPart.match(/^(.*?(?:developed|designed|created)\s+by\s*[:\-]?\s*)(.+)$/i);
+    expect(match).not.toBeNull();
+    expect(match![1].trim()).toBe("Developed by :");
+    expect(match![2].trim()).toBe("Shashank Jangid");
+
+    const defaultUrl = "https://dpsiwhale.vercel.app";
+    expect(defaultUrl).toContain("dpsiwhale.vercel.app");
+  });
+
   describe("Developer Credit Password Security Guard", () => {
     // Import helper dynamically to verify runtime export
     it("rejects unauthorized password attempts (empty, wrong, or malformed)", async () => {

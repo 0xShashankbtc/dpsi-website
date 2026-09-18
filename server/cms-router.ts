@@ -1249,6 +1249,7 @@ export const cmsRouter = createRouter({
       z.object({
         title: z.string().optional().default(""),
         subtitle: z.string().optional(),
+        badge: z.string().optional().default(""),
         imageUrl: z.string().optional().default("/images/dps/slider_1.webp"),
         videoUrl: z.string().optional(),
         mobileVideoUrl: z.string().optional().default(""),
@@ -1290,6 +1291,7 @@ export const cmsRouter = createRouter({
         id: z.union([z.string(), z.any()]),
         title: z.string().optional(),
         subtitle: z.string().optional(),
+        badge: z.string().optional(),
         imageUrl: z.string().optional(),
         videoUrl: z.string().optional(),
         mobileVideoUrl: z.string().optional(),
@@ -2127,6 +2129,29 @@ export const cmsRouter = createRouter({
           { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
           { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
           { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" },
+          { key: "school_affiliation", value: "CBSE Affiliation No. 2130541 • School Code: 60241", label: "CBSE Affiliation / Accreditation Info", group: "general" },
+          { key: "contact_map_url", value: "https://maps.google.com/maps?q=Delhi%20Public%20School%20Indirapuram%20Ahinsa%20Khand%20Ghaziabad&t=&z=15&ie=UTF8&iwloc=&output=embed", label: "Google Maps Embed URL (Contact Page)", group: "contact" },
+          { key: "office_hours", value: "Monday – Saturday: 8:00 AM – 3:00 PM (Second & Fourth Saturdays Closed)", label: "School Office Working Hours", group: "contact" },
+          { key: "admission_badge", value: "Session 2026-27 Registrations Open", label: "Admissions Hero Badge / Status", group: "admissions" },
+          { key: "admissions_title", value: "Admissions", label: "Admissions Page Main Title", group: "admissions" },
+          { key: "admissions_subtitle", value: "Join the DPS Indirapuram family. A journey of excellence, discovery, and growth awaits your child.", label: "Admissions Page Subtitle", group: "admissions" },
+          { key: "facilities_badge", value: "DPS Indirapuram • Campus Infrastructure", label: "Facilities Page Hero Badge", group: "facilities" },
+          { key: "facilities_title", value: "World-Class Facilities", label: "Facilities Page Main Title", group: "facilities" },
+          { key: "facilities_subtitle", value: "Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities.", label: "Facilities Page Subtitle", group: "facilities" },
+          { key: "facilities_metric_1_val", value: "40+ Acres", label: "Facilities Metric 1 Value", group: "facilities" },
+          { key: "facilities_metric_1_label", value: "Green Campus", label: "Facilities Metric 1 Label", group: "facilities" },
+          { key: "facilities_metric_2_val", value: "1,200+", label: "Facilities Metric 2 Value", group: "facilities" },
+          { key: "facilities_metric_2_label", value: "Acoustic Hall", label: "Facilities Metric 2 Label", group: "facilities" },
+          { key: "facilities_metric_3_val", value: "25m", label: "Facilities Metric 3 Value", group: "facilities" },
+          { key: "facilities_metric_3_label", value: "Olympic Pool", label: "Facilities Metric 3 Label", group: "facilities" },
+          { key: "facilities_metric_4_val", value: "100%", label: "Facilities Metric 4 Value", group: "facilities" },
+          { key: "facilities_metric_4_label", value: "Air-Conditioned", label: "Facilities Metric 4 Label", group: "facilities" },
+          { key: "achievements_badge", value: "Academic Excellence", label: "Toppers Section Top Badge", group: "achievements" },
+          { key: "achievements_title", value: "Class X & XII Toppers", label: "Toppers Section Title", group: "achievements" },
+          { key: "achievements_subtitle", value: "Celebrating outstanding academic achievements in CBSE Board Examinations. Our Dipsites continue to set benchmark results nationwide.", label: "Toppers Section Subtitle", group: "achievements" },
+          { key: "testimonials_badge", value: "Parent & Alumni Voices", label: "Testimonials Section Top Badge", group: "testimonials" },
+          { key: "testimonials_title", value: "What They Say About Us", label: "Testimonials Section Main Title", group: "testimonials" },
+          { key: "developer_url", value: "https://dpsiwhale.vercel.app", label: "Developer Website / Portfolio URL", group: "footer" },
         ];
         await SiteSettings.insertMany(defaults).catch(() => {});
         return SiteSettings.find({}).sort({ group: 1, key: 1 }).lean();
@@ -2158,6 +2183,29 @@ export const cmsRouter = createRouter({
         { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
         { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
         { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" },
+        { key: "school_affiliation", value: "CBSE Affiliation No. 2130541 • School Code: 60241", label: "CBSE Affiliation / Accreditation Info", group: "general" },
+        { key: "contact_map_url", value: "https://maps.google.com/maps?q=Delhi%20Public%20School%20Indirapuram%20Ahinsa%20Khand%20Ghaziabad&t=&z=15&ie=UTF8&iwloc=&output=embed", label: "Google Maps Embed URL (Contact Page)", group: "contact" },
+        { key: "office_hours", value: "Monday – Saturday: 8:00 AM – 3:00 PM (Second & Fourth Saturdays Closed)", label: "School Office Working Hours", group: "contact" },
+        { key: "admission_badge", value: "Session 2026-27 Registrations Open", label: "Admissions Hero Badge / Status", group: "admissions" },
+        { key: "admissions_title", value: "Admissions", label: "Admissions Page Main Title", group: "admissions" },
+        { key: "admissions_subtitle", value: "Join the DPS Indirapuram family. A journey of excellence, discovery, and growth awaits your child.", label: "Admissions Page Subtitle", group: "admissions" },
+        { key: "facilities_badge", value: "DPS Indirapuram • Campus Infrastructure", label: "Facilities Page Hero Badge", group: "facilities" },
+        { key: "facilities_title", value: "World-Class Facilities", label: "Facilities Page Main Title", group: "facilities" },
+        { key: "facilities_subtitle", value: "Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities.", label: "Facilities Page Subtitle", group: "facilities" },
+        { key: "facilities_metric_1_val", value: "40+ Acres", label: "Facilities Metric 1 Value", group: "facilities" },
+        { key: "facilities_metric_1_label", value: "Green Campus", label: "Facilities Metric 1 Label", group: "facilities" },
+        { key: "facilities_metric_2_val", value: "1,200+", label: "Facilities Metric 2 Value", group: "facilities" },
+        { key: "facilities_metric_2_label", value: "Acoustic Hall", label: "Facilities Metric 2 Label", group: "facilities" },
+        { key: "facilities_metric_3_val", value: "25m", label: "Facilities Metric 3 Value", group: "facilities" },
+        { key: "facilities_metric_3_label", value: "Olympic Pool", label: "Facilities Metric 3 Label", group: "facilities" },
+        { key: "facilities_metric_4_val", value: "100%", label: "Facilities Metric 4 Value", group: "facilities" },
+        { key: "facilities_metric_4_label", value: "Air-Conditioned", label: "Facilities Metric 4 Label", group: "facilities" },
+        { key: "achievements_badge", value: "Academic Excellence", label: "Toppers Section Top Badge", group: "achievements" },
+        { key: "achievements_title", value: "Class X & XII Toppers", label: "Toppers Section Title", group: "achievements" },
+        { key: "achievements_subtitle", value: "Celebrating outstanding academic achievements in CBSE Board Examinations. Our Dipsites continue to set benchmark results nationwide.", label: "Toppers Section Subtitle", group: "achievements" },
+        { key: "testimonials_badge", value: "Parent & Alumni Voices", label: "Testimonials Section Top Badge", group: "testimonials" },
+        { key: "testimonials_title", value: "What They Say About Us", label: "Testimonials Section Main Title", group: "testimonials" },
+        { key: "developer_url", value: "https://dpsiwhale.vercel.app", label: "Developer Website / Portfolio URL", group: "footer" },
       ].filter((d) => !existingKeys.has(d.key));
 
       if (missingDefaults.length > 0) {
@@ -2203,6 +2251,22 @@ export const cmsRouter = createRouter({
             throw new TRPCError({
               code: "UNAUTHORIZED",
               message: "Protected Field: Modifying Developer Credit Text requires the developer authorization password.",
+            });
+          }
+        }
+      }
+
+      // Guard developer_url: if value is modified from current DB setting, verify developer authorization password
+      const urlUpdate = input.updates.find((u) => u.key === "developer_url");
+      if (urlUpdate) {
+        const existingDoc = await SiteSettings.findOne({ key: "developer_url" }).lean();
+        const existingVal = (existingDoc as any)?.value;
+        if (existingVal !== undefined && urlUpdate.value.trim() !== existingVal.trim()) {
+          const isAuthorized = verifyDevCreditPassword(input.unlockPassword);
+          if (!isAuthorized) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Protected Field: Modifying Developer Website URL requires the developer authorization password.",
             });
           }
         }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { trpc } from "@/providers/trpc";
+import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 function extractYoutubeInfo(url: string) {
   if (!url || typeof url !== "string") return null;
@@ -22,8 +23,6 @@ function extractYoutubeInfo(url: string) {
     hqThumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
   };
 }
-
-import { optimizeMediaUrl } from "@/lib/mediaUtils";
 
 export const DEFAULT_CAMPUS_VIDEOS = [
   {
@@ -202,7 +201,11 @@ export default function VideoGallerySection() {
                   activeVideo.isDirectVideo ? (
                     <video
                       key={activeVideo.id}
-                      src={activeVideo.url}
+                      src={optimizeMediaUrl(activeVideo.url, {
+                        isMobile: typeof window !== "undefined" && window.innerWidth < 768,
+                        quality: "good",
+                        width: 1080,
+                      })}
                       poster={activeVideo.thumbnail}
                       controls
                       autoPlay

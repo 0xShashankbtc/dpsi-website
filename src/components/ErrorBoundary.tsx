@@ -29,10 +29,48 @@ export default class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught runtime error captured by ErrorBoundary:", error, errorInfo);
     captureError(error, { componentStack: errorInfo.componentStack || "" });
     this.setState({ errorInfo });
+
+    // Auto-recover from deployment chunk mismatches or stale Service Worker bundles
+    const isChunkError =
+      error?.message?.includes("dynamically imported module") ||
+      error?.message?.includes("Loading chunk") ||
+      error?.message?.includes("Failed to fetch") ||
+      error?.message?.includes("MIME type");
+
+    if (isChunkError && typeof window !== "undefined") {
+      const retryKey = "dpsi_error_boundary_retry";
+      const lastRetry = sessionStorage.getItem(retryKey);
+      const now = Date.now();
+      if (!lastRetry || now - Number(lastRetry) > 15000) {
+        sessionStorage.setItem(retryKey, String(now));
+        this.handleResetAndReload();
+      }
+    }
   }
 
   private handleReload = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
+    window.location.reload();
+  };
+
+  private handleResetAndReload = async () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          await reg.unregister();
+        }
+      }
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        for (const k of keys) {
+          await caches.delete(k);
+        }
+      }
+      localStorage.removeItem("dpsi_admin_token");
+      localStorage.removeItem("dpsi_admin_auth");
+    } catch {}
     window.location.reload();
   };
 
@@ -55,7 +93,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 {this.props.fallbackTitle || "Something went wrong"}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                An unexpected interface error occurred. You can safely reload the page or return home.
+                An unexpected interface error occurred. You can safely reload the page or reset the local cache.
               </p>
             </div>
 
@@ -65,7 +103,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               </div>
             )}
 
-            <div className="flex items-center justify-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -76,10 +114,10 @@ export default class ErrorBoundary extends Component<Props, State> {
               </Button>
               <Button
                 size="sm"
-                onClick={this.handleReload}
+                onClick={this.handleResetAndReload}
                 className="text-xs gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> Reload Page
+                <RefreshCw className="w-3.5 h-3.5" /> Reset Cache & Reload
               </Button>
             </div>
           </div>

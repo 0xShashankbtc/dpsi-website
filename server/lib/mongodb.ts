@@ -1,3 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
+if (typeof process !== "undefined" && typeof (process as any).loadEnvFile === "function") {
+  try {
+    (process as any).loadEnvFile();
+  } catch {}
+}
+
 import mongoose from "mongoose";
 
 export type AllowedDbName = "dpsi_main" | "dpsi_gallery" | "dpsi_tc" | "dpsi_admin" | (string & {});
@@ -51,7 +59,16 @@ const MONGO_OPTIONS: mongoose.ConnectOptions = {
 };
 
 export async function getDbConnection(dbName: string): Promise<mongoose.Connection> {
-  const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  let rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  if (!rawUri) {
+    dotenv.config();
+    if (typeof process !== "undefined" && typeof (process as any).loadEnvFile === "function") {
+      try {
+        (process as any).loadEnvFile();
+      } catch {}
+    }
+    rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  }
   if (!rawUri) {
     throw new Error("MONGODB_URI environment variable is missing.");
   }

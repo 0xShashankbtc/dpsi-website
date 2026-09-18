@@ -1,5 +1,13 @@
 import "./instrument"; // ← MUST be first — initializes Sentry before any other module
 
+import dotenv from "dotenv";
+dotenv.config();
+if (typeof process !== "undefined" && typeof (process as any).loadEnvFile === "function") {
+  try {
+    (process as any).loadEnvFile();
+  } catch {}
+}
+
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { secureHeaders } from "hono/secure-headers";
@@ -11,12 +19,26 @@ import { appRouter } from "./router";
 import { createContext } from "./context";
 import { getDbConnection, resolveDbName } from "./lib/mongodb";
 
-// Eager non-blocking database pre-warm & critical index verification on boot
+// Eager non-blocking database pre-warm, critical index verification & auto-seeding on fresh system boot
 if (process.env.MONGODB_URI) {
   getDbConnection(resolveDbName("dpsi", "main"))
     .then(async () => {
-      const { ensureCriticalIndexes } = await import("./models/cmsSchemas");
+      const { ensureCriticalIndexes, getMainModels } = await import("./models/cmsSchemas");
       await ensureCriticalIndexes("dpsi");
+
+      // Auto-bootstrap fresh deployment if database has zero site settings
+      try {
+        const { SiteSettings } = await getMainModels("dpsi");
+        const count = await SiteSettings.countDocuments();
+        if (count === 0) {
+          console.log("[Boot] Fresh system detected — Auto-seeding initial database structure & admin portal...");
+          const { seedDatabase } = await import("./lib/seedDatabase");
+          await seedDatabase("dpsi");
+          console.log("[Boot] Fresh system database seeding completed!");
+        }
+      } catch (seedErr: any) {
+        console.warn("[Boot] Auto-seed check notice:", seedErr?.message || seedErr);
+      }
     })
     .catch((err) => {
       console.warn("[Boot] Background DB pre-warm notice:", err.message);
@@ -59,18 +81,24 @@ app.use(
   "*",
   cors({
     origin: (origin) => {
-      if (!origin) return "*"; // allow server-to-server / curl
-      if (
-        ALLOWED_ORIGINS.includes(origin) ||
-        origin.endsWith(".vercel.app") ||
-        origin.endsWith(".dpsindirapuram.com")
-      ) {
-        return origin;
-      }
-      return null; // Explicitly reject unauthorized origins
+      if (!origin) return "https://dpsindirapuram.vercel.app";
+      return origin;
     },
+    credentials: true,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "x-trpc-source", "x-admin-auth", "x-tenant-id"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-trpc-source",
+      "x-admin-auth",
+      "x-tenant-id",
+      "trpc-accept",
+      "trpc-batch-mode",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+    exposeHeaders: ["Content-Length", "X-Kuma-Revision"],
     maxAge: 86400,
   })
 );
@@ -89,6 +117,14 @@ const createTrpcHandler = (endpoint: string) => async (c: any) => {
   });
   // Set appropriate caching headers: public queries get Edge CDN acceleration (sub-20ms) while admin requests bypass cache
   const headers = new Headers(res.headers);
+
+  // Guarantee explicit CORS headers on every response
+  const clientOrigin = c.req.header("origin");
+  if (clientOrigin) {
+    headers.set("Access-Control-Allow-Origin", clientOrigin);
+    headers.set("Access-Control-Allow-Credentials", "true");
+  }
+
   const isPublicQuery =
     c.req.method === "GET" &&
     !c.req.header("authorization") &&

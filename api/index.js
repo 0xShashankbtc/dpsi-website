@@ -10783,6 +10783,325 @@ var require_index_shim = __commonJS({
   }
 });
 
+// node_modules/dotenv/lib/main.js
+var require_main = __commonJS({
+  "node_modules/dotenv/lib/main.js"(exports, module2) {
+    var fs = __require("fs");
+    var path = __require("path");
+    var os3 = __require("os");
+    var crypto4 = __require("crypto");
+    var TIPS = [
+      "\u25C8 encrypted .env [www.dotenvx.com]",
+      "\u25C8 secrets for agents [www.dotenvx.com]",
+      "\u2301 auth for agents [www.vestauth.com]",
+      "\u2318 custom filepath { path: '/custom/path/.env' }",
+      "\u2318 enable debugging { debug: true }",
+      "\u2318 override existing { override: true }",
+      "\u2318 suppress logs { quiet: true }",
+      "\u2318 multiple files { path: ['.env.local', '.env'] }"
+    ];
+    function _getRandomTip() {
+      return TIPS[Math.floor(Math.random() * TIPS.length)];
+    }
+    function parseBoolean2(value) {
+      if (typeof value === "string") {
+        return !["false", "0", "no", "off", ""].includes(value.toLowerCase());
+      }
+      return Boolean(value);
+    }
+    function supportsAnsi() {
+      return process.stdout.isTTY;
+    }
+    function dim(text) {
+      return supportsAnsi() ? `\x1B[2m${text}\x1B[0m` : text;
+    }
+    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
+    function parse4(src) {
+      const obj = {};
+      let lines = src.toString();
+      lines = lines.replace(/\r\n?/mg, "\n");
+      let match2;
+      while ((match2 = LINE.exec(lines)) != null) {
+        const key = match2[1];
+        let value = match2[2] || "";
+        value = value.trim();
+        const maybeQuote = value[0];
+        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
+        if (maybeQuote === '"') {
+          value = value.replace(/\\n/g, "\n");
+          value = value.replace(/\\r/g, "\r");
+        }
+        obj[key] = value;
+      }
+      return obj;
+    }
+    function _parseVault(options) {
+      options = options || {};
+      const vaultPath = _vaultPath(options);
+      options.path = vaultPath;
+      const result = DotenvModule.configDotenv(options);
+      if (!result.parsed) {
+        const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
+        err.code = "MISSING_DATA";
+        throw err;
+      }
+      const keys = _dotenvKey(options).split(",");
+      const length = keys.length;
+      let decrypted;
+      for (let i5 = 0; i5 < length; i5++) {
+        try {
+          const key = keys[i5].trim();
+          const attrs = _instructions(result, key);
+          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
+          break;
+        } catch (error50) {
+          if (i5 + 1 >= length) {
+            throw error50;
+          }
+        }
+      }
+      return DotenvModule.parse(decrypted);
+    }
+    function _warn(message) {
+      console.error(`\u26A0 ${message}`);
+    }
+    function _debug(message) {
+      console.log(`\u2506 ${message}`);
+    }
+    function _log(message) {
+      console.log(`\u25C7 ${message}`);
+    }
+    function _dotenvKey(options) {
+      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
+        return options.DOTENV_KEY;
+      }
+      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
+        return process.env.DOTENV_KEY;
+      }
+      return "";
+    }
+    function _instructions(result, dotenvKey) {
+      let uri;
+      try {
+        uri = new URL(dotenvKey);
+      } catch (error50) {
+        if (error50.code === "ERR_INVALID_URL") {
+          const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        }
+        throw error50;
+      }
+      const key = uri.password;
+      if (!key) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing key part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environment = uri.searchParams.get("environment");
+      if (!environment) {
+        const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
+        err.code = "INVALID_DOTENV_KEY";
+        throw err;
+      }
+      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
+      const ciphertext = result.parsed[environmentKey];
+      if (!ciphertext) {
+        const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
+        err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
+        throw err;
+      }
+      return { ciphertext, key };
+    }
+    function _vaultPath(options) {
+      let possibleVaultPath = null;
+      if (options && options.path && options.path.length > 0) {
+        if (Array.isArray(options.path)) {
+          for (const filepath of options.path) {
+            if (fs.existsSync(filepath)) {
+              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
+            }
+          }
+        } else {
+          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
+        }
+      } else {
+        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
+      }
+      if (fs.existsSync(possibleVaultPath)) {
+        return possibleVaultPath;
+      }
+      return null;
+    }
+    function _resolveHome(envPath) {
+      return envPath[0] === "~" ? path.join(os3.homedir(), envPath.slice(1)) : envPath;
+    }
+    function _configVault(options) {
+      const debug2 = parseBoolean2(process.env.DOTENV_CONFIG_DEBUG || options && options.debug);
+      const quiet = parseBoolean2(process.env.DOTENV_CONFIG_QUIET || options && options.quiet);
+      if (debug2 || !quiet) {
+        _log("loading env from encrypted .env.vault");
+      }
+      const parsed = DotenvModule._parseVault(options);
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      DotenvModule.populate(processEnv, parsed, options);
+      return { parsed };
+    }
+    function configDotenv(options) {
+      const dotenvPath = path.resolve(process.cwd(), ".env");
+      let encoding = "utf8";
+      let processEnv = process.env;
+      if (options && options.processEnv != null) {
+        processEnv = options.processEnv;
+      }
+      let debug2 = parseBoolean2(processEnv.DOTENV_CONFIG_DEBUG || options && options.debug);
+      let quiet = parseBoolean2(processEnv.DOTENV_CONFIG_QUIET || options && options.quiet);
+      if (options && options.encoding) {
+        encoding = options.encoding;
+      } else {
+        if (debug2) {
+          _debug("no encoding is specified (UTF-8 is used by default)");
+        }
+      }
+      let optionPaths = [dotenvPath];
+      if (options && options.path) {
+        if (!Array.isArray(options.path)) {
+          optionPaths = [_resolveHome(options.path)];
+        } else {
+          optionPaths = [];
+          for (const filepath of options.path) {
+            optionPaths.push(_resolveHome(filepath));
+          }
+        }
+      }
+      let lastError;
+      const parsedAll = {};
+      for (const path2 of optionPaths) {
+        try {
+          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
+          DotenvModule.populate(parsedAll, parsed, options);
+        } catch (e5) {
+          if (debug2) {
+            _debug(`failed to load ${path2} ${e5.message}`);
+          }
+          lastError = e5;
+        }
+      }
+      const populated = DotenvModule.populate(processEnv, parsedAll, options);
+      debug2 = parseBoolean2(processEnv.DOTENV_CONFIG_DEBUG || debug2);
+      quiet = parseBoolean2(processEnv.DOTENV_CONFIG_QUIET || quiet);
+      if (debug2 || !quiet) {
+        const keysCount = Object.keys(populated).length;
+        const shortPaths = [];
+        for (const filePath of optionPaths) {
+          try {
+            const relative2 = path.relative(process.cwd(), filePath);
+            shortPaths.push(relative2);
+          } catch (e5) {
+            if (debug2) {
+              _debug(`failed to load ${filePath} ${e5.message}`);
+            }
+            lastError = e5;
+          }
+        }
+        _log(`injected env (${keysCount}) from ${shortPaths.join(",")} ${dim(`// tip: ${_getRandomTip()}`)}`);
+      }
+      if (lastError) {
+        return { parsed: parsedAll, error: lastError };
+      } else {
+        return { parsed: parsedAll };
+      }
+    }
+    function config2(options) {
+      if (_dotenvKey(options).length === 0) {
+        return DotenvModule.configDotenv(options);
+      }
+      const vaultPath = _vaultPath(options);
+      if (!vaultPath) {
+        _warn(`you set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}`);
+        return DotenvModule.configDotenv(options);
+      }
+      return DotenvModule._configVault(options);
+    }
+    function decrypt(encrypted, keyStr) {
+      const key = Buffer.from(keyStr.slice(-64), "hex");
+      let ciphertext = Buffer.from(encrypted, "base64");
+      const nonce = ciphertext.subarray(0, 12);
+      const authTag = ciphertext.subarray(-16);
+      ciphertext = ciphertext.subarray(12, -16);
+      try {
+        const aesgcm = crypto4.createDecipheriv("aes-256-gcm", key, nonce);
+        aesgcm.setAuthTag(authTag);
+        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
+      } catch (error50) {
+        const isRange = error50 instanceof RangeError;
+        const invalidKeyLength = error50.message === "Invalid key length";
+        const decryptionFailed = error50.message === "Unsupported state or unable to authenticate data";
+        if (isRange || invalidKeyLength) {
+          const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
+          err.code = "INVALID_DOTENV_KEY";
+          throw err;
+        } else if (decryptionFailed) {
+          const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
+          err.code = "DECRYPTION_FAILED";
+          throw err;
+        } else {
+          throw error50;
+        }
+      }
+    }
+    function populate(processEnv, parsed, options = {}) {
+      const debug2 = Boolean(options && options.debug);
+      const override = Boolean(options && options.override);
+      const populated = {};
+      if (typeof parsed !== "object") {
+        const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
+        err.code = "OBJECT_REQUIRED";
+        throw err;
+      }
+      for (const key of Object.keys(parsed)) {
+        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
+          if (override === true) {
+            processEnv[key] = parsed[key];
+            populated[key] = parsed[key];
+          }
+          if (debug2) {
+            if (override === true) {
+              _debug(`"${key}" is already defined and WAS overwritten`);
+            } else {
+              _debug(`"${key}" is already defined and was NOT overwritten`);
+            }
+          }
+        } else {
+          processEnv[key] = parsed[key];
+          populated[key] = parsed[key];
+        }
+      }
+      return populated;
+    }
+    var DotenvModule = {
+      configDotenv,
+      _configVault,
+      _parseVault,
+      config: config2,
+      decrypt,
+      parse: parse4,
+      populate
+    };
+    module2.exports.configDotenv = DotenvModule.configDotenv;
+    module2.exports._configVault = DotenvModule._configVault;
+    module2.exports._parseVault = DotenvModule._parseVault;
+    module2.exports.config = DotenvModule.config;
+    module2.exports.decrypt = DotenvModule.decrypt;
+    module2.exports.parse = DotenvModule.parse;
+    module2.exports.populate = DotenvModule.populate;
+    module2.exports = DotenvModule;
+  }
+});
+
 // node_modules/bson/lib/bson.cjs
 var require_bson = __commonJS({
   "node_modules/bson/lib/bson.cjs"(exports) {
@@ -76900,7 +77219,17 @@ function resolveDbName(tenantId, scope) {
   return `tenant_${cleanTenant}_${scope}`;
 }
 async function getDbConnection(dbName) {
-  const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  let rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  if (!rawUri) {
+    import_dotenv.default.config();
+    if (typeof process !== "undefined" && typeof process.loadEnvFile === "function") {
+      try {
+        process.loadEnvFile();
+      } catch {
+      }
+    }
+    rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+  }
   if (!rawUri) {
     throw new Error("MONGODB_URI environment variable is missing.");
   }
@@ -76932,11 +77261,19 @@ async function getDbConnection(dbName) {
   }
   return cached3.connections[dbName];
 }
-var import_mongoose4, cached3, MONGO_OPTIONS;
+var import_dotenv, import_mongoose4, cached3, MONGO_OPTIONS;
 var init_mongodb = __esm({
   "server/lib/mongodb.ts"() {
     "use strict";
+    import_dotenv = __toESM(require_main(), 1);
     import_mongoose4 = __toESM(require_mongoose2(), 1);
+    import_dotenv.default.config();
+    if (typeof process !== "undefined" && typeof process.loadEnvFile === "function") {
+      try {
+        process.loadEnvFile();
+      } catch {
+      }
+    }
     cached3 = global._mongoCache || {
       baseConn: null,
       basePromise: null,
@@ -77238,6 +77575,7 @@ var init_cmsSchemas = __esm({
       {
         title: { type: String, default: "" },
         subtitle: { type: String, default: "" },
+        badge: { type: String, default: "" },
         imageUrl: { type: String, default: "" },
         videoUrl: { type: String, default: "" },
         mobileVideoUrl: { type: String, default: "" },
@@ -81400,6 +81738,1000 @@ var require_jsonwebtoken = __commonJS({
       NotBeforeError: require_NotBeforeError(),
       TokenExpiredError: require_TokenExpiredError()
     };
+  }
+});
+
+// server/models/adminUserSchema.ts
+async function getAdminUserModel() {
+  const conn = await getDbConnection("dpsi_admin");
+  return conn.models.AdminUser || conn.model("AdminUser", AdminUserSchema);
+}
+var import_mongoose15, AdminUserSchema;
+var init_adminUserSchema = __esm({
+  "server/models/adminUserSchema.ts"() {
+    "use strict";
+    import_mongoose15 = __toESM(require_mongoose2(), 1);
+    init_mongodb();
+    AdminUserSchema = new import_mongoose15.Schema(
+      {
+        username: { type: String, required: true, unique: true },
+        email: { type: String },
+        passwordHash: { type: String, required: true },
+        role: { type: String, default: "admin" },
+        tenantId: { type: String, default: "dpsi" },
+        mustChangePassword: { type: Boolean, default: false },
+        lastLogin: { type: Date }
+      },
+      { timestamps: true }
+    );
+  }
+});
+
+// server/models/tenantSchema.ts
+async function getTenantModel() {
+  const conn = await getDbConnection("dpsi_admin");
+  return conn.models.Tenant || conn.model("Tenant", TenantSchema);
+}
+var import_mongoose16, TenantSchema;
+var init_tenantSchema = __esm({
+  "server/models/tenantSchema.ts"() {
+    "use strict";
+    import_mongoose16 = __toESM(require_mongoose2(), 1);
+    init_mongodb();
+    TenantSchema = new import_mongoose16.Schema(
+      {
+        tenantId: { type: String, required: true, unique: true, index: true },
+        schoolName: { type: String, required: true },
+        schoolCode: { type: String, required: true, unique: true, index: true },
+        domain: { type: String, index: true },
+        logoUrl: { type: String, default: "/logo.webp" },
+        faviconUrl: { type: String, default: "/favicon.ico" },
+        primaryColor: { type: String, default: "#047857" },
+        secondaryColor: { type: String, default: "#065f46" },
+        contactEmail: { type: String },
+        contactPhone: { type: String },
+        address: { type: String },
+        status: { type: String, enum: ["active", "suspended"], default: "active" },
+        features: {
+          aiChatbot: { type: Boolean, default: true },
+          tcPortal: { type: Boolean, default: true },
+          gallery: { type: Boolean, default: true },
+          munRegistration: { type: Boolean, default: true }
+        }
+      },
+      { timestamps: true }
+    );
+  }
+});
+
+// server/lib/seedDatabase.ts
+var seedDatabase_exports = {};
+__export(seedDatabase_exports, {
+  seedDatabase: () => seedDatabase
+});
+import bcrypt from "bcryptjs";
+async function seedDatabase(tenantId = "dpsi", _options) {
+  try {
+    const Tenant = await getTenantModel();
+    await Tenant.findOneAndUpdate(
+      { tenantId: "dpsi" },
+      {
+        $setOnInsert: {
+          tenantId: "dpsi",
+          schoolName: "Delhi Public School Indirapuram",
+          schoolCode: "DPSI-60297",
+          domain: "dpsindirapuram.com",
+          primaryColor: "#047857",
+          secondaryColor: "#065f46",
+          contactEmail: "info@dpsindirapuram.com",
+          contactPhone: "+91-0120-4660000, 4670000",
+          address: "526/1, Ahinsa Khand-II, Indirapuram, Ghaziabad, U.P. - 201014",
+          status: "active",
+          features: {
+            aiChatbot: true,
+            tcPortal: true,
+            gallery: true,
+            munRegistration: true
+          }
+        }
+      },
+      { upsert: true }
+    );
+    const {
+      SiteSettings,
+      Achievement,
+      Testimonial,
+      Leadership,
+      Facility,
+      Department,
+      AdmissionStep,
+      Faq,
+      QuickStat,
+      TimelineItem,
+      CoreValue,
+      Slider,
+      Page,
+      Menu,
+      Marquee,
+      Popup,
+      Activity,
+      Attachment,
+      FeatureCard
+    } = await getMainModels(tenantId);
+    const { GalleryImage, VideoGallery } = await getGalleryModels(tenantId);
+    const { TransferCertificate } = await getTcModels(tenantId);
+    const defaultSettings = [
+      { key: "school_name", value: "Delhi Public School Indirapuram", label: "School Name", group: "general" },
+      { key: "school_tagline", value: "Service Before Self \u2022 Nurturing Global Leaders", label: "School Tagline", group: "general" },
+      { key: "logo_url", value: "/images/dps/logo.webp", label: "School Primary Logo", group: "branding" },
+      { key: "logo_height", value: "62", label: "Logo Height (px)", group: "branding" },
+      { key: "logo_shape", value: "default", label: "Logo Shape", group: "branding" },
+      { key: "cbse_affiliation_no", value: "2130663", label: "CBSE Affiliation No.", group: "general" },
+      { key: "school_code", value: "60297", label: "School Code", group: "general" },
+      { key: "contact_phone", value: "+91-0120-4660000, 4670000", label: "Primary Phone", group: "contact" },
+      { key: "contact_email", value: "info@dpsindirapuram.com", label: "General Email", group: "contact" },
+      { key: "contact_admissions_email", value: "admissions@dpsindirapuram.com", label: "Admissions Email", group: "contact" },
+      { key: "contact_address", value: "526/1, Ahinsa Khand-II, Indirapuram, Ghaziabad, U.P. - 201014", label: "Campus Address", group: "contact" },
+      { key: "office_hours", value: "Monday \u2013 Saturday: 8:00 AM \u2013 3:00 PM (Second & Fourth Saturdays Closed)", label: "Visiting Hours", group: "contact" },
+      { key: "google_map_embed_url", value: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.9961138244976!2d77.37397757620296!3d28.63073038421833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cf007c65c2b09%3A0xe5a36378e9b88235!2sDelhi%20Public%20School%20Indirapuram!5e0!3m2!1sen!2sin!4v1700000000000", label: "Google Maps Embed URL", group: "contact" },
+      { key: "social_facebook", value: "https://www.facebook.com/DPSIndirapuramGhaziabad", label: "Facebook Page", group: "social" },
+      { key: "social_instagram", value: "https://www.instagram.com/dps_indirapuram/", label: "Instagram Profile", group: "social" },
+      { key: "social_youtube", value: "https://www.youtube.com/channel/UC-jQAVRh4pBXEktpml3yeIQ/videos", label: "YouTube Channel", group: "social" },
+      { key: "social_linkedin", value: "https://www.linkedin.com/school/dps-indirapuram/", label: "LinkedIn Page", group: "social" },
+      { key: "social_twitter", value: "https://twitter.com/dps_indirapuram", label: "Twitter / X Profile", group: "social" },
+      { key: "principal_name", value: "Ms. Priya Elizabeth John", label: "Principal Name", group: "principal" },
+      { key: "principal_title", value: "Principal, DPS Indirapuram", label: "Principal Title", group: "principal" },
+      { key: "principal_badge", value: "Principal's Message", label: "Principal Badge", group: "principal" },
+      { key: "principal_headline", value: "Nurturing Future Leaders with Values & Innovation", label: "Principal Headline", group: "principal" },
+      { key: "principal_image", value: "/images/leadership/priya_john.webp", label: "Principal Image URL", group: "principal" },
+      { key: "principal_message_p1", value: "Welcome to Delhi Public School Indirapuram, where we believe in empowering every child to discover their unique potential. Our institution stands as a beacon of excellence, combining traditional values with futuristic pedagogical methods.", label: "Principal Message (Paragraph 1)", group: "principal" },
+      { key: "principal_message_p2", value: "With over two decades of educational leadership, our state-of-the-art facilities, dedicated educators, and holistic curricula ensure that every student thrives with confidence, character, and intellect.", label: "Principal Message (Paragraph 2)", group: "principal" },
+      { key: "cta_badge", value: "Admissions Open 2026-27", label: "CTA Badge", group: "cta" },
+      { key: "cta_title", value: "Ready to Shape Your Child's Bright Future?", label: "CTA Title", group: "cta" },
+      { key: "cta_button_link", value: "/admissions", label: "CTA Button Link", group: "cta" },
+      { key: "footer_copyright", value: "\xA9 2026 Delhi Public School Indirapuram. All rights reserved.", label: "Footer Copyright", group: "general" },
+      { key: "footer_credit", value: "Developed by : Shashank Jangid", label: "Footer / Credit Text", group: "general" },
+      { key: "developer_url", value: "https://dpsiwhale.vercel.app", label: "Developer Website / Portfolio URL", group: "footer" },
+      { key: "footer_tagline", value: "Delhi Public School Indirapuram, established in 2003, is a premier institution under the DPS Society, committed to holistic education and excellence.", label: "Footer Tagline", group: "general" },
+      { key: "chat_welcome_message", value: "Hello! I am DPSI AI. I can assist you with Admissions, Exam Schedules, Vacations, Academic Streams, and Campus Facilities.", label: "AI Chat Welcome Message", group: "ai" },
+      { key: "calendar_pdf_url", value: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", label: "Academic Calendar PDF URL", group: "ai" }
+    ];
+    for (const s of defaultSettings) {
+      await SiteSettings.findOneAndUpdate(
+        { key: s.key },
+        { $setOnInsert: s },
+        { upsert: true, new: true }
+      );
+    }
+    const achievementCount = await Achievement.countDocuments({ isDeleted: false });
+    if (achievementCount === 0) {
+      await Achievement.insertMany([
+        {
+          studentName: "Siddhant Tiwari",
+          className: "Class X",
+          score: "99.4%",
+          exam: "CBSE Board Examination",
+          stream: "All India Rank #1",
+          rank: "#1 Rank (Class X)",
+          year: "2025-26",
+          imageUrl: "/images/dps/topper_siddhant.webp",
+          featured: true,
+          order: 1
+        },
+        {
+          studentName: "Ansh Pathak",
+          className: "Class X",
+          score: "99.4%",
+          exam: "CBSE Board Examination",
+          stream: "All India Rank #1",
+          rank: "#1 Rank (Class X)",
+          year: "2025-26",
+          imageUrl: "/images/dps/topper_ansh.webp",
+          featured: true,
+          order: 2
+        },
+        {
+          studentName: "Aayush Jha",
+          className: "Class X",
+          score: "99.2%",
+          exam: "CBSE Board Examination",
+          stream: "All India Rank #2",
+          rank: "#2 Rank (Class X)",
+          year: "2025-26",
+          imageUrl: "/images/dps/topper_aayush.webp",
+          featured: true,
+          order: 3
+        },
+        {
+          studentName: "Arnav Jha",
+          className: "Class X",
+          score: "99.2%",
+          exam: "CBSE Board Examination",
+          stream: "All India Rank #2",
+          rank: "#2 Rank (Class X)",
+          year: "2025-26",
+          imageUrl: "/images/dps/topper_arnav.webp",
+          featured: true,
+          order: 4
+        },
+        {
+          studentName: "Jia Manchanda",
+          className: "Class XII",
+          score: "98.2%",
+          exam: "CBSE Board Examination",
+          stream: "Commerce Stream Topper",
+          rank: "School Rank 1",
+          year: "2025-26",
+          imageUrl: "/images/dps/topper_jia.webp",
+          featured: true,
+          order: 5
+        },
+        {
+          studentName: "Snigdha Shukla",
+          className: "Class XII",
+          score: "97.6%",
+          exam: "CBSE Board Examination",
+          stream: "Humanities Stream Topper",
+          rank: "School Rank 1",
+          year: "2025-26",
+          imageUrl: "/images/dps/topper_snigdha.webp",
+          featured: true,
+          order: 6
+        },
+        {
+          studentName: "Pawni Srivastava",
+          className: "Class XII",
+          score: "97.2%",
+          exam: "CBSE Board Examination",
+          stream: "Science Stream Topper",
+          rank: "School Rank 1",
+          year: "2025-26",
+          imageUrl: "/images/dps/topper_pawni.webp",
+          featured: true,
+          order: 7
+        }
+      ]);
+    }
+    const testimonialCount = await Testimonial.countDocuments({ isDeleted: false });
+    if (testimonialCount === 0) {
+      await Testimonial.insertMany([
+        {
+          name: "Dr. Rajesh Sharma",
+          role: "Parent of Class XII Student",
+          content: "The holistic environment and focus on futuristic technology like AI & Robotics at DPS Indirapuram helped my child excel academically while developing strong leadership skills.",
+          avatarUrl: "/images/leadership/priya_john.webp",
+          rating: 5,
+          featured: true,
+          order: 1
+        },
+        {
+          name: "Meenakshi Verma",
+          role: "Parent of Class X Student",
+          content: "The dedicated faculty, Olympic-level sports facilities, and personal attention given to each student makes DPS Indirapuram truly the top school in the NCR.",
+          avatarUrl: "/images/leadership/santosh_bansal.webp",
+          rating: 5,
+          featured: true,
+          order: 2
+        },
+        {
+          name: "Col. Sanjeev Tyagi",
+          role: "Parent of Class VIII Student",
+          content: "Discipline, character building, and academic brilliance are ingrained in every DPS Indirapuram student. We are proud parents!",
+          avatarUrl: "/images/leadership/vk_shunglu.webp",
+          rating: 5,
+          featured: true,
+          order: 3
+        }
+      ]);
+    }
+    const leadershipCount = await Leadership.countDocuments({ isDeleted: false });
+    if (leadershipCount === 0) {
+      await Leadership.insertMany([
+        {
+          name: "Mr. V.K. Shunglu",
+          role: "Chairman, DPS Society & Managing Committee",
+          designation: "Chairman",
+          bio: "Eminent civil servant and former Comptroller and Auditor General of India, providing visionary leadership to DPS Society institutions across the world.",
+          imageUrl: "/images/leadership/vk_shunglu.webp",
+          order: 1,
+          category: "Management"
+        },
+        {
+          name: "Ms. Santosh Bansal",
+          role: "Pro-Vice Chairperson",
+          designation: "Pro-Vice Chairperson",
+          bio: "Pioneering educator and administrator committed to cultivating world-class educational opportunities and infrastructure for students.",
+          imageUrl: "/images/leadership/santosh_bansal.webp",
+          order: 2,
+          category: "Management"
+        },
+        {
+          name: "Ms. Priya Elizabeth John",
+          role: "Principal, DPS Indirapuram",
+          designation: "Principal",
+          bio: "National Award-winning educator driving innovation in CBSE pedagogy, holistic student well-being, and future-ready robotics curriculum.",
+          imageUrl: "/images/leadership/priya_john.webp",
+          order: 3,
+          category: "Principal"
+        }
+      ]);
+    }
+    const initialFacilities = [
+      {
+        title: "Design, Robotics & Ai Lab",
+        category: "Innovation & Technology",
+        description: "State-of-the-art AI & Robotics innovation center equipped with humanoid robots, Arduino/Raspberry Pi workstations, 3D printers, IoT microcontrollers, and CAD software for hands-on engineering.",
+        icon: "Bot",
+        imageUrl: "/images/facilities/ai_robotics_lab.webp",
+        geometry: "torusKnot",
+        color: "#047857",
+        accent: "#10b981",
+        order: 1
+      },
+      {
+        title: "MakerSpace",
+        category: "Innovation & Creativity",
+        description: "A collaborative hands-on creative workspace where students design, build, and invent using digital fabrication, woodworking, rapid prototyping, and electronics tools.",
+        icon: "Boxes",
+        imageUrl: "/images/facilities/art_craft_studio.webp",
+        geometry: "octahedron",
+        color: "#0284c7",
+        accent: "#38bdf8",
+        order: 2
+      },
+      {
+        title: "Innovation Club",
+        category: "Student Clubs & Research",
+        description: "A vibrant incubator hub for student-led science projects, patent exploration, hackathons, STEAM challenges, and inter-school innovation summits.",
+        icon: "Rocket",
+        imageUrl: "/images/facilities/smart_classroom.webp",
+        geometry: "icosahedron",
+        color: "#d97706",
+        accent: "#f59e0b",
+        order: 3
+      },
+      {
+        title: "Advanced Science Laboratories",
+        category: "Academics",
+        description: "State-of-the-art Physics, Chemistry, and Biology laboratories equipped with modern precision apparatus and safety systems.",
+        icon: "FlaskConical",
+        imageUrl: "/images/facilities/science_lab.webp",
+        geometry: "dodecahedron",
+        color: "#1d4ed8",
+        accent: "#60a5fa",
+        order: 4
+      },
+      {
+        title: "Next-Gen Smart Classrooms",
+        category: "Infrastructure",
+        description: "Equipped with interactive digital touchboards, ergonomic learning pods, and high-speed gigabit connectivity.",
+        icon: "Wifi",
+        imageUrl: "/images/facilities/smart_classroom.webp",
+        geometry: "icosahedron",
+        color: "#7c3aed",
+        accent: "#a78bfa",
+        order: 5
+      },
+      {
+        title: "Sports & Aquatic Complex",
+        category: "Sports",
+        description: "Olympic-size swimming pool, basketball courts, cricket ground, athletics track, and indoor badminton courts.",
+        icon: "Dumbbell",
+        imageUrl: "/images/facilities/swimming_pool.webp",
+        geometry: "octahedron",
+        color: "#059669",
+        accent: "#34d399",
+        order: 6
+      },
+      {
+        title: "Digital Knowledge Library",
+        category: "Academics",
+        description: "A vast repository of 50,000+ books, digital archives, e-journals, and quiet reading spaces for focused study.",
+        icon: "BookOpen",
+        imageUrl: "/images/facilities/library.webp",
+        geometry: "torusKnot",
+        color: "#b45309",
+        accent: "#fbbf24",
+        order: 7
+      },
+      {
+        title: "Performing Arts & Music Studio",
+        category: "Arts",
+        description: "Professional music rooms, dance studios, and an auditorium with stage lighting and acoustics.",
+        icon: "Music",
+        imageUrl: "/images/facilities/music_dance.webp",
+        geometry: "dodecahedron",
+        color: "#db2777",
+        accent: "#f472b6",
+        order: 8
+      },
+      {
+        title: "Art & Craft Studio",
+        category: "Arts",
+        description: "Spacious art studios for painting, sculpture, pottery, and craft with professional-grade materials.",
+        icon: "Palette",
+        imageUrl: "/images/facilities/art_craft_studio.webp",
+        geometry: "octahedron",
+        color: "#9333ea",
+        accent: "#c084fc",
+        order: 9
+      },
+      {
+        title: "GPS AC Transportation",
+        category: "Transport",
+        description: "Fleet of 50+ GPS-enabled AC buses covering all major areas with trained drivers and attendants.",
+        icon: "Bus",
+        imageUrl: "/images/facilities/transport_bus.webp",
+        geometry: "icosahedron",
+        color: "#4f46e5",
+        accent: "#818cf8",
+        order: 10
+      },
+      {
+        title: "Campus Safety & Security",
+        category: "Safety",
+        description: "24/7 CCTV surveillance, trained security personnel, fire safety systems, and emergency response protocols.",
+        icon: "Shield",
+        imageUrl: "/images/facilities/campus_security.webp",
+        geometry: "torusKnot",
+        color: "#dc2626",
+        accent: "#f87171",
+        order: 11
+      },
+      {
+        title: "Health & Medical Center",
+        category: "Health",
+        description: "On-campus medical facility with qualified nurses, annual health checkups, and counseling services.",
+        icon: "HeartPulse",
+        imageUrl: "/images/facilities/medical_infirmary.webp",
+        geometry: "octahedron",
+        color: "#e11d48",
+        accent: "#fb7185",
+        order: 12
+      }
+    ];
+    for (const fac of initialFacilities) {
+      await Facility.findOneAndUpdate(
+        { title: fac.title },
+        { $setOnInsert: { ...fac, isActive: true, isDeleted: false } },
+        { upsert: true }
+      );
+    }
+    const departmentCount = await Department.countDocuments({ isDeleted: false });
+    if (departmentCount === 0) {
+      await Department.insertMany([
+        {
+          name: "Science",
+          subjects: "Physics, Chemistry, Biology, Biotechnology",
+          icon: "FlaskConical",
+          color: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
+          order: 1
+        },
+        {
+          name: "Mathematics",
+          subjects: "Pure Math, Applied Math, Statistics",
+          icon: "Calculator",
+          color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
+          order: 2
+        },
+        {
+          name: "Languages",
+          subjects: "English, Hindi, Sanskrit, French, German",
+          icon: "Globe",
+          color: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+          order: 3
+        },
+        {
+          name: "Arts & Humanities",
+          subjects: "History, Geography, Political Science, Economics, Psychology",
+          icon: "Palette",
+          color: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400",
+          order: 4
+        },
+        {
+          name: "Computer Science & AI",
+          subjects: "Artificial Intelligence, Robotics, Python, Web Dev, Data Science",
+          icon: "Cpu",
+          color: "bg-violet-50 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400",
+          order: 5
+        },
+        {
+          name: "Physical Education",
+          subjects: "Sports Science, Athletics, Yoga, Health Education",
+          icon: "Activity",
+          color: "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
+          order: 6
+        }
+      ]);
+    }
+    const stepCount = await AdmissionStep.countDocuments({ isDeleted: false });
+    if (stepCount === 0) {
+      await AdmissionStep.insertMany([
+        {
+          stepNumber: 1,
+          title: "Online Registration",
+          description: "Fill out the online application form with student bio-data and parent details.",
+          icon: "FileText",
+          order: 1
+        },
+        {
+          stepNumber: 2,
+          title: "Document Submission",
+          description: "Upload necessary documents: birth certificate, previous report cards, and transfer certificate.",
+          icon: "ClipboardList",
+          order: 2
+        },
+        {
+          stepNumber: 3,
+          title: "Registration Fee Payment",
+          description: "Pay the registration processing fee securely via our instant payment gateway.",
+          icon: "CreditCard",
+          order: 3
+        },
+        {
+          stepNumber: 4,
+          title: "Student Interaction & Assessment",
+          description: "Participate in an interactive evaluation designed to understand the child's academic and emotional readiness.",
+          icon: "BadgeCheck",
+          order: 4
+        },
+        {
+          stepNumber: 5,
+          title: "Admission Formalities & Onboarding",
+          description: "Receive admission confirmation letter and complete the enrollment formalities.",
+          icon: "CheckCircle",
+          order: 5
+        }
+      ]);
+    }
+    const faqCount = await Faq.countDocuments({ isDeleted: false });
+    if (faqCount === 0) {
+      await Faq.insertMany([
+        {
+          question: "What is the age criteria for admission to Pre-School / Nursery?",
+          answer: "The child should be 3+ years as of March 31st of the admission academic year.",
+          category: "Admissions",
+          order: 1
+        },
+        {
+          question: "What documents are required for the admission process?",
+          answer: "Birth certificate, passport-size photographs of student & parents, previous report card, transfer certificate (Class II upwards), and proof of residence.",
+          category: "Admissions",
+          order: 2
+        },
+        {
+          question: "Is there an entrance examination for higher classes?",
+          answer: "An age-appropriate competency assessment is conducted for Class I onwards to understand baseline readiness.",
+          category: "Admissions",
+          order: 3
+        },
+        {
+          question: "What is the fee structure and scholarship policy?",
+          answer: "Please contact our admissions office or refer to the fee breakdown table. Merit scholarships are offered for national Olympiad winners and sports champions.",
+          category: "Admissions",
+          order: 4
+        },
+        {
+          question: "Does the school provide GPS-monitored AC bus transport?",
+          answer: "Yes, we operate an extensive fleet of air-conditioned GPS-tracked buses covering Ghaziabad, Noida, and East Delhi.",
+          category: "Transport",
+          order: 5
+        },
+        {
+          question: "What is the average student-teacher ratio?",
+          answer: "We strictly maintain a 25:1 student-to-educator ratio to guarantee individual attention and care.",
+          category: "General",
+          order: 6
+        }
+      ]);
+    }
+    const statCount = await QuickStat.countDocuments({ isDeleted: false });
+    if (statCount === 0) {
+      await QuickStat.insertMany([
+        { label: "Students Enrolled", value: "3,500+", icon: "GraduationCap", order: 1 },
+        { label: "CBSE Board Average", value: "88.6%", icon: "Award", order: 2 },
+        { label: "Expert Educators", value: "220+", icon: "Users", order: 3 },
+        { label: "Campus Area", value: "10 Acres", icon: "Building", order: 4 }
+      ]);
+    }
+    const timelineCount = await TimelineItem.countDocuments({ isDeleted: false });
+    if (timelineCount === 0) {
+      await TimelineItem.insertMany([
+        { year: "2003", title: "Foundation", description: "DPS Indirapuram established under the aegis of The DPS Society.", order: 1 },
+        { year: "2008", title: "CBSE Affiliation", description: "Granted permanent CBSE affiliation with exemplary rating.", order: 2 },
+        { year: "2012", title: "First Batch Success", description: "100% CBSE board results with multiple students securing >95%.", order: 3 },
+        { year: "2015", title: "Sports Complex", description: "Inaugurated Olympic-size aquatic complex and national sports grounds.", order: 4 },
+        { year: "2021", title: "Digital Transformation", description: "Complete smart classroom and digital infrastructure upgrade.", order: 5 },
+        { year: "2023", title: "20th Anniversary", description: "Celebrated two decades of holistic excellence and character building.", order: 6 },
+        { year: "2024", title: "AI & Robotics Lab", description: "State-of-the-art innovation center launched with humanoid robotics kits.", order: 7 },
+        { year: "2025", title: "Global Recognition", description: "Ranked among top CBSE schools in India with British Council ISA honors.", order: 8 }
+      ]);
+    }
+    const valueCount = await CoreValue.countDocuments({ isDeleted: false });
+    if (valueCount === 0) {
+      await CoreValue.insertMany([
+        {
+          title: "Excellence",
+          description: "Striving for the highest standards in education and character development.",
+          icon: "Target",
+          order: 1
+        },
+        {
+          title: "Integrity",
+          description: "Building honest, ethical individuals who lead with moral courage.",
+          icon: "Heart",
+          order: 2
+        },
+        {
+          title: "Inclusivity",
+          description: "Celebrating diversity and creating a welcoming environment for all.",
+          icon: "Users",
+          order: 3
+        },
+        {
+          title: "Innovation",
+          description: "Embracing new ideas and technologies to prepare students for the future.",
+          icon: "BookOpen",
+          order: 4
+        },
+        {
+          title: "Resilience",
+          description: "Developing grit and perseverance to overcome challenges with confidence.",
+          icon: "Award",
+          order: 5
+        }
+      ]);
+    }
+    const sliderCount = await Slider.countDocuments({ isDeleted: false });
+    if (sliderCount === 0) {
+      await Slider.insertMany([
+        {
+          title: "Empowering Minds, Shaping Tomorrow",
+          subtitle: "Ranked among the Top CBSE Schools in the National Capital Region with 20+ Years of Academic Legacy",
+          imageUrl: "https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg",
+          videoUrl: "https://res.cloudinary.com/uqty03zf/video/upload/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4",
+          mediaType: "video",
+          buttonText: "Explore Campus",
+          buttonLink: "/about",
+          order: 1
+        },
+        {
+          title: "Futuristic AI & Robotics Innovation",
+          subtitle: "Equipping young minds with humanoid robotics, 3D prototyping, and cutting-edge STEM labs",
+          imageUrl: "/images/dps/slider_2.webp",
+          buttonText: "Discover Facilities",
+          buttonLink: "/facilities",
+          order: 2
+        },
+        {
+          title: "Admissions Open for Academic Session 2026-27",
+          subtitle: "Give your child the foundation of holistic education, global exposure, and athletic excellence",
+          imageUrl: "/images/dps/slider_3.webp",
+          buttonText: "Apply Online",
+          buttonLink: "/admissions",
+          order: 3
+        }
+      ]);
+    }
+    const featureCardCount = await FeatureCard.countDocuments({ isDeleted: false });
+    if (featureCardCount === 0) {
+      await FeatureCard.insertMany([
+        {
+          title: "Humanoid Robotics",
+          description: "AI Innovation Lab with autonomous bots and Raspberry Pi workstations",
+          icon: "Bot",
+          category: "AI Innovation Lab",
+          order: 1,
+          isActive: true
+        },
+        {
+          title: "MakerSpace Lab",
+          description: "Flight Simulators, 3D Printers & Design Thinking Studio",
+          icon: "Cpu",
+          category: "Flight Simulators & D&T",
+          order: 2,
+          isActive: true
+        },
+        {
+          title: "Next-Gen Curriculum",
+          description: "STEAM Pedagogy, Experiential Learning & Global Skill Modules",
+          icon: "Rocket",
+          category: "STEAM & Experiential Learning",
+          order: 3,
+          isActive: true
+        }
+      ]);
+    }
+    const pageCount = await Page.countDocuments({ isDeleted: false });
+    if (pageCount === 0) {
+      await Page.insertMany([
+        {
+          title: "About DPS Indirapuram",
+          slug: "about",
+          category: "About",
+          content: "Delhi Public School Indirapuram is a premier educational institution established in 2003 under the aegis of the DPS Society, New Delhi.",
+          metaTitle: "About Us - DPS Indirapuram",
+          metaDescription: "Learn about the rich legacy, leadership, and vision of DPS Indirapuram.",
+          isPublished: true
+        },
+        {
+          title: "Academic Curriculum & Pedagogy",
+          slug: "academics",
+          category: "Academics",
+          content: "Comprehensive CBSE curriculum integrated with STEAM, AI, and holistic development modules.",
+          metaTitle: "Academics - DPS Indirapuram",
+          metaDescription: "Explore our academic departments, curriculum, and pedagogy.",
+          isPublished: true
+        },
+        {
+          title: "Admissions 2026-27 Guidelines",
+          slug: "admissions",
+          category: "Admissions",
+          content: "Admissions open from Pre-Nursery to Class IX & Class XI for the academic session 2026-27.",
+          metaTitle: "Admissions - DPS Indirapuram",
+          metaDescription: "Apply online for admissions at DPS Indirapuram.",
+          isPublished: true
+        },
+        {
+          title: "World-Class Campus Facilities",
+          slug: "facilities",
+          category: "Facilities",
+          content: "10-acre campus with AI Robotics lab, Olympic swimming pool, smart classrooms, and shooting range.",
+          metaTitle: "Campus Facilities - DPS Indirapuram",
+          metaDescription: "Explore campus infrastructure and sports facilities.",
+          isPublished: true
+        }
+      ]);
+    }
+    const menuCount = await Menu.countDocuments({ isDeleted: false });
+    if (menuCount === 0) {
+      await Menu.insertMany([
+        { title: "Home", url: "/", location: "header", order: 1, isActive: true },
+        { title: "About", url: "/about", location: "header", order: 2, isActive: true },
+        { title: "Vision & Mission", url: "/about#vision", location: "header", parent: "About", order: 1, isActive: true },
+        { title: "Leadership", url: "/about#leadership", location: "header", parent: "About", order: 2, isActive: true },
+        { title: "Academics", url: "/academics", location: "header", order: 3, isActive: true },
+        { title: "Curriculum", url: "/academics#curriculum", location: "header", parent: "Academics", order: 1, isActive: true },
+        { title: "Departments", url: "/academics#departments", location: "header", parent: "Academics", order: 2, isActive: true },
+        { title: "Admissions", url: "/admissions", location: "header", order: 4, isActive: true },
+        { title: "Facilities", url: "/facilities", location: "header", order: 5, isActive: true },
+        { title: "News & Events", url: "/news-events", location: "header", order: 6, isActive: true },
+        { title: "Gallery", url: "/gallery", location: "header", order: 7, isActive: true },
+        { title: "Contact", url: "/contact", location: "header", order: 8, isActive: true },
+        // Footer Quick Links
+        { title: "About Us", url: "/about", location: "footer_quick", order: 1, isActive: true },
+        { title: "Academic Streams", url: "/academics", location: "footer_quick", order: 2, isActive: true },
+        { title: "Admissions Criteria", url: "/admissions", location: "footer_quick", order: 3, isActive: true },
+        { title: "Campus Facilities", url: "/facilities", location: "footer_quick", order: 4, isActive: true },
+        // Footer Resources
+        { title: "SchoolsOS Portal Login", url: "https://dpsindp.schoolforschools.ai/login", location: "footer_resources", order: 1, isActive: true },
+        { title: "Transfer Certificate (TC)", url: "/tc", location: "footer_resources", order: 2, isActive: true },
+        { title: "Annual Academic Calendar", url: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", location: "footer_resources", order: 3, isActive: true },
+        { title: "Mandatory Public Disclosure", url: "/attachments", location: "footer_resources", order: 4, isActive: true }
+      ]);
+    }
+    const marqueeCount = await Marquee.countDocuments({ isDeleted: false });
+    if (marqueeCount === 0) {
+      await Marquee.insertMany([
+        {
+          text: "ADMISSIONS OPEN FOR SESSION 2026\u201327 (PRE-NURSERY TO CLASS IX & XI)",
+          linkUrl: "/admissions",
+          speed: 50,
+          textColor: "#ffffff",
+          bgColor: "#047857",
+          badgeText: "Admissions",
+          isActive: true
+        },
+        {
+          text: "CBSE CLASS XII & X BOARD RESULTS DECLARED \u2014 TOP SCORE 99.4%",
+          linkUrl: "/academics",
+          speed: 50,
+          textColor: "#fef3c7",
+          bgColor: "#b45309",
+          badgeText: "Exam Alert",
+          isActive: true
+        },
+        {
+          text: "TIMES EDUCATION ICONS 2024 AWARD WINNER \u2014 #1 CBSE SCHOOL IN GHAZIABAD",
+          linkUrl: "/about",
+          speed: 50,
+          textColor: "#dbeafe",
+          bgColor: "#1e3a8a",
+          badgeText: "Award",
+          isActive: true
+        }
+      ]);
+    }
+    const popupCount = await Popup.countDocuments({ isDeleted: false });
+    if (popupCount === 0) {
+      await Popup.insertMany([
+        {
+          title: "Admissions Open 2026-27",
+          content: "Online registration is now open for Pre-Nursery through Class IX and XI. Limited seats available.",
+          imageUrl: "/images/dps/slider_3.webp",
+          linkUrl: "/admissions",
+          badgeText: "Admissions 2026-27",
+          buttonText: "Apply Now",
+          showOnLoad: true,
+          isActive: true
+        }
+      ]);
+    }
+    const activityCount = await Activity.countDocuments({ isDeleted: false });
+    if (activityCount === 0) {
+      await Activity.insertMany([
+        {
+          title: "Annual Science & Innovation Exhibition 2025",
+          category: "Innovation",
+          description: "Students demonstrated 100+ working models in Robotics, AI, Renewable Energy, and Smart Cities.",
+          eventDate: /* @__PURE__ */ new Date("2025-11-15"),
+          imageUrl: "/images/facilities/ai_robotics_lab.webp",
+          isPublished: true
+        },
+        {
+          title: "Inter-School Swimming Championship",
+          category: "Sports",
+          description: "DPS Indirapuram aquatic team secured 14 Gold and 8 Silver medals at the CBSE Inter-School Meet.",
+          eventDate: /* @__PURE__ */ new Date("2025-10-22"),
+          imageUrl: "/images/facilities/swimming_pool.webp",
+          isPublished: true
+        },
+        {
+          title: "Model United Nations (DPSI-MUN) 2025",
+          category: "Conferences",
+          description: "Over 500 delegates from across the nation debated pressing global geopolitical issues.",
+          eventDate: /* @__PURE__ */ new Date("2025-09-18"),
+          imageUrl: "/images/facilities/smart_classroom.webp",
+          isPublished: true
+        },
+        {
+          title: "Silver Jubilee Grand Annual Cultural Fest",
+          category: "Culture",
+          description: "A spectacular evening of theatrical musical performance, classical dance, and student art showcase.",
+          eventDate: /* @__PURE__ */ new Date("2025-12-20"),
+          imageUrl: "/images/facilities/music_dance.webp",
+          isPublished: true
+        }
+      ]);
+    }
+    const imageCount = await GalleryImage.countDocuments({ isDeleted: false });
+    if (imageCount === 0) {
+      await GalleryImage.insertMany([
+        { title: "Main Campus Building", category: "Campus", imageUrl: "/images/dps/slider_1.webp", isFeatured: true, order: 1 },
+        { title: "Futuristic AI & Robotics Lab", category: "Facilities", imageUrl: "/images/facilities/ai_robotics_lab.webp", isFeatured: true, order: 2 },
+        { title: "Olympic Swimming Pool", category: "Sports", imageUrl: "/images/facilities/swimming_pool.webp", isFeatured: true, order: 3 },
+        { title: "Smart Interactive Classroom", category: "Academics", imageUrl: "/images/facilities/smart_classroom.webp", isFeatured: true, order: 4 },
+        { title: "Digital Knowledge Library", category: "Facilities", imageUrl: "/images/facilities/library.webp", isFeatured: true, order: 5 },
+        { title: "Performing Arts & Music Studio", category: "Arts", imageUrl: "/images/facilities/music_dance.webp", isFeatured: true, order: 6 },
+        { title: "GPS Air-Conditioned Buses", category: "Transport", imageUrl: "/images/facilities/transport_bus.webp", isFeatured: true, order: 7 },
+        { title: "Comprehensive Science Labs", category: "Academics", imageUrl: "/images/facilities/science_lab.webp", isFeatured: true, order: 8 },
+        { title: "Art & Pottery Studio", category: "Arts", imageUrl: "/images/facilities/art_craft_studio.webp", isFeatured: true, order: 9 },
+        { title: "Campus Health & Medical Bay", category: "Facilities", imageUrl: "/images/facilities/medical_infirmary.webp", isFeatured: true, order: 10 },
+        { title: "Campus Security & Safety", category: "Facilities", imageUrl: "/images/facilities/campus_security.webp", isFeatured: true, order: 11 }
+      ]);
+    }
+    await VideoGallery.deleteMany({
+      $or: [
+        { youtubeUrl: { $regex: /dQw4w9WgXcQ|rickroll|placeholder|example/i } },
+        { videoUrl: { $regex: /dQw4w9WgXcQ|rickroll|placeholder|example/i } }
+      ]
+    });
+    const videoCount = await VideoGallery.countDocuments({ isDeleted: false });
+    if (videoCount === 0) {
+      await VideoGallery.insertMany([
+        {
+          title: "DPS Indirapuram Virtual Campus Tour & Infrastructure",
+          category: "Campus Tour",
+          videoUrl: "/videos/campus_hero.mp4",
+          thumbnailUrl: "/images/dps/slider_1.webp",
+          order: 1,
+          isPublished: true,
+          isDeleted: false
+        }
+      ]);
+    }
+    const attachmentCount = await Attachment.countDocuments({ isDeleted: false });
+    if (attachmentCount === 0) {
+      await Attachment.insertMany([
+        {
+          title: "Annual Academic Calendar 2026-27",
+          category: "Calendar",
+          fileUrl: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf",
+          fileName: "annual-academic-calendar-2026-27.pdf",
+          fileType: "application/pdf",
+          fileSize: 24e5
+        },
+        {
+          title: "Mandatory Public Disclosure (CBSE)",
+          category: "CBSE Compliance",
+          fileUrl: "https://www.dpsindirapuram.com/docs/mandatory-disclosure.pdf",
+          fileName: "cbse-mandatory-public-disclosure.pdf",
+          fileType: "application/pdf",
+          fileSize: 18e5
+        },
+        {
+          title: "Fee Structure & Payment Schedule 2026-27",
+          category: "Admissions",
+          fileUrl: "https://www.dpsindirapuram.com/docs/fee-structure.pdf",
+          fileName: "dpsi-fee-structure-2026-27.pdf",
+          fileType: "application/pdf",
+          fileSize: 95e4
+        }
+      ]);
+    }
+    const tcCount = await TransferCertificate.countDocuments({ isDeleted: false });
+    if (tcCount === 0) {
+      await TransferCertificate.insertMany([
+        {
+          admissionNumber: "ADM-18492",
+          dob: "2010-05-14",
+          studentName: "Aarav Sharma",
+          fatherName: "Mr. Vikram Sharma",
+          motherName: "Mrs. Pooja Sharma",
+          classLeaving: "Class X",
+          dateOfIssue: /* @__PURE__ */ new Date("2025-04-10"),
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Parent Transfer",
+          isDeleted: false
+        },
+        {
+          admissionNumber: "ADM-19203",
+          dob: "2008-09-22",
+          studentName: "Riya Verma",
+          fatherName: "Mr. Alok Verma",
+          motherName: "Mrs. Sneha Verma",
+          classLeaving: "Class XII",
+          dateOfIssue: /* @__PURE__ */ new Date("2025-05-18"),
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Course Completed",
+          isDeleted: false
+        },
+        {
+          admissionNumber: "DPSI-1082",
+          dob: "2009-11-15",
+          studentName: "Kabir Mehra",
+          fatherName: "Mr. Rajesh Mehra",
+          motherName: "Mrs. Sangeeta Mehra",
+          classLeaving: "Class XI",
+          dateOfIssue: /* @__PURE__ */ new Date("2025-06-01"),
+          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
+          status: "Issued",
+          remarks: "Higher Studies Relocation",
+          isDeleted: false
+        }
+      ]);
+    } else {
+      await TransferCertificate.updateMany(
+        { dob: { $exists: false } },
+        { $set: { dob: "2010-01-01" } }
+      );
+    }
+    const AdminUser = await getAdminUserModel();
+    const adminUser = await AdminUser.findOne({ username: { $regex: /^admin$/i } });
+    const initialPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD;
+    if (!adminUser && initialPassword) {
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(initialPassword, salt);
+      await AdminUser.create({
+        username: process.env.ADMIN_USERNAME || "Admin",
+        passwordHash,
+        role: "superadmin",
+        mustChangePassword: true
+      });
+    }
+    console.log("\u2705 MongoDB Auto-Seeding completed successfully with all models populated!");
+  } catch (error50) {
+    console.warn("MongoDB Auto-Seeding warning:", error50);
+  }
+}
+var init_seedDatabase = __esm({
+  "server/lib/seedDatabase.ts"() {
+    "use strict";
+    init_cmsSchemas();
+    init_adminUserSchema();
+    init_tenantSchema();
   }
 });
 
@@ -94926,325 +96258,6 @@ var require_cloudinary2 = __commonJS({
   }
 });
 
-// node_modules/dotenv/lib/main.js
-var require_main = __commonJS({
-  "node_modules/dotenv/lib/main.js"(exports, module2) {
-    var fs = __require("fs");
-    var path = __require("path");
-    var os3 = __require("os");
-    var crypto4 = __require("crypto");
-    var TIPS = [
-      "\u25C8 encrypted .env [www.dotenvx.com]",
-      "\u25C8 secrets for agents [www.dotenvx.com]",
-      "\u2301 auth for agents [www.vestauth.com]",
-      "\u2318 custom filepath { path: '/custom/path/.env' }",
-      "\u2318 enable debugging { debug: true }",
-      "\u2318 override existing { override: true }",
-      "\u2318 suppress logs { quiet: true }",
-      "\u2318 multiple files { path: ['.env.local', '.env'] }"
-    ];
-    function _getRandomTip() {
-      return TIPS[Math.floor(Math.random() * TIPS.length)];
-    }
-    function parseBoolean2(value) {
-      if (typeof value === "string") {
-        return !["false", "0", "no", "off", ""].includes(value.toLowerCase());
-      }
-      return Boolean(value);
-    }
-    function supportsAnsi() {
-      return process.stdout.isTTY;
-    }
-    function dim(text) {
-      return supportsAnsi() ? `\x1B[2m${text}\x1B[0m` : text;
-    }
-    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
-    function parse4(src) {
-      const obj = {};
-      let lines = src.toString();
-      lines = lines.replace(/\r\n?/mg, "\n");
-      let match2;
-      while ((match2 = LINE.exec(lines)) != null) {
-        const key = match2[1];
-        let value = match2[2] || "";
-        value = value.trim();
-        const maybeQuote = value[0];
-        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
-        if (maybeQuote === '"') {
-          value = value.replace(/\\n/g, "\n");
-          value = value.replace(/\\r/g, "\r");
-        }
-        obj[key] = value;
-      }
-      return obj;
-    }
-    function _parseVault(options) {
-      options = options || {};
-      const vaultPath = _vaultPath(options);
-      options.path = vaultPath;
-      const result = DotenvModule.configDotenv(options);
-      if (!result.parsed) {
-        const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
-        err.code = "MISSING_DATA";
-        throw err;
-      }
-      const keys = _dotenvKey(options).split(",");
-      const length = keys.length;
-      let decrypted;
-      for (let i5 = 0; i5 < length; i5++) {
-        try {
-          const key = keys[i5].trim();
-          const attrs = _instructions(result, key);
-          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
-          break;
-        } catch (error50) {
-          if (i5 + 1 >= length) {
-            throw error50;
-          }
-        }
-      }
-      return DotenvModule.parse(decrypted);
-    }
-    function _warn(message) {
-      console.error(`\u26A0 ${message}`);
-    }
-    function _debug(message) {
-      console.log(`\u2506 ${message}`);
-    }
-    function _log(message) {
-      console.log(`\u25C7 ${message}`);
-    }
-    function _dotenvKey(options) {
-      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
-        return options.DOTENV_KEY;
-      }
-      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
-        return process.env.DOTENV_KEY;
-      }
-      return "";
-    }
-    function _instructions(result, dotenvKey) {
-      let uri;
-      try {
-        uri = new URL(dotenvKey);
-      } catch (error50) {
-        if (error50.code === "ERR_INVALID_URL") {
-          const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
-          err.code = "INVALID_DOTENV_KEY";
-          throw err;
-        }
-        throw error50;
-      }
-      const key = uri.password;
-      if (!key) {
-        const err = new Error("INVALID_DOTENV_KEY: Missing key part");
-        err.code = "INVALID_DOTENV_KEY";
-        throw err;
-      }
-      const environment = uri.searchParams.get("environment");
-      if (!environment) {
-        const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
-        err.code = "INVALID_DOTENV_KEY";
-        throw err;
-      }
-      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
-      const ciphertext = result.parsed[environmentKey];
-      if (!ciphertext) {
-        const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
-        err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
-        throw err;
-      }
-      return { ciphertext, key };
-    }
-    function _vaultPath(options) {
-      let possibleVaultPath = null;
-      if (options && options.path && options.path.length > 0) {
-        if (Array.isArray(options.path)) {
-          for (const filepath of options.path) {
-            if (fs.existsSync(filepath)) {
-              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
-            }
-          }
-        } else {
-          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
-        }
-      } else {
-        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
-      }
-      if (fs.existsSync(possibleVaultPath)) {
-        return possibleVaultPath;
-      }
-      return null;
-    }
-    function _resolveHome(envPath) {
-      return envPath[0] === "~" ? path.join(os3.homedir(), envPath.slice(1)) : envPath;
-    }
-    function _configVault(options) {
-      const debug2 = parseBoolean2(process.env.DOTENV_CONFIG_DEBUG || options && options.debug);
-      const quiet = parseBoolean2(process.env.DOTENV_CONFIG_QUIET || options && options.quiet);
-      if (debug2 || !quiet) {
-        _log("loading env from encrypted .env.vault");
-      }
-      const parsed = DotenvModule._parseVault(options);
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      DotenvModule.populate(processEnv, parsed, options);
-      return { parsed };
-    }
-    function configDotenv(options) {
-      const dotenvPath = path.resolve(process.cwd(), ".env");
-      let encoding = "utf8";
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      let debug2 = parseBoolean2(processEnv.DOTENV_CONFIG_DEBUG || options && options.debug);
-      let quiet = parseBoolean2(processEnv.DOTENV_CONFIG_QUIET || options && options.quiet);
-      if (options && options.encoding) {
-        encoding = options.encoding;
-      } else {
-        if (debug2) {
-          _debug("no encoding is specified (UTF-8 is used by default)");
-        }
-      }
-      let optionPaths = [dotenvPath];
-      if (options && options.path) {
-        if (!Array.isArray(options.path)) {
-          optionPaths = [_resolveHome(options.path)];
-        } else {
-          optionPaths = [];
-          for (const filepath of options.path) {
-            optionPaths.push(_resolveHome(filepath));
-          }
-        }
-      }
-      let lastError;
-      const parsedAll = {};
-      for (const path2 of optionPaths) {
-        try {
-          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
-          DotenvModule.populate(parsedAll, parsed, options);
-        } catch (e5) {
-          if (debug2) {
-            _debug(`failed to load ${path2} ${e5.message}`);
-          }
-          lastError = e5;
-        }
-      }
-      const populated = DotenvModule.populate(processEnv, parsedAll, options);
-      debug2 = parseBoolean2(processEnv.DOTENV_CONFIG_DEBUG || debug2);
-      quiet = parseBoolean2(processEnv.DOTENV_CONFIG_QUIET || quiet);
-      if (debug2 || !quiet) {
-        const keysCount = Object.keys(populated).length;
-        const shortPaths = [];
-        for (const filePath of optionPaths) {
-          try {
-            const relative2 = path.relative(process.cwd(), filePath);
-            shortPaths.push(relative2);
-          } catch (e5) {
-            if (debug2) {
-              _debug(`failed to load ${filePath} ${e5.message}`);
-            }
-            lastError = e5;
-          }
-        }
-        _log(`injected env (${keysCount}) from ${shortPaths.join(",")} ${dim(`// tip: ${_getRandomTip()}`)}`);
-      }
-      if (lastError) {
-        return { parsed: parsedAll, error: lastError };
-      } else {
-        return { parsed: parsedAll };
-      }
-    }
-    function config2(options) {
-      if (_dotenvKey(options).length === 0) {
-        return DotenvModule.configDotenv(options);
-      }
-      const vaultPath = _vaultPath(options);
-      if (!vaultPath) {
-        _warn(`you set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}`);
-        return DotenvModule.configDotenv(options);
-      }
-      return DotenvModule._configVault(options);
-    }
-    function decrypt(encrypted, keyStr) {
-      const key = Buffer.from(keyStr.slice(-64), "hex");
-      let ciphertext = Buffer.from(encrypted, "base64");
-      const nonce = ciphertext.subarray(0, 12);
-      const authTag = ciphertext.subarray(-16);
-      ciphertext = ciphertext.subarray(12, -16);
-      try {
-        const aesgcm = crypto4.createDecipheriv("aes-256-gcm", key, nonce);
-        aesgcm.setAuthTag(authTag);
-        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
-      } catch (error50) {
-        const isRange = error50 instanceof RangeError;
-        const invalidKeyLength = error50.message === "Invalid key length";
-        const decryptionFailed = error50.message === "Unsupported state or unable to authenticate data";
-        if (isRange || invalidKeyLength) {
-          const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
-          err.code = "INVALID_DOTENV_KEY";
-          throw err;
-        } else if (decryptionFailed) {
-          const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
-          err.code = "DECRYPTION_FAILED";
-          throw err;
-        } else {
-          throw error50;
-        }
-      }
-    }
-    function populate(processEnv, parsed, options = {}) {
-      const debug2 = Boolean(options && options.debug);
-      const override = Boolean(options && options.override);
-      const populated = {};
-      if (typeof parsed !== "object") {
-        const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
-        err.code = "OBJECT_REQUIRED";
-        throw err;
-      }
-      for (const key of Object.keys(parsed)) {
-        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
-          if (override === true) {
-            processEnv[key] = parsed[key];
-            populated[key] = parsed[key];
-          }
-          if (debug2) {
-            if (override === true) {
-              _debug(`"${key}" is already defined and WAS overwritten`);
-            } else {
-              _debug(`"${key}" is already defined and was NOT overwritten`);
-            }
-          }
-        } else {
-          processEnv[key] = parsed[key];
-          populated[key] = parsed[key];
-        }
-      }
-      return populated;
-    }
-    var DotenvModule = {
-      configDotenv,
-      _configVault,
-      _parseVault,
-      config: config2,
-      decrypt,
-      parse: parse4,
-      populate
-    };
-    module2.exports.configDotenv = DotenvModule.configDotenv;
-    module2.exports._configVault = DotenvModule._configVault;
-    module2.exports._parseVault = DotenvModule._parseVault;
-    module2.exports.config = DotenvModule.config;
-    module2.exports.decrypt = DotenvModule.decrypt;
-    module2.exports.parse = DotenvModule.parse;
-    module2.exports.populate = DotenvModule.populate;
-    module2.exports = DotenvModule;
-  }
-});
-
 // server/lib/cloudinary.ts
 var cloudinary_exports = {};
 __export(cloudinary_exports, {
@@ -95284,13 +96297,13 @@ async function uploadToCloudinary(buffer, folder = "dpsi_cms", resourceType = "a
     uploadStream.end(buffer);
   });
 }
-var import_cloudinary, import_dotenv, cloudinary_default;
+var import_cloudinary, import_dotenv2, cloudinary_default;
 var init_cloudinary = __esm({
   "server/lib/cloudinary.ts"() {
     "use strict";
     import_cloudinary = __toESM(require_cloudinary2(), 1);
-    import_dotenv = __toESM(require_main(), 1);
-    import_dotenv.default.config();
+    import_dotenv2 = __toESM(require_main(), 1);
+    import_dotenv2.default.config();
     import_cloudinary.v2.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
       api_key: process.env.CLOUDINARY_API_KEY || "",
@@ -130812,13 +131825,13 @@ async function deleteFromR2(key, bucketName = R2_BUCKET_NAME) {
     return false;
   }
 }
-var import_client_s3, import_dotenv2, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_DOMAIN, r2Client;
+var import_client_s3, import_dotenv3, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_DOMAIN, r2Client;
 var init_cloudflareR2 = __esm({
   "server/lib/cloudflareR2.ts"() {
     "use strict";
     import_client_s3 = __toESM(require_dist_cjs71(), 1);
-    import_dotenv2 = __toESM(require_main(), 1);
-    import_dotenv2.default.config();
+    import_dotenv3 = __toESM(require_main(), 1);
+    import_dotenv3.default.config();
     R2_ACCOUNT_ID = (process.env.CLOUDFLARE_R2_ACCOUNT_ID || "").trim();
     R2_ACCESS_KEY_ID = (process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || "").trim();
     R2_SECRET_ACCESS_KEY = (process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || "").trim();
@@ -157600,6 +158613,9 @@ init2({
   enableLogs: true
 });
 
+// server/boot.ts
+var import_dotenv4 = __toESM(require_main(), 1);
+
 // node_modules/hono/dist/compose.js
 var compose = (middleware, onError2, onNotFound) => {
   return (context2, next) => {
@@ -179263,976 +180279,10 @@ var import_jsonwebtoken2 = __toESM(require_jsonwebtoken(), 1);
 var import_mongoose17 = __toESM(require_mongoose2(), 1);
 import bcrypt2 from "bcryptjs";
 init_cmsSchemas();
-
-// server/models/adminUserSchema.ts
-var import_mongoose15 = __toESM(require_mongoose2(), 1);
-init_mongodb();
-var AdminUserSchema = new import_mongoose15.Schema(
-  {
-    username: { type: String, required: true, unique: true },
-    email: { type: String },
-    passwordHash: { type: String, required: true },
-    role: { type: String, default: "admin" },
-    tenantId: { type: String, default: "dpsi" },
-    mustChangePassword: { type: Boolean, default: false },
-    lastLogin: { type: Date }
-  },
-  { timestamps: true }
-);
-async function getAdminUserModel() {
-  const conn = await getDbConnection("dpsi_admin");
-  return conn.models.AdminUser || conn.model("AdminUser", AdminUserSchema);
-}
-
-// server/cms-router.ts
+init_adminUserSchema();
+init_tenantSchema();
+init_seedDatabase();
 import crypto3 from "crypto";
-
-// server/models/tenantSchema.ts
-var import_mongoose16 = __toESM(require_mongoose2(), 1);
-init_mongodb();
-var TenantSchema = new import_mongoose16.Schema(
-  {
-    tenantId: { type: String, required: true, unique: true, index: true },
-    schoolName: { type: String, required: true },
-    schoolCode: { type: String, required: true, unique: true, index: true },
-    domain: { type: String, index: true },
-    logoUrl: { type: String, default: "/logo.webp" },
-    faviconUrl: { type: String, default: "/favicon.ico" },
-    primaryColor: { type: String, default: "#047857" },
-    secondaryColor: { type: String, default: "#065f46" },
-    contactEmail: { type: String },
-    contactPhone: { type: String },
-    address: { type: String },
-    status: { type: String, enum: ["active", "suspended"], default: "active" },
-    features: {
-      aiChatbot: { type: Boolean, default: true },
-      tcPortal: { type: Boolean, default: true },
-      gallery: { type: Boolean, default: true },
-      munRegistration: { type: Boolean, default: true }
-    }
-  },
-  { timestamps: true }
-);
-async function getTenantModel() {
-  const conn = await getDbConnection("dpsi_admin");
-  return conn.models.Tenant || conn.model("Tenant", TenantSchema);
-}
-
-// server/lib/seedDatabase.ts
-init_cmsSchemas();
-import bcrypt from "bcryptjs";
-async function seedDatabase(tenantId = "dpsi", _options) {
-  try {
-    const Tenant = await getTenantModel();
-    await Tenant.findOneAndUpdate(
-      { tenantId: "dpsi" },
-      {
-        $setOnInsert: {
-          tenantId: "dpsi",
-          schoolName: "Delhi Public School Indirapuram",
-          schoolCode: "DPSI-60297",
-          domain: "dpsindirapuram.com",
-          primaryColor: "#047857",
-          secondaryColor: "#065f46",
-          contactEmail: "info@dpsindirapuram.com",
-          contactPhone: "+91-0120-4660000, 4670000",
-          address: "526/1, Ahinsa Khand-II, Indirapuram, Ghaziabad, U.P. - 201014",
-          status: "active",
-          features: {
-            aiChatbot: true,
-            tcPortal: true,
-            gallery: true,
-            munRegistration: true
-          }
-        }
-      },
-      { upsert: true }
-    );
-    const {
-      SiteSettings,
-      Achievement,
-      Testimonial,
-      Leadership,
-      Facility,
-      Department,
-      AdmissionStep,
-      Faq,
-      QuickStat,
-      TimelineItem,
-      CoreValue,
-      Slider,
-      Page,
-      Menu,
-      Marquee,
-      Popup,
-      Activity,
-      Attachment,
-      FeatureCard
-    } = await getMainModels(tenantId);
-    const { GalleryImage, VideoGallery } = await getGalleryModels(tenantId);
-    const { TransferCertificate } = await getTcModels(tenantId);
-    const defaultSettings = [
-      { key: "school_name", value: "Delhi Public School Indirapuram", label: "School Name", group: "general" },
-      { key: "school_tagline", value: "Service Before Self \u2022 Nurturing Global Leaders", label: "School Tagline", group: "general" },
-      { key: "cbse_affiliation_no", value: "2130663", label: "CBSE Affiliation No.", group: "general" },
-      { key: "school_code", value: "60297", label: "School Code", group: "general" },
-      { key: "contact_phone", value: "+91-0120-4660000, 4670000", label: "Primary Phone", group: "contact" },
-      { key: "contact_email", value: "info@dpsindirapuram.com", label: "General Email", group: "contact" },
-      { key: "contact_admissions_email", value: "admissions@dpsindirapuram.com", label: "Admissions Email", group: "contact" },
-      { key: "contact_address", value: "526/1, Ahinsa Khand-II, Indirapuram, Ghaziabad, U.P. - 201014", label: "Campus Address", group: "contact" },
-      { key: "office_hours", value: "Monday \u2013 Saturday: 8:00 AM \u2013 3:00 PM (Second & Fourth Saturdays Closed)", label: "Visiting Hours", group: "contact" },
-      { key: "google_map_embed_url", value: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.9961138244976!2d77.37397757620296!3d28.63073038421833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cf007c65c2b09%3A0xe5a36378e9b88235!2sDelhi%20Public%20School%20Indirapuram!5e0!3m2!1sen!2sin!4v1700000000000", label: "Google Maps Embed URL", group: "contact" },
-      { key: "social_facebook", value: "https://www.facebook.com/DPSIndirapuramGhaziabad", label: "Facebook Page", group: "social" },
-      { key: "social_instagram", value: "https://www.instagram.com/dps_indirapuram/", label: "Instagram Profile", group: "social" },
-      { key: "social_youtube", value: "https://www.youtube.com/channel/UC-jQAVRh4pBXEktpml3yeIQ/videos", label: "YouTube Channel", group: "social" },
-      { key: "social_linkedin", value: "https://www.linkedin.com/school/dps-indirapuram/", label: "LinkedIn Page", group: "social" },
-      { key: "social_twitter", value: "https://twitter.com/dps_indirapuram", label: "Twitter / X Profile", group: "social" },
-      { key: "principal_name", value: "Ms. Priya Elizabeth John", label: "Principal Name", group: "principal" },
-      { key: "principal_title", value: "Principal, DPS Indirapuram", label: "Principal Title", group: "principal" },
-      { key: "principal_badge", value: "Principal's Message", label: "Principal Badge", group: "principal" },
-      { key: "principal_headline", value: "Nurturing Future Leaders with Values & Innovation", label: "Principal Headline", group: "principal" },
-      { key: "principal_image", value: "/images/leadership/priya_john.webp", label: "Principal Image URL", group: "principal" },
-      { key: "principal_message_p1", value: "Welcome to Delhi Public School Indirapuram, where we believe in empowering every child to discover their unique potential. Our institution stands as a beacon of excellence, combining traditional values with futuristic pedagogical methods.", label: "Principal Message (Paragraph 1)", group: "principal" },
-      { key: "principal_message_p2", value: "With over two decades of educational leadership, our state-of-the-art facilities, dedicated educators, and holistic curricula ensure that every student thrives with confidence, character, and intellect.", label: "Principal Message (Paragraph 2)", group: "principal" },
-      { key: "cta_badge", value: "Admissions Open 2026-27", label: "CTA Badge", group: "cta" },
-      { key: "cta_title", value: "Ready to Shape Your Child's Bright Future?", label: "CTA Title", group: "cta" },
-      { key: "cta_button_link", value: "/admissions", label: "CTA Button Link", group: "cta" },
-      { key: "footer_copyright", value: "\xA9 2026 Delhi Public School Indirapuram. All rights reserved.", label: "Footer Copyright", group: "general" },
-      { key: "footer_credit", value: "Developed by : Shashank Jangid", label: "Footer / Credit Text", group: "general" },
-      { key: "footer_tagline", value: "Delhi Public School Indirapuram, established in 2003, is a premier institution under the DPS Society, committed to holistic education and excellence.", label: "Footer Tagline", group: "general" },
-      { key: "chat_welcome_message", value: "Hello! I am DPSI AI. I can assist you with Admissions, Exam Schedules, Vacations, Academic Streams, and Campus Facilities.", label: "AI Chat Welcome Message", group: "ai" },
-      { key: "calendar_pdf_url", value: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", label: "Academic Calendar PDF URL", group: "ai" }
-    ];
-    for (const s of defaultSettings) {
-      await SiteSettings.findOneAndUpdate(
-        { key: s.key },
-        { $setOnInsert: s },
-        { upsert: true, new: true }
-      );
-    }
-    const achievementCount = await Achievement.countDocuments({ isDeleted: false });
-    if (achievementCount === 0) {
-      await Achievement.insertMany([
-        {
-          studentName: "Siddhant Tiwari",
-          className: "Class X",
-          score: "99.4%",
-          exam: "CBSE Board Examination",
-          stream: "All India Rank #1",
-          rank: "#1 Rank (Class X)",
-          year: "2025-26",
-          imageUrl: "/images/dps/topper_siddhant.webp",
-          featured: true,
-          order: 1
-        },
-        {
-          studentName: "Ansh Pathak",
-          className: "Class X",
-          score: "99.4%",
-          exam: "CBSE Board Examination",
-          stream: "All India Rank #1",
-          rank: "#1 Rank (Class X)",
-          year: "2025-26",
-          imageUrl: "/images/dps/topper_ansh.webp",
-          featured: true,
-          order: 2
-        },
-        {
-          studentName: "Aayush Jha",
-          className: "Class X",
-          score: "99.2%",
-          exam: "CBSE Board Examination",
-          stream: "All India Rank #2",
-          rank: "#2 Rank (Class X)",
-          year: "2025-26",
-          imageUrl: "/images/dps/topper_aayush.webp",
-          featured: true,
-          order: 3
-        },
-        {
-          studentName: "Arnav Jha",
-          className: "Class X",
-          score: "99.2%",
-          exam: "CBSE Board Examination",
-          stream: "All India Rank #2",
-          rank: "#2 Rank (Class X)",
-          year: "2025-26",
-          imageUrl: "/images/dps/topper_arnav.webp",
-          featured: true,
-          order: 4
-        },
-        {
-          studentName: "Jia Manchanda",
-          className: "Class XII",
-          score: "98.2%",
-          exam: "CBSE Board Examination",
-          stream: "Commerce Stream Topper",
-          rank: "School Rank 1",
-          year: "2025-26",
-          imageUrl: "/images/dps/topper_jia.webp",
-          featured: true,
-          order: 5
-        },
-        {
-          studentName: "Snigdha Shukla",
-          className: "Class XII",
-          score: "97.6%",
-          exam: "CBSE Board Examination",
-          stream: "Humanities Stream Topper",
-          rank: "School Rank 1",
-          year: "2025-26",
-          imageUrl: "/images/dps/topper_snigdha.webp",
-          featured: true,
-          order: 6
-        },
-        {
-          studentName: "Pawni Srivastava",
-          className: "Class XII",
-          score: "97.2%",
-          exam: "CBSE Board Examination",
-          stream: "Science Stream Topper",
-          rank: "School Rank 1",
-          year: "2025-26",
-          imageUrl: "/images/dps/topper_pawni.webp",
-          featured: true,
-          order: 7
-        }
-      ]);
-    }
-    const testimonialCount = await Testimonial.countDocuments({ isDeleted: false });
-    if (testimonialCount === 0) {
-      await Testimonial.insertMany([
-        {
-          name: "Dr. Rajesh Sharma",
-          role: "Parent of Class XII Student",
-          content: "The holistic environment and focus on futuristic technology like AI & Robotics at DPS Indirapuram helped my child excel academically while developing strong leadership skills.",
-          avatarUrl: "/images/leadership/priya_john.webp",
-          rating: 5,
-          featured: true,
-          order: 1
-        },
-        {
-          name: "Meenakshi Verma",
-          role: "Parent of Class X Student",
-          content: "The dedicated faculty, Olympic-level sports facilities, and personal attention given to each student makes DPS Indirapuram truly the top school in the NCR.",
-          avatarUrl: "/images/leadership/santosh_bansal.webp",
-          rating: 5,
-          featured: true,
-          order: 2
-        },
-        {
-          name: "Col. Sanjeev Tyagi",
-          role: "Parent of Class VIII Student",
-          content: "Discipline, character building, and academic brilliance are ingrained in every DPS Indirapuram student. We are proud parents!",
-          avatarUrl: "/images/leadership/vk_shunglu.webp",
-          rating: 5,
-          featured: true,
-          order: 3
-        }
-      ]);
-    }
-    const leadershipCount = await Leadership.countDocuments({ isDeleted: false });
-    if (leadershipCount === 0) {
-      await Leadership.insertMany([
-        {
-          name: "Mr. V.K. Shunglu",
-          role: "Chairman, DPS Society & Managing Committee",
-          designation: "Chairman",
-          bio: "Eminent civil servant and former Comptroller and Auditor General of India, providing visionary leadership to DPS Society institutions across the world.",
-          imageUrl: "/images/leadership/vk_shunglu.webp",
-          order: 1,
-          category: "Management"
-        },
-        {
-          name: "Ms. Santosh Bansal",
-          role: "Pro-Vice Chairperson",
-          designation: "Pro-Vice Chairperson",
-          bio: "Pioneering educator and administrator committed to cultivating world-class educational opportunities and infrastructure for students.",
-          imageUrl: "/images/leadership/santosh_bansal.webp",
-          order: 2,
-          category: "Management"
-        },
-        {
-          name: "Ms. Priya Elizabeth John",
-          role: "Principal, DPS Indirapuram",
-          designation: "Principal",
-          bio: "National Award-winning educator driving innovation in CBSE pedagogy, holistic student well-being, and future-ready robotics curriculum.",
-          imageUrl: "/images/leadership/priya_john.webp",
-          order: 3,
-          category: "Principal"
-        }
-      ]);
-    }
-    const initialFacilities = [
-      {
-        title: "Design, Robotics & Ai Lab",
-        category: "Innovation & Technology",
-        description: "State-of-the-art AI & Robotics innovation center equipped with humanoid robots, Arduino/Raspberry Pi workstations, 3D printers, IoT microcontrollers, and CAD software for hands-on engineering.",
-        icon: "Bot",
-        imageUrl: "/images/facilities/ai_robotics_lab.webp",
-        geometry: "torusKnot",
-        color: "#047857",
-        accent: "#10b981",
-        order: 1
-      },
-      {
-        title: "MakerSpace",
-        category: "Innovation & Creativity",
-        description: "A collaborative hands-on creative workspace where students design, build, and invent using digital fabrication, woodworking, rapid prototyping, and electronics tools.",
-        icon: "Boxes",
-        imageUrl: "/images/facilities/art_craft_studio.webp",
-        geometry: "octahedron",
-        color: "#0284c7",
-        accent: "#38bdf8",
-        order: 2
-      },
-      {
-        title: "Innovation Club",
-        category: "Student Clubs & Research",
-        description: "A vibrant incubator hub for student-led science projects, patent exploration, hackathons, STEAM challenges, and inter-school innovation summits.",
-        icon: "Rocket",
-        imageUrl: "/images/facilities/smart_classroom.webp",
-        geometry: "icosahedron",
-        color: "#d97706",
-        accent: "#f59e0b",
-        order: 3
-      },
-      {
-        title: "Advanced Science Laboratories",
-        category: "Academics",
-        description: "State-of-the-art Physics, Chemistry, and Biology laboratories equipped with modern precision apparatus and safety systems.",
-        icon: "FlaskConical",
-        imageUrl: "/images/facilities/science_lab.webp",
-        geometry: "dodecahedron",
-        color: "#1d4ed8",
-        accent: "#60a5fa",
-        order: 4
-      },
-      {
-        title: "Next-Gen Smart Classrooms",
-        category: "Infrastructure",
-        description: "Equipped with interactive digital touchboards, ergonomic learning pods, and high-speed gigabit connectivity.",
-        icon: "Wifi",
-        imageUrl: "/images/facilities/smart_classroom.webp",
-        geometry: "icosahedron",
-        color: "#7c3aed",
-        accent: "#a78bfa",
-        order: 5
-      },
-      {
-        title: "Sports & Aquatic Complex",
-        category: "Sports",
-        description: "Olympic-size swimming pool, basketball courts, cricket ground, athletics track, and indoor badminton courts.",
-        icon: "Dumbbell",
-        imageUrl: "/images/facilities/swimming_pool.webp",
-        geometry: "octahedron",
-        color: "#059669",
-        accent: "#34d399",
-        order: 6
-      },
-      {
-        title: "Digital Knowledge Library",
-        category: "Academics",
-        description: "A vast repository of 50,000+ books, digital archives, e-journals, and quiet reading spaces for focused study.",
-        icon: "BookOpen",
-        imageUrl: "/images/facilities/library.webp",
-        geometry: "torusKnot",
-        color: "#b45309",
-        accent: "#fbbf24",
-        order: 7
-      },
-      {
-        title: "Performing Arts & Music Studio",
-        category: "Arts",
-        description: "Professional music rooms, dance studios, and an auditorium with stage lighting and acoustics.",
-        icon: "Music",
-        imageUrl: "/images/facilities/music_dance.webp",
-        geometry: "dodecahedron",
-        color: "#db2777",
-        accent: "#f472b6",
-        order: 8
-      },
-      {
-        title: "Art & Craft Studio",
-        category: "Arts",
-        description: "Spacious art studios for painting, sculpture, pottery, and craft with professional-grade materials.",
-        icon: "Palette",
-        imageUrl: "/images/facilities/art_craft_studio.webp",
-        geometry: "octahedron",
-        color: "#9333ea",
-        accent: "#c084fc",
-        order: 9
-      },
-      {
-        title: "GPS AC Transportation",
-        category: "Transport",
-        description: "Fleet of 50+ GPS-enabled AC buses covering all major areas with trained drivers and attendants.",
-        icon: "Bus",
-        imageUrl: "/images/facilities/transport_bus.webp",
-        geometry: "icosahedron",
-        color: "#4f46e5",
-        accent: "#818cf8",
-        order: 10
-      },
-      {
-        title: "Campus Safety & Security",
-        category: "Safety",
-        description: "24/7 CCTV surveillance, trained security personnel, fire safety systems, and emergency response protocols.",
-        icon: "Shield",
-        imageUrl: "/images/facilities/campus_security.webp",
-        geometry: "torusKnot",
-        color: "#dc2626",
-        accent: "#f87171",
-        order: 11
-      },
-      {
-        title: "Health & Medical Center",
-        category: "Health",
-        description: "On-campus medical facility with qualified nurses, annual health checkups, and counseling services.",
-        icon: "HeartPulse",
-        imageUrl: "/images/facilities/medical_infirmary.webp",
-        geometry: "octahedron",
-        color: "#e11d48",
-        accent: "#fb7185",
-        order: 12
-      }
-    ];
-    for (const fac of initialFacilities) {
-      await Facility.findOneAndUpdate(
-        { title: fac.title },
-        { $setOnInsert: { ...fac, isActive: true, isDeleted: false } },
-        { upsert: true }
-      );
-    }
-    const departmentCount = await Department.countDocuments({ isDeleted: false });
-    if (departmentCount === 0) {
-      await Department.insertMany([
-        {
-          name: "Science",
-          subjects: "Physics, Chemistry, Biology, Biotechnology",
-          icon: "FlaskConical",
-          color: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
-          order: 1
-        },
-        {
-          name: "Mathematics",
-          subjects: "Pure Math, Applied Math, Statistics",
-          icon: "Calculator",
-          color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400",
-          order: 2
-        },
-        {
-          name: "Languages",
-          subjects: "English, Hindi, Sanskrit, French, German",
-          icon: "Globe",
-          color: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
-          order: 3
-        },
-        {
-          name: "Arts & Humanities",
-          subjects: "History, Geography, Political Science, Economics, Psychology",
-          icon: "Palette",
-          color: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400",
-          order: 4
-        },
-        {
-          name: "Computer Science & AI",
-          subjects: "Artificial Intelligence, Robotics, Python, Web Dev, Data Science",
-          icon: "Cpu",
-          color: "bg-violet-50 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400",
-          order: 5
-        },
-        {
-          name: "Physical Education",
-          subjects: "Sports Science, Athletics, Yoga, Health Education",
-          icon: "Activity",
-          color: "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
-          order: 6
-        }
-      ]);
-    }
-    const stepCount = await AdmissionStep.countDocuments({ isDeleted: false });
-    if (stepCount === 0) {
-      await AdmissionStep.insertMany([
-        {
-          stepNumber: 1,
-          title: "Online Registration",
-          description: "Fill out the online application form with student bio-data and parent details.",
-          icon: "FileText",
-          order: 1
-        },
-        {
-          stepNumber: 2,
-          title: "Document Submission",
-          description: "Upload necessary documents: birth certificate, previous report cards, and transfer certificate.",
-          icon: "ClipboardList",
-          order: 2
-        },
-        {
-          stepNumber: 3,
-          title: "Registration Fee Payment",
-          description: "Pay the registration processing fee securely via our instant payment gateway.",
-          icon: "CreditCard",
-          order: 3
-        },
-        {
-          stepNumber: 4,
-          title: "Student Interaction & Assessment",
-          description: "Participate in an interactive evaluation designed to understand the child's academic and emotional readiness.",
-          icon: "BadgeCheck",
-          order: 4
-        },
-        {
-          stepNumber: 5,
-          title: "Admission Formalities & Onboarding",
-          description: "Receive admission confirmation letter and complete the enrollment formalities.",
-          icon: "CheckCircle",
-          order: 5
-        }
-      ]);
-    }
-    const faqCount = await Faq.countDocuments({ isDeleted: false });
-    if (faqCount === 0) {
-      await Faq.insertMany([
-        {
-          question: "What is the age criteria for admission to Pre-School / Nursery?",
-          answer: "The child should be 3+ years as of March 31st of the admission academic year.",
-          category: "Admissions",
-          order: 1
-        },
-        {
-          question: "What documents are required for the admission process?",
-          answer: "Birth certificate, passport-size photographs of student & parents, previous report card, transfer certificate (Class II upwards), and proof of residence.",
-          category: "Admissions",
-          order: 2
-        },
-        {
-          question: "Is there an entrance examination for higher classes?",
-          answer: "An age-appropriate competency assessment is conducted for Class I onwards to understand baseline readiness.",
-          category: "Admissions",
-          order: 3
-        },
-        {
-          question: "What is the fee structure and scholarship policy?",
-          answer: "Please contact our admissions office or refer to the fee breakdown table. Merit scholarships are offered for national Olympiad winners and sports champions.",
-          category: "Admissions",
-          order: 4
-        },
-        {
-          question: "Does the school provide GPS-monitored AC bus transport?",
-          answer: "Yes, we operate an extensive fleet of air-conditioned GPS-tracked buses covering Ghaziabad, Noida, and East Delhi.",
-          category: "Transport",
-          order: 5
-        },
-        {
-          question: "What is the average student-teacher ratio?",
-          answer: "We strictly maintain a 25:1 student-to-educator ratio to guarantee individual attention and care.",
-          category: "General",
-          order: 6
-        }
-      ]);
-    }
-    const statCount = await QuickStat.countDocuments({ isDeleted: false });
-    if (statCount === 0) {
-      await QuickStat.insertMany([
-        { label: "Students Enrolled", value: "3,500+", icon: "GraduationCap", order: 1 },
-        { label: "CBSE Board Average", value: "88.6%", icon: "Award", order: 2 },
-        { label: "Expert Educators", value: "220+", icon: "Users", order: 3 },
-        { label: "Campus Area", value: "10 Acres", icon: "Building", order: 4 }
-      ]);
-    }
-    const timelineCount = await TimelineItem.countDocuments({ isDeleted: false });
-    if (timelineCount === 0) {
-      await TimelineItem.insertMany([
-        { year: "2003", title: "Foundation", description: "DPS Indirapuram established under the aegis of The DPS Society.", order: 1 },
-        { year: "2008", title: "CBSE Affiliation", description: "Granted permanent CBSE affiliation with exemplary rating.", order: 2 },
-        { year: "2012", title: "First Batch Success", description: "100% CBSE board results with multiple students securing >95%.", order: 3 },
-        { year: "2015", title: "Sports Complex", description: "Inaugurated Olympic-size aquatic complex and national sports grounds.", order: 4 },
-        { year: "2021", title: "Digital Transformation", description: "Complete smart classroom and digital infrastructure upgrade.", order: 5 },
-        { year: "2023", title: "20th Anniversary", description: "Celebrated two decades of holistic excellence and character building.", order: 6 },
-        { year: "2024", title: "AI & Robotics Lab", description: "State-of-the-art innovation center launched with humanoid robotics kits.", order: 7 },
-        { year: "2025", title: "Global Recognition", description: "Ranked among top CBSE schools in India with British Council ISA honors.", order: 8 }
-      ]);
-    }
-    const valueCount = await CoreValue.countDocuments({ isDeleted: false });
-    if (valueCount === 0) {
-      await CoreValue.insertMany([
-        {
-          title: "Excellence",
-          description: "Striving for the highest standards in education and character development.",
-          icon: "Target",
-          order: 1
-        },
-        {
-          title: "Integrity",
-          description: "Building honest, ethical individuals who lead with moral courage.",
-          icon: "Heart",
-          order: 2
-        },
-        {
-          title: "Inclusivity",
-          description: "Celebrating diversity and creating a welcoming environment for all.",
-          icon: "Users",
-          order: 3
-        },
-        {
-          title: "Innovation",
-          description: "Embracing new ideas and technologies to prepare students for the future.",
-          icon: "BookOpen",
-          order: 4
-        },
-        {
-          title: "Resilience",
-          description: "Developing grit and perseverance to overcome challenges with confidence.",
-          icon: "Award",
-          order: 5
-        }
-      ]);
-    }
-    const sliderCount = await Slider.countDocuments({ isDeleted: false });
-    if (sliderCount === 0) {
-      await Slider.insertMany([
-        {
-          title: "Empowering Minds, Shaping Tomorrow",
-          subtitle: "Ranked among the Top CBSE Schools in the National Capital Region with 20+ Years of Academic Legacy",
-          imageUrl: "https://res.cloudinary.com/uqty03zf/video/upload/so_0,q_auto,f_auto,w_1920,c_limit/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.jpg",
-          videoUrl: "https://res.cloudinary.com/uqty03zf/video/upload/v1789020646/dpsi_videos/u1s2ebtl3owdvrtxcp4v.mp4",
-          mediaType: "video",
-          buttonText: "Explore Campus",
-          buttonLink: "/about",
-          order: 1
-        },
-        {
-          title: "Futuristic AI & Robotics Innovation",
-          subtitle: "Equipping young minds with humanoid robotics, 3D prototyping, and cutting-edge STEM labs",
-          imageUrl: "/images/dps/slider_2.webp",
-          buttonText: "Discover Facilities",
-          buttonLink: "/facilities",
-          order: 2
-        },
-        {
-          title: "Admissions Open for Academic Session 2026-27",
-          subtitle: "Give your child the foundation of holistic education, global exposure, and athletic excellence",
-          imageUrl: "/images/dps/slider_3.webp",
-          buttonText: "Apply Online",
-          buttonLink: "/admissions",
-          order: 3
-        }
-      ]);
-    }
-    const featureCardCount = await FeatureCard.countDocuments({ isDeleted: false });
-    if (featureCardCount === 0) {
-      await FeatureCard.insertMany([
-        {
-          title: "Humanoid Robotics",
-          description: "AI Innovation Lab with autonomous bots and Raspberry Pi workstations",
-          icon: "Bot",
-          category: "AI Innovation Lab",
-          order: 1,
-          isActive: true
-        },
-        {
-          title: "MakerSpace Lab",
-          description: "Flight Simulators, 3D Printers & Design Thinking Studio",
-          icon: "Cpu",
-          category: "Flight Simulators & D&T",
-          order: 2,
-          isActive: true
-        },
-        {
-          title: "Next-Gen Curriculum",
-          description: "STEAM Pedagogy, Experiential Learning & Global Skill Modules",
-          icon: "Rocket",
-          category: "STEAM & Experiential Learning",
-          order: 3,
-          isActive: true
-        }
-      ]);
-    }
-    const pageCount = await Page.countDocuments({ isDeleted: false });
-    if (pageCount === 0) {
-      await Page.insertMany([
-        {
-          title: "About DPS Indirapuram",
-          slug: "about",
-          category: "About",
-          content: "Delhi Public School Indirapuram is a premier educational institution established in 2003 under the aegis of the DPS Society, New Delhi.",
-          metaTitle: "About Us - DPS Indirapuram",
-          metaDescription: "Learn about the rich legacy, leadership, and vision of DPS Indirapuram.",
-          isPublished: true
-        },
-        {
-          title: "Academic Curriculum & Pedagogy",
-          slug: "academics",
-          category: "Academics",
-          content: "Comprehensive CBSE curriculum integrated with STEAM, AI, and holistic development modules.",
-          metaTitle: "Academics - DPS Indirapuram",
-          metaDescription: "Explore our academic departments, curriculum, and pedagogy.",
-          isPublished: true
-        },
-        {
-          title: "Admissions 2026-27 Guidelines",
-          slug: "admissions",
-          category: "Admissions",
-          content: "Admissions open from Pre-Nursery to Class IX & Class XI for the academic session 2026-27.",
-          metaTitle: "Admissions - DPS Indirapuram",
-          metaDescription: "Apply online for admissions at DPS Indirapuram.",
-          isPublished: true
-        },
-        {
-          title: "World-Class Campus Facilities",
-          slug: "facilities",
-          category: "Facilities",
-          content: "10-acre campus with AI Robotics lab, Olympic swimming pool, smart classrooms, and shooting range.",
-          metaTitle: "Campus Facilities - DPS Indirapuram",
-          metaDescription: "Explore campus infrastructure and sports facilities.",
-          isPublished: true
-        }
-      ]);
-    }
-    const menuCount = await Menu.countDocuments({ isDeleted: false });
-    if (menuCount === 0) {
-      await Menu.insertMany([
-        { title: "Home", url: "/", location: "header", order: 1, isActive: true },
-        { title: "About", url: "/about", location: "header", order: 2, isActive: true },
-        { title: "Vision & Mission", url: "/about#vision", location: "header", parent: "About", order: 1, isActive: true },
-        { title: "Leadership", url: "/about#leadership", location: "header", parent: "About", order: 2, isActive: true },
-        { title: "Academics", url: "/academics", location: "header", order: 3, isActive: true },
-        { title: "Curriculum", url: "/academics#curriculum", location: "header", parent: "Academics", order: 1, isActive: true },
-        { title: "Departments", url: "/academics#departments", location: "header", parent: "Academics", order: 2, isActive: true },
-        { title: "Admissions", url: "/admissions", location: "header", order: 4, isActive: true },
-        { title: "Facilities", url: "/facilities", location: "header", order: 5, isActive: true },
-        { title: "News & Events", url: "/news-events", location: "header", order: 6, isActive: true },
-        { title: "Gallery", url: "/gallery", location: "header", order: 7, isActive: true },
-        { title: "Contact", url: "/contact", location: "header", order: 8, isActive: true },
-        // Footer Quick Links
-        { title: "About Us", url: "/about", location: "footer_quick", order: 1, isActive: true },
-        { title: "Academic Streams", url: "/academics", location: "footer_quick", order: 2, isActive: true },
-        { title: "Admissions Criteria", url: "/admissions", location: "footer_quick", order: 3, isActive: true },
-        { title: "Campus Facilities", url: "/facilities", location: "footer_quick", order: 4, isActive: true },
-        // Footer Resources
-        { title: "SchoolsOS Portal Login", url: "https://dpsindp.schoolforschools.ai/login", location: "footer_resources", order: 1, isActive: true },
-        { title: "Transfer Certificate (TC)", url: "/tc", location: "footer_resources", order: 2, isActive: true },
-        { title: "Annual Academic Calendar", url: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", location: "footer_resources", order: 3, isActive: true },
-        { title: "Mandatory Public Disclosure", url: "/attachments", location: "footer_resources", order: 4, isActive: true }
-      ]);
-    }
-    const marqueeCount = await Marquee.countDocuments({ isDeleted: false });
-    if (marqueeCount === 0) {
-      await Marquee.insertMany([
-        {
-          text: "ADMISSIONS OPEN FOR SESSION 2026\u201327 (PRE-NURSERY TO CLASS IX & XI)",
-          linkUrl: "/admissions",
-          speed: 50,
-          textColor: "#ffffff",
-          bgColor: "#047857",
-          badgeText: "Admissions",
-          isActive: true
-        },
-        {
-          text: "CBSE CLASS XII & X BOARD RESULTS DECLARED \u2014 TOP SCORE 99.4%",
-          linkUrl: "/academics",
-          speed: 50,
-          textColor: "#fef3c7",
-          bgColor: "#b45309",
-          badgeText: "Exam Alert",
-          isActive: true
-        },
-        {
-          text: "TIMES EDUCATION ICONS 2024 AWARD WINNER \u2014 #1 CBSE SCHOOL IN GHAZIABAD",
-          linkUrl: "/about",
-          speed: 50,
-          textColor: "#dbeafe",
-          bgColor: "#1e3a8a",
-          badgeText: "Award",
-          isActive: true
-        }
-      ]);
-    }
-    const popupCount = await Popup.countDocuments({ isDeleted: false });
-    if (popupCount === 0) {
-      await Popup.insertMany([
-        {
-          title: "Admissions Open 2026-27",
-          content: "Online registration is now open for Pre-Nursery through Class IX and XI. Limited seats available.",
-          imageUrl: "/images/dps/slider_3.webp",
-          linkUrl: "/admissions",
-          badgeText: "Admissions 2026-27",
-          buttonText: "Apply Now",
-          showOnLoad: true,
-          isActive: true
-        }
-      ]);
-    }
-    const activityCount = await Activity.countDocuments({ isDeleted: false });
-    if (activityCount === 0) {
-      await Activity.insertMany([
-        {
-          title: "Annual Science & Innovation Exhibition 2025",
-          category: "Innovation",
-          description: "Students demonstrated 100+ working models in Robotics, AI, Renewable Energy, and Smart Cities.",
-          eventDate: /* @__PURE__ */ new Date("2025-11-15"),
-          imageUrl: "/images/facilities/ai_robotics_lab.webp",
-          isPublished: true
-        },
-        {
-          title: "Inter-School Swimming Championship",
-          category: "Sports",
-          description: "DPS Indirapuram aquatic team secured 14 Gold and 8 Silver medals at the CBSE Inter-School Meet.",
-          eventDate: /* @__PURE__ */ new Date("2025-10-22"),
-          imageUrl: "/images/facilities/swimming_pool.webp",
-          isPublished: true
-        },
-        {
-          title: "Model United Nations (DPSI-MUN) 2025",
-          category: "Conferences",
-          description: "Over 500 delegates from across the nation debated pressing global geopolitical issues.",
-          eventDate: /* @__PURE__ */ new Date("2025-09-18"),
-          imageUrl: "/images/facilities/smart_classroom.webp",
-          isPublished: true
-        },
-        {
-          title: "Silver Jubilee Grand Annual Cultural Fest",
-          category: "Culture",
-          description: "A spectacular evening of theatrical musical performance, classical dance, and student art showcase.",
-          eventDate: /* @__PURE__ */ new Date("2025-12-20"),
-          imageUrl: "/images/facilities/music_dance.webp",
-          isPublished: true
-        }
-      ]);
-    }
-    const imageCount = await GalleryImage.countDocuments({ isDeleted: false });
-    if (imageCount === 0) {
-      await GalleryImage.insertMany([
-        { title: "Main Campus Building", category: "Campus", imageUrl: "/images/dps/slider_1.webp", isFeatured: true, order: 1 },
-        { title: "Futuristic AI & Robotics Lab", category: "Facilities", imageUrl: "/images/facilities/ai_robotics_lab.webp", isFeatured: true, order: 2 },
-        { title: "Olympic Swimming Pool", category: "Sports", imageUrl: "/images/facilities/swimming_pool.webp", isFeatured: true, order: 3 },
-        { title: "Smart Interactive Classroom", category: "Academics", imageUrl: "/images/facilities/smart_classroom.webp", isFeatured: true, order: 4 },
-        { title: "Digital Knowledge Library", category: "Facilities", imageUrl: "/images/facilities/library.webp", isFeatured: true, order: 5 },
-        { title: "Performing Arts & Music Studio", category: "Arts", imageUrl: "/images/facilities/music_dance.webp", isFeatured: true, order: 6 },
-        { title: "GPS Air-Conditioned Buses", category: "Transport", imageUrl: "/images/facilities/transport_bus.webp", isFeatured: true, order: 7 },
-        { title: "Comprehensive Science Labs", category: "Academics", imageUrl: "/images/facilities/science_lab.webp", isFeatured: true, order: 8 },
-        { title: "Art & Pottery Studio", category: "Arts", imageUrl: "/images/facilities/art_craft_studio.webp", isFeatured: true, order: 9 },
-        { title: "Campus Health & Medical Bay", category: "Facilities", imageUrl: "/images/facilities/medical_infirmary.webp", isFeatured: true, order: 10 },
-        { title: "Campus Security & Safety", category: "Facilities", imageUrl: "/images/facilities/campus_security.webp", isFeatured: true, order: 11 }
-      ]);
-    }
-    await VideoGallery.deleteMany({
-      $or: [
-        { youtubeUrl: { $regex: /dQw4w9WgXcQ|rickroll|placeholder|example/i } },
-        { videoUrl: { $regex: /dQw4w9WgXcQ|rickroll|placeholder|example/i } }
-      ]
-    });
-    const videoCount = await VideoGallery.countDocuments({ isDeleted: false });
-    if (videoCount === 0) {
-      await VideoGallery.insertMany([
-        {
-          title: "DPS Indirapuram Virtual Campus Tour & Infrastructure",
-          category: "Campus Tour",
-          videoUrl: "/videos/campus_hero.mp4",
-          thumbnailUrl: "/images/dps/slider_1.webp",
-          order: 1,
-          isPublished: true,
-          isDeleted: false
-        }
-      ]);
-    }
-    const attachmentCount = await Attachment.countDocuments({ isDeleted: false });
-    if (attachmentCount === 0) {
-      await Attachment.insertMany([
-        {
-          title: "Annual Academic Calendar 2026-27",
-          category: "Calendar",
-          fileUrl: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf",
-          fileName: "annual-academic-calendar-2026-27.pdf",
-          fileType: "application/pdf",
-          fileSize: 24e5
-        },
-        {
-          title: "Mandatory Public Disclosure (CBSE)",
-          category: "CBSE Compliance",
-          fileUrl: "https://www.dpsindirapuram.com/docs/mandatory-disclosure.pdf",
-          fileName: "cbse-mandatory-public-disclosure.pdf",
-          fileType: "application/pdf",
-          fileSize: 18e5
-        },
-        {
-          title: "Fee Structure & Payment Schedule 2026-27",
-          category: "Admissions",
-          fileUrl: "https://www.dpsindirapuram.com/docs/fee-structure.pdf",
-          fileName: "dpsi-fee-structure-2026-27.pdf",
-          fileType: "application/pdf",
-          fileSize: 95e4
-        }
-      ]);
-    }
-    const tcCount = await TransferCertificate.countDocuments({ isDeleted: false });
-    if (tcCount === 0) {
-      await TransferCertificate.insertMany([
-        {
-          admissionNumber: "ADM-18492",
-          dob: "2010-05-14",
-          studentName: "Aarav Sharma",
-          fatherName: "Mr. Vikram Sharma",
-          motherName: "Mrs. Pooja Sharma",
-          classLeaving: "Class X",
-          dateOfIssue: /* @__PURE__ */ new Date("2025-04-10"),
-          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
-          status: "Issued",
-          remarks: "Parent Transfer",
-          isDeleted: false
-        },
-        {
-          admissionNumber: "ADM-19203",
-          dob: "2008-09-22",
-          studentName: "Riya Verma",
-          fatherName: "Mr. Alok Verma",
-          motherName: "Mrs. Sneha Verma",
-          classLeaving: "Class XII",
-          dateOfIssue: /* @__PURE__ */ new Date("2025-05-18"),
-          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
-          status: "Issued",
-          remarks: "Course Completed",
-          isDeleted: false
-        },
-        {
-          admissionNumber: "DPSI-1082",
-          dob: "2009-11-15",
-          studentName: "Kabir Mehra",
-          fatherName: "Mr. Rajesh Mehra",
-          motherName: "Mrs. Sangeeta Mehra",
-          classLeaving: "Class XI",
-          dateOfIssue: /* @__PURE__ */ new Date("2025-06-01"),
-          certificatePdfUrl: "https://dpsindirapuram.com/tc/sample.pdf",
-          status: "Issued",
-          remarks: "Higher Studies Relocation",
-          isDeleted: false
-        }
-      ]);
-    } else {
-      await TransferCertificate.updateMany(
-        { dob: { $exists: false } },
-        { $set: { dob: "2010-01-01" } }
-      );
-    }
-    const AdminUser = await getAdminUserModel();
-    const adminUser = await AdminUser.findOne({ username: { $regex: /^admin$/i } });
-    const initialPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD;
-    if (!adminUser && initialPassword) {
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(initialPassword, salt);
-      await AdminUser.create({
-        username: process.env.ADMIN_USERNAME || "Admin",
-        passwordHash,
-        role: "superadmin",
-        mustChangePassword: true
-      });
-    }
-    console.log("\u2705 MongoDB Auto-Seeding completed successfully with all models populated!");
-  } catch (error50) {
-    console.warn("MongoDB Auto-Seeding warning:", error50);
-  }
-}
 
 // server/utils/mediaConverter.ts
 import sharp from "sharp";
@@ -181329,6 +181379,7 @@ var cmsRouter = createRouter({
     external_exports.object({
       title: external_exports.string().optional().default(""),
       subtitle: external_exports.string().optional(),
+      badge: external_exports.string().optional().default(""),
       imageUrl: external_exports.string().optional().default("/images/dps/slider_1.webp"),
       videoUrl: external_exports.string().optional(),
       mobileVideoUrl: external_exports.string().optional().default(""),
@@ -181368,6 +181419,7 @@ var cmsRouter = createRouter({
       id: external_exports.union([external_exports.string(), external_exports.any()]),
       title: external_exports.string().optional(),
       subtitle: external_exports.string().optional(),
+      badge: external_exports.string().optional(),
       imageUrl: external_exports.string().optional(),
       videoUrl: external_exports.string().optional(),
       mobileVideoUrl: external_exports.string().optional(),
@@ -182077,7 +182129,30 @@ var cmsRouter = createRouter({
           { key: "mission_text", value: "To provide a stimulating learning environment that fosters academic excellence, physical fitness, emotional well-being, and social responsibility through innovative pedagogy and state-of-the-art infrastructure.", label: "Our Mission (About Us Page)", group: "general" },
           { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
           { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
-          { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" }
+          { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" },
+          { key: "school_affiliation", value: "CBSE Affiliation No. 2130541 \u2022 School Code: 60241", label: "CBSE Affiliation / Accreditation Info", group: "general" },
+          { key: "contact_map_url", value: "https://maps.google.com/maps?q=Delhi%20Public%20School%20Indirapuram%20Ahinsa%20Khand%20Ghaziabad&t=&z=15&ie=UTF8&iwloc=&output=embed", label: "Google Maps Embed URL (Contact Page)", group: "contact" },
+          { key: "office_hours", value: "Monday \u2013 Saturday: 8:00 AM \u2013 3:00 PM (Second & Fourth Saturdays Closed)", label: "School Office Working Hours", group: "contact" },
+          { key: "admission_badge", value: "Session 2026-27 Registrations Open", label: "Admissions Hero Badge / Status", group: "admissions" },
+          { key: "admissions_title", value: "Admissions", label: "Admissions Page Main Title", group: "admissions" },
+          { key: "admissions_subtitle", value: "Join the DPS Indirapuram family. A journey of excellence, discovery, and growth awaits your child.", label: "Admissions Page Subtitle", group: "admissions" },
+          { key: "facilities_badge", value: "DPS Indirapuram \u2022 Campus Infrastructure", label: "Facilities Page Hero Badge", group: "facilities" },
+          { key: "facilities_title", value: "World-Class Facilities", label: "Facilities Page Main Title", group: "facilities" },
+          { key: "facilities_subtitle", value: "Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities.", label: "Facilities Page Subtitle", group: "facilities" },
+          { key: "facilities_metric_1_val", value: "40+ Acres", label: "Facilities Metric 1 Value", group: "facilities" },
+          { key: "facilities_metric_1_label", value: "Green Campus", label: "Facilities Metric 1 Label", group: "facilities" },
+          { key: "facilities_metric_2_val", value: "1,200+", label: "Facilities Metric 2 Value", group: "facilities" },
+          { key: "facilities_metric_2_label", value: "Acoustic Hall", label: "Facilities Metric 2 Label", group: "facilities" },
+          { key: "facilities_metric_3_val", value: "25m", label: "Facilities Metric 3 Value", group: "facilities" },
+          { key: "facilities_metric_3_label", value: "Olympic Pool", label: "Facilities Metric 3 Label", group: "facilities" },
+          { key: "facilities_metric_4_val", value: "100%", label: "Facilities Metric 4 Value", group: "facilities" },
+          { key: "facilities_metric_4_label", value: "Air-Conditioned", label: "Facilities Metric 4 Label", group: "facilities" },
+          { key: "achievements_badge", value: "Academic Excellence", label: "Toppers Section Top Badge", group: "achievements" },
+          { key: "achievements_title", value: "Class X & XII Toppers", label: "Toppers Section Title", group: "achievements" },
+          { key: "achievements_subtitle", value: "Celebrating outstanding academic achievements in CBSE Board Examinations. Our Dipsites continue to set benchmark results nationwide.", label: "Toppers Section Subtitle", group: "achievements" },
+          { key: "testimonials_badge", value: "Parent & Alumni Voices", label: "Testimonials Section Top Badge", group: "testimonials" },
+          { key: "testimonials_title", value: "What They Say About Us", label: "Testimonials Section Main Title", group: "testimonials" },
+          { key: "developer_url", value: "https://dpsiwhale.vercel.app", label: "Developer Website / Portfolio URL", group: "footer" }
         ];
         await SiteSettings.insertMany(defaults).catch(() => {
         });
@@ -182107,7 +182182,30 @@ var cmsRouter = createRouter({
         { key: "mission_text", value: "To provide a stimulating learning environment that fosters academic excellence, physical fitness, emotional well-being, and social responsibility through innovative pedagogy and state-of-the-art infrastructure.", label: "Our Mission (About Us Page)", group: "general" },
         { key: "academics_title", value: "Academic Excellence", label: "Academics Page Title", group: "academics" },
         { key: "academics_subtitle", value: "Our comprehensive curriculum is designed to foster critical thinking, creativity, and a lifelong love for learning.", label: "Academics Page Subtitle", group: "academics" },
-        { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" }
+        { key: "academics_tagline", value: "Pedagogical Standards & Curriculum", label: "Academics Page Tagline / Badge", group: "academics" },
+        { key: "school_affiliation", value: "CBSE Affiliation No. 2130541 \u2022 School Code: 60241", label: "CBSE Affiliation / Accreditation Info", group: "general" },
+        { key: "contact_map_url", value: "https://maps.google.com/maps?q=Delhi%20Public%20School%20Indirapuram%20Ahinsa%20Khand%20Ghaziabad&t=&z=15&ie=UTF8&iwloc=&output=embed", label: "Google Maps Embed URL (Contact Page)", group: "contact" },
+        { key: "office_hours", value: "Monday \u2013 Saturday: 8:00 AM \u2013 3:00 PM (Second & Fourth Saturdays Closed)", label: "School Office Working Hours", group: "contact" },
+        { key: "admission_badge", value: "Session 2026-27 Registrations Open", label: "Admissions Hero Badge / Status", group: "admissions" },
+        { key: "admissions_title", value: "Admissions", label: "Admissions Page Main Title", group: "admissions" },
+        { key: "admissions_subtitle", value: "Join the DPS Indirapuram family. A journey of excellence, discovery, and growth awaits your child.", label: "Admissions Page Subtitle", group: "admissions" },
+        { key: "facilities_badge", value: "DPS Indirapuram \u2022 Campus Infrastructure", label: "Facilities Page Hero Badge", group: "facilities" },
+        { key: "facilities_title", value: "World-Class Facilities", label: "Facilities Page Main Title", group: "facilities" },
+        { key: "facilities_subtitle", value: "Our campus infrastructure is architected to ignite intellectual curiosity, nurture Olympic-standard athleticism, and celebrate artistic mastery across 40+ acres of purpose-built educational facilities.", label: "Facilities Page Subtitle", group: "facilities" },
+        { key: "facilities_metric_1_val", value: "40+ Acres", label: "Facilities Metric 1 Value", group: "facilities" },
+        { key: "facilities_metric_1_label", value: "Green Campus", label: "Facilities Metric 1 Label", group: "facilities" },
+        { key: "facilities_metric_2_val", value: "1,200+", label: "Facilities Metric 2 Value", group: "facilities" },
+        { key: "facilities_metric_2_label", value: "Acoustic Hall", label: "Facilities Metric 2 Label", group: "facilities" },
+        { key: "facilities_metric_3_val", value: "25m", label: "Facilities Metric 3 Value", group: "facilities" },
+        { key: "facilities_metric_3_label", value: "Olympic Pool", label: "Facilities Metric 3 Label", group: "facilities" },
+        { key: "facilities_metric_4_val", value: "100%", label: "Facilities Metric 4 Value", group: "facilities" },
+        { key: "facilities_metric_4_label", value: "Air-Conditioned", label: "Facilities Metric 4 Label", group: "facilities" },
+        { key: "achievements_badge", value: "Academic Excellence", label: "Toppers Section Top Badge", group: "achievements" },
+        { key: "achievements_title", value: "Class X & XII Toppers", label: "Toppers Section Title", group: "achievements" },
+        { key: "achievements_subtitle", value: "Celebrating outstanding academic achievements in CBSE Board Examinations. Our Dipsites continue to set benchmark results nationwide.", label: "Toppers Section Subtitle", group: "achievements" },
+        { key: "testimonials_badge", value: "Parent & Alumni Voices", label: "Testimonials Section Top Badge", group: "testimonials" },
+        { key: "testimonials_title", value: "What They Say About Us", label: "Testimonials Section Main Title", group: "testimonials" },
+        { key: "developer_url", value: "https://dpsiwhale.vercel.app", label: "Developer Website / Portfolio URL", group: "footer" }
       ].filter((d5) => !existingKeys.has(d5.key));
       if (missingDefaults.length > 0) {
         await SiteSettings.insertMany(missingDefaults).catch(() => {
@@ -182144,6 +182242,20 @@ var cmsRouter = createRouter({
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "Protected Field: Modifying Developer Credit Text requires the developer authorization password."
+          });
+        }
+      }
+    }
+    const urlUpdate = input.updates.find((u) => u.key === "developer_url");
+    if (urlUpdate) {
+      const existingDoc = await SiteSettings.findOne({ key: "developer_url" }).lean();
+      const existingVal = existingDoc?.value;
+      if (existingVal !== void 0 && urlUpdate.value.trim() !== existingVal.trim()) {
+        const isAuthorized = verifyDevCreditPassword(input.unlockPassword);
+        if (!isAuthorized) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Protected Field: Modifying Developer Website URL requires the developer authorization password."
           });
         }
       }
@@ -183108,10 +183220,29 @@ var appRouter = createRouter({
 // server/boot.ts
 init_mongodb();
 init_cmsSchemas();
+import_dotenv4.default.config();
+if (typeof process !== "undefined" && typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile();
+  } catch {
+  }
+}
 if (process.env.MONGODB_URI) {
   getDbConnection(resolveDbName("dpsi", "main")).then(async () => {
-    const { ensureCriticalIndexes: ensureCriticalIndexes2 } = await Promise.resolve().then(() => (init_cmsSchemas(), cmsSchemas_exports));
+    const { ensureCriticalIndexes: ensureCriticalIndexes2, getMainModels: getMainModels2 } = await Promise.resolve().then(() => (init_cmsSchemas(), cmsSchemas_exports));
     await ensureCriticalIndexes2("dpsi");
+    try {
+      const { SiteSettings } = await getMainModels2("dpsi");
+      const count = await SiteSettings.countDocuments();
+      if (count === 0) {
+        console.log("[Boot] Fresh system detected \u2014 Auto-seeding initial database structure & admin portal...");
+        const { seedDatabase: seedDatabase2 } = await Promise.resolve().then(() => (init_seedDatabase(), seedDatabase_exports));
+        await seedDatabase2("dpsi");
+        console.log("[Boot] Fresh system database seeding completed!");
+      }
+    } catch (seedErr) {
+      console.warn("[Boot] Auto-seed check notice:", seedErr?.message || seedErr);
+    }
   }).catch((err) => {
     console.warn("[Boot] Background DB pre-warm notice:", err.message);
   });
@@ -183132,26 +183263,28 @@ app.use(
     crossOriginOpenerPolicy: "same-origin-allow-popups"
   })
 );
-var ALLOWED_ORIGINS = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "https://dpsindirapuram.com",
-  "https://www.dpsindirapuram.com",
-  "https://dpsindirapuram.vercel.app",
-  "https://dpsi-website.vercel.app"
-];
 app.use(
   "*",
   cors({
     origin: (origin) => {
-      if (!origin) return "*";
-      if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith(".vercel.app") || origin.endsWith(".dpsindirapuram.com")) {
-        return origin;
-      }
-      return null;
+      if (!origin) return "https://dpsindirapuram.vercel.app";
+      return origin;
     },
+    credentials: true,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "x-trpc-source", "x-admin-auth", "x-tenant-id"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-trpc-source",
+      "x-admin-auth",
+      "x-tenant-id",
+      "trpc-accept",
+      "trpc-batch-mode",
+      "X-Requested-With",
+      "Accept",
+      "Origin"
+    ],
+    exposeHeaders: ["Content-Length", "X-Kuma-Revision"],
     maxAge: 86400
   })
 );
@@ -183166,6 +183299,11 @@ var createTrpcHandler = (endpoint) => async (c5) => {
     });
   });
   const headers = new Headers(res.headers);
+  const clientOrigin = c5.req.header("origin");
+  if (clientOrigin) {
+    headers.set("Access-Control-Allow-Origin", clientOrigin);
+    headers.set("Access-Control-Allow-Credentials", "true");
+  }
   const isPublicQuery = c5.req.method === "GET" && !c5.req.header("authorization") && c5.req.header("x-admin-auth") !== "true";
   if (isPublicQuery) {
     headers.set("Cache-Control", "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400");
@@ -183214,24 +183352,46 @@ var boot_default = app;
 // server/index.ts
 async function handler(req, res) {
   try {
-    const MAX_BUFFER_BYTES = 20 * 1024 * 1024;
-    let totalBytes = 0;
-    const chunks = [];
-    for await (const chunk of req) {
-      const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
-      totalBytes += buf.length;
-      if (totalBytes > MAX_BUFFER_BYTES) {
-        res.statusCode = 413;
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ error: "Payload Too Large" }));
-        return;
+    const method = (req.method || "GET").toUpperCase();
+    const isBodyMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
+    let bodyBuffer = void 0;
+    if (isBodyMethod) {
+      if (Buffer.isBuffer(req.body)) {
+        bodyBuffer = req.body;
+      } else if (typeof req.body === "string") {
+        bodyBuffer = Buffer.from(req.body);
+      } else if (req.body && typeof req.body === "object") {
+        bodyBuffer = Buffer.from(JSON.stringify(req.body));
+      } else if (req[Symbol.asyncIterator]) {
+        const MAX_BUFFER_BYTES = 20 * 1024 * 1024;
+        let totalBytes = 0;
+        const chunks = [];
+        for await (const chunk of req) {
+          const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+          totalBytes += buf.length;
+          if (totalBytes > MAX_BUFFER_BYTES) {
+            res.statusCode = 413;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Payload Too Large" }));
+            return;
+          }
+          chunks.push(buf);
+        }
+        bodyBuffer = Buffer.concat(chunks);
       }
-      chunks.push(buf);
     }
-    const bodyBuffer = Buffer.concat(chunks);
     const protocol = req.headers["x-forwarded-proto"] || "https";
     const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost";
-    const fullUrl = new URL(req.url, `${protocol}://${host}`).href;
+    let pathAndQuery = req.headers["x-forwarded-url"] || req.url || "/";
+    if (pathAndQuery.startsWith("/api/index.js") || pathAndQuery.startsWith("/api/index")) {
+      const matched = req.headers["x-matched-path"];
+      if (matched) {
+        const queryIdx = (req.url || "").indexOf("?");
+        const query = queryIdx !== -1 ? (req.url || "").slice(queryIdx) : "";
+        pathAndQuery = (matched.startsWith("/") ? matched : `/${matched}`) + query;
+      }
+    }
+    const fullUrl = new URL(pathAndQuery, `${protocol}://${host}`).href;
     const headers = new Headers();
     for (const [key, value] of Object.entries(req.headers)) {
       if (value !== void 0) {
@@ -183242,9 +183402,9 @@ async function handler(req, res) {
         }
       }
     }
-    const hasBody = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method?.toUpperCase() || "") && bodyBuffer.length > 0;
+    const hasBody = isBodyMethod && bodyBuffer && bodyBuffer.length > 0;
     const webReq = new Request(fullUrl, {
-      method: req.method,
+      method,
       headers,
       body: hasBody ? bodyBuffer : void 0,
       // @ts-ignore

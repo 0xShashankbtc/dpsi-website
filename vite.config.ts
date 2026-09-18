@@ -1,3 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
+if (typeof process !== "undefined" && typeof (process as any).loadEnvFile === "function") {
+  try {
+    (process as any).loadEnvFile();
+  } catch {}
+}
+
 import devServer from "@hono/vite-dev-server"
 import path from "path"
 const __dirname = import.meta.dirname
@@ -7,7 +15,7 @@ import { VitePWA } from "vite-plugin-pwa"
 import { sentryVitePlugin } from "@sentry/vite-plugin"
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     devServer({ entry: "server/boot.ts", exclude: [/^\/(?!api\/).*$/] }),
     react(),
@@ -48,19 +56,10 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
         clientsClaim: true,
         skipWaiting: true,
+        cleanupOutdatedCaches: true,
         navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api/, /^\/admin/],
         runtimeCaching: [
-          {
-            urlPattern: /\.(?:js)$/i,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "static-js-assets",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7
-              }
-            }
-          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
@@ -115,20 +114,6 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /\/api\/trpc\/(cms|stats|testimonials|achievements|events|news|announcements|gallery)\..*/i,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "dpsi-api-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 10
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
             // YouTube video thumbnails used in VideoGallerySection
             urlPattern: /^https:\/\/img\.youtube\.com\/.*/i,
             handler: "CacheFirst",
@@ -147,19 +132,21 @@ export default defineConfig({
       }
     }),
     // Sentry source maps — uploads to Sentry at build time for readable stack traces
-    // Only active when SENTRY_AUTH_TOKEN is set (skip in dev)
-    ...(process.env.SENTRY_AUTH_TOKEN
+    ...(process.env.SENTRY_UPLOAD_SOURCEMAPS === "true" && process.env.SENTRY_AUTH_TOKEN
       ? [
           sentryVitePlugin({
-            org: "orangefuturetech",
-            project: "javascript-react-router",
+            org: process.env.SENTRY_ORG || "orangefuturetech",
+            project: process.env.SENTRY_PROJECT || "javascript-react-router",
             authToken: process.env.SENTRY_AUTH_TOKEN,
+            errorHandler: (err) => {
+              console.warn("[Sentry] Source map upload notice:", err.message);
+            },
           }),
         ]
       : []),
   ],
   esbuild: {
-    drop: process.env.NODE_ENV === "production" ? ["console", "debugger"] : [],
+    drop: mode === "production" ? ["console", "debugger"] : [],
   },
   server: {
     port: 3000,
@@ -199,6 +186,9 @@ export default defineConfig({
             if (id.includes("framer-motion")) {
               return "framer-motion";
             }
+            if (id.includes("gsap") || id.includes("@gsap")) {
+              return "gsap-vendor";
+            }
             if (id.includes("@sentry")) {
               return "sentry-vendor";
             }
@@ -216,4 +206,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

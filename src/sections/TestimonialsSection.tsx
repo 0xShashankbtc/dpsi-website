@@ -7,6 +7,16 @@ import { DEFAULT_TESTIMONIALS } from "@/lib/initialDataSnapshot";
 
 export default function TestimonialsSection() {
   const { data: testimonials, isLoading } = trpc.testimonials.featured.useQuery();
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const badge = getSetting("testimonials_badge", "Parent & Alumni Voices");
+  const title = getSetting("testimonials_title", "What They Say About Us");
+
   const effectiveTestimonials =
     testimonials && testimonials.length > 0 ? testimonials : DEFAULT_TESTIMONIALS;
   const [current, setCurrent] = useState(0);
@@ -31,10 +41,10 @@ export default function TestimonialsSection() {
         >
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/15 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3 border border-emerald-400/30">
             <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
-            Parent & Alumni Voices
+            {badge}
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            What They Say About Us
+            {title}
           </h2>
           <div className="w-14 h-1 bg-gradient-to-r from-emerald-500 to-amber-500 mx-auto mt-4 rounded-full" />
         </motion.div>

@@ -25,6 +25,19 @@ const iconMap: Record<string, React.ReactNode> = {
 export default function Admissions() {
   const { data: stepsList } = trpc.cms.listAdmissionSteps.useQuery();
   const { data: faqsList } = trpc.cms.listFaqs.useQuery({ category: "Admissions" });
+  const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+
+  const getSetting = (key: string, fallback: string) => {
+    const item = siteSettings?.find((s: any) => s.key === key);
+    return item?.value?.trim() || fallback;
+  };
+
+  const badgeText = getSetting("admission_badge", getSetting("admission_status", "Session 2026-27 Registrations Open"));
+  const titleText = getSetting("admissions_title", "Admissions");
+  const subtitleText = getSetting(
+    "admissions_subtitle",
+    "Join the DPS Indirapuram family. A journey of excellence, discovery, and growth awaits your child."
+  );
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -88,14 +101,14 @@ export default function Admissions() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
-              Session 2026-27 Registrations Open
+              {badgeText}
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-5 tracking-tight text-white drop-shadow-md">
-              Admissions
+              {titleText}
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-emerald-400 to-amber-400 mx-auto rounded-full mb-6" />
             <p className="text-base sm:text-lg md:text-xl text-slate-300 font-medium leading-relaxed">
-              Join the DPS Indirapuram family. A journey of excellence, discovery, and growth awaits your child.
+              {subtitleText}
             </p>
           </div>
         </div>

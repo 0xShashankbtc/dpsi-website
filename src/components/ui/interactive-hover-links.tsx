@@ -24,15 +24,48 @@ export function InteractiveHoverLinks({
 }: InteractiveHoverLinksProps) {
   trpc.cms.listMenus.useQuery({ location: "header" });
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
+  const { data: featureCards } = trpc.cms.listFeatureCards.useQuery();
 
   // If custom links were passed via props, use them
-  // Otherwise build dynamic links combining DB menus & site settings, with curated fallbacks
+  // Otherwise build dynamic links combining DB menus, 3D feature cards & site settings, with curated fallbacks
   const resolvedLinks: InteractiveLinkItem[] = (() => {
     if (links && links.length > 0) return links;
 
     // Check if 360 tour URL is configured in DB site settings
     const view360Url = siteSettings?.find((s: any) => s.key === "view_360_url")?.value?.trim() || "https://dpsivr.vercel.app";
     const view360Enabled = siteSettings?.find((s: any) => s.key === "view_360_enabled")?.value !== "false";
+
+    const defaultImages = [
+      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop",
+    ];
+
+    if (featureCards && featureCards.length > 0) {
+      const activeCards = featureCards
+        .filter((c: any) => !c.isDeleted && c.isActive !== false)
+        .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+
+      if (activeCards.length > 0) {
+        const mapped: InteractiveLinkItem[] = activeCards.map((card: any, idx: number) => ({
+          heading: card.title,
+          subheading: card.description || card.category || "DPS Indirapuram Campus Feature",
+          imgSrc: defaultImages[idx % defaultImages.length],
+          href: card.category?.toLowerCase().includes("academic") ? "/academics" : "/facilities",
+        }));
+
+        if (view360Enabled) {
+          mapped.push({
+            heading: "360 Virtual Tour",
+            subheading: "Immersive VR walkthrough of the entire school campus",
+            imgSrc: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop",
+            href: view360Url,
+          });
+        }
+        return mapped;
+      }
+    }
 
     const baseList: InteractiveLinkItem[] = [
       {
