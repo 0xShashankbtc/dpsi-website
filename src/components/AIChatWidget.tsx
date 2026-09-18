@@ -117,14 +117,15 @@ export default function AIChatWidget() {
   // Hold-to-Talk Voice Input State & Handlers
   const [isListening, setIsListening] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+  const isListeningRef = useRef(false);
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef<string>("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const isMediaRecordingRef = useRef(false);
-  const voiceNoticeTimerRef = useRef<any>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   // Voice State & Speech Synthesis Control
   const [isMuted, setIsMuted] = useState(false);
@@ -450,20 +451,11 @@ export default function AIChatWidget() {
     return false;
   };
 
-  const showVoiceNotice = (msg: string, durationMs = 5000) => {
-    setVoiceNotice(msg);
-    if (voiceNoticeTimerRef.current) clearTimeout(voiceNoticeTimerRef.current);
-    voiceNoticeTimerRef.current = setTimeout(() => {
-      setVoiceNotice(null);
-    }, durationMs);
-  };
-
   const startMediaRecording = async (e?: React.SyntheticEvent) => {
     if (e) e.preventDefault();
     stopAllAudio();
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
-      showVoiceNotice("Voice recording is not supported in this browser. Please type your query or press Windows + H.");
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       return;
     }
 
@@ -488,6 +480,47 @@ export default function AIChatWidget() {
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
       isMediaRecordingRef.current = true;
+      isListeningRef.current = true;
+
+      // Real-time Voice Activity Detection: detects silence after speaking to auto-send like native speech
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const audioCtx = new AudioCtx();
+          audioContextRef.current = audioCtx;
+          const source = audioCtx.createMediaStreamSource(stream);
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          let hasSpoken = false;
+          let silenceStart = Date.now();
+
+          const checkAudioLevel = () => {
+            if (!isMediaRecordingRef.current) return;
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+            const avg = sum / dataArray.length;
+
+            if (avg > 14) {
+              hasSpoken = true;
+              silenceStart = Date.now();
+            } else if (hasSpoken && Date.now() - silenceStart > 1800) {
+              // 1.8s of silence after speech -> auto-stop & send
+              stopListening();
+              return;
+            }
+
+            animFrameRef.current = requestAnimationFrame(checkAudioLevel);
+          };
+
+          animFrameRef.current = requestAnimationFrame(checkAudioLevel);
+        }
+      } catch {
+        // Fallback without Web Audio analyser
+      }
 
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
@@ -497,8 +530,19 @@ export default function AIChatWidget() {
 
       recorder.onstop = async () => {
         setIsListening(false);
+        isListeningRef.current = false;
         isMediaRecordingRef.current = false;
 
+        if (animFrameRef.current) {
+          cancelAnimationFrame(animFrameRef.current);
+          animFrameRef.current = null;
+        }
+        if (audioContextRef.current) {
+          try {
+            audioContextRef.current.close();
+          } catch {}
+          audioContextRef.current = null;
+        }
         if (mediaStreamRef.current) {
           mediaStreamRef.current.getTracks().forEach((track) => track.stop());
           mediaStreamRef.current = null;
@@ -526,11 +570,9 @@ export default function AIChatWidget() {
               if (res?.text) {
                 setInput(res.text);
                 handleSend(res.text);
-              } else if (res?.error) {
-                showVoiceNotice("Could not recognize voice. Please speak clearly or type.");
               }
             } catch {
-              showVoiceNotice("Voice transcription failed. Please try again or type.");
+              // Graceful silent fallback
             } finally {
               setIsTranscribing(false);
             }
@@ -542,25 +584,18 @@ export default function AIChatWidget() {
 
       recorder.start(250);
       setIsListening(true);
-      showVoiceNotice("🎙️ Listening... Click mic again when done to send.", 4000);
 
       // Auto-stop after 15 seconds to prevent runaway recording
       setTimeout(() => {
         if (isMediaRecordingRef.current && mediaRecorderRef.current?.state === "recording") {
-          mediaRecorderRef.current.stop();
+          stopListening();
         }
       }, 15000);
     } catch (err: any) {
       console.warn("Microphone access error:", err);
       setIsListening(false);
+      isListeningRef.current = false;
       isMediaRecordingRef.current = false;
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        showVoiceNotice("Microphone permission blocked. Click the lock/shield icon in Brave's URL bar to allow microphone.");
-      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-        showVoiceNotice("No microphone detected on this PC. Please connect a mic/headset or type your query.");
-      } else {
-        showVoiceNotice("Microphone unavailable. Please type your query.");
-      }
     }
   };
 
@@ -581,25 +616,20 @@ export default function AIChatWidget() {
 
   const startListening = async (e?: React.SyntheticEvent) => {
     if (e) e.preventDefault();
-    
-    // CRITICAL: Instantly stop and silence any playing voice before listening
     stopAllAudio();
 
     if (isListening || recognitionRef.current || isMediaRecordingRef.current) return;
 
-    // 1. Detect Brave Browser upfront:
-    // Brave disables Google's proprietary WebkitSpeechRecognition cloud endpoint by default for privacy,
-    // which causes recognition.start() to fail immediately with a network error.
-    // We immediately route Brave users to standard HTML5 MediaRecorder + Whisper AI!
+    // Detect Brave Browser upfront:
+    // Brave disables Google Speech API by default for privacy, causing recognition.start() to fail immediately.
+    // In Brave, route straight to MediaRecorder + Whisper speech-to-text!
     const isBrave = await checkIsBraveBrowser();
     if (isBrave) {
-      console.log("[Voice] Brave browser detected. Using HTML5 MediaRecorder + Whisper AI...");
       startMediaRecording(e);
       return;
     }
 
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-
     if (!SpeechRecognitionAPI) {
       startMediaRecording(e);
       return;
@@ -627,17 +657,10 @@ export default function AIChatWidget() {
         setIsListening(false);
         recognitionRef.current = null;
 
-        // If network error, not-allowed, or service-not-allowed:
-        // This is the classic symptom of Brave or blocked Chromium Speech-to-Text!
-        // Seamlessly failover to MediaRecorder so the user can speak!
+        // If network error, not-allowed, or service-not-allowed in Chromium:
+        // Seamlessly failover to MediaRecorder so it NEVER closes instantly!
         if (event.error === "network" || event.error === "service-not-allowed") {
-          console.log("[Voice] SpeechRecognition cloud service blocked. Failing over to MediaRecorder...");
           startMediaRecording();
-          return;
-        }
-
-        if (event.error === "not-allowed") {
-          showVoiceNotice("Microphone permission blocked. Please allow microphone access in your browser address bar.");
         }
       };
 
@@ -654,8 +677,7 @@ export default function AIChatWidget() {
       recognition.start();
       recognitionRef.current = recognition;
       setIsListening(true);
-    } catch (err) {
-      console.error("Speech recognition error, failing over to MediaRecorder:", err);
+    } catch {
       setIsListening(false);
       recognitionRef.current = null;
       startMediaRecording(e);
@@ -664,7 +686,6 @@ export default function AIChatWidget() {
 
   const toggleMic = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    // Stop any playing audio immediately when mic button is pressed
     stopAllAudio();
     if (isListening) {
       stopListening(e);
@@ -700,7 +721,6 @@ export default function AIChatWidget() {
       }
       isMediaRecordingRef.current = false;
       setIsTranscribing(false);
-      setVoiceNotice(null);
 
       if (typingTimerRef.current) {
         clearInterval(typingTimerRef.current);
@@ -734,7 +754,6 @@ export default function AIChatWidget() {
     }
     isMediaRecordingRef.current = false;
     setIsTranscribing(false);
-    setVoiceNotice(null);
 
     if (typingTimerRef.current) {
       clearInterval(typingTimerRef.current);
@@ -1139,21 +1158,8 @@ export default function AIChatWidget() {
                 }}
                 className="relative z-20 p-3 bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-950 text-white shrink-0 border-t border-emerald-500/30 rounded-b-[27px] mt-auto w-full"
               >
-                {voiceNotice && (
-                  <div className="mb-2 p-2 rounded-xl bg-amber-500/20 border border-amber-500/35 text-amber-200 text-[11px] flex items-center justify-between gap-2 animate-in fade-in">
-                    <span className="leading-tight">{voiceNotice}</span>
-                    <button
-                      type="button"
-                      onClick={() => setVoiceNotice(null)}
-                      className="text-amber-300 hover:text-white shrink-0 p-0.5"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-
                 <AnimatePresence>
-                  {isListening && (
+                  {(isListening || isTranscribing) && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -1161,18 +1167,7 @@ export default function AIChatWidget() {
                       className="absolute -top-9 left-1/2 -translate-x-1/2 px-3 py-1 bg-rose-600/95 backdrop-blur-md text-white text-[11px] font-semibold rounded-full shadow-lg border border-rose-400/40 flex items-center gap-1.5 whitespace-nowrap z-30 pointer-events-none"
                     >
                       <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                      <span>Listening... (Click mic to send)</span>
-                    </motion.div>
-                  )}
-                  {isTranscribing && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute -top-9 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-600/95 backdrop-blur-md text-white text-[11px] font-semibold rounded-full shadow-lg border border-emerald-400/40 flex items-center gap-1.5 whitespace-nowrap z-30 pointer-events-none"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-white animate-spin" />
-                      <span>Transcribing voice...</span>
+                      <span>{isTranscribing ? "Transcribing..." : "Listening..."}</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1186,8 +1181,8 @@ export default function AIChatWidget() {
                       unlockMobileAudio();
                       toggleMic(e);
                     }}
-                    title={isListening ? "Stop listening and send" : "Speak to DPSI AI"}
-                    aria-label={isListening ? "Stop voice listening and send" : "Speak to DPSI AI"}
+                    title={isListening ? "Stop listening" : "Speak to DPSI AI"}
+                    aria-label={isListening ? "Stop voice listening" : "Speak to DPSI AI"}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer shrink-0 ${
                       isListening
                         ? "bg-rose-600 text-white scale-105 shadow-rose-500/50"
