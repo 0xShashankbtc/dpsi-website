@@ -549,11 +549,11 @@ export default function Facilities() {
                       </div>
 
                       {/* Metrics Footer */}
-                      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
                         {f.metrics.map((m, idx) => (
-                          <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/80 dark:border-slate-800">
-                            <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300 tracking-tight">{m.value}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{m.label}</p>
+                          <div key={idx} className="p-1.5 sm:p-2 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-center min-w-0">
+                            <p className="text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 tracking-tight truncate">{m.value}</p>
+                            <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{m.label}</p>
                           </div>
                         ))}
                       </div>

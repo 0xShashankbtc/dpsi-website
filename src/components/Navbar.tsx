@@ -771,13 +771,13 @@ export default function Navbar() {
               {/* Scrollable Navigation Body */}
               <div
                 data-lenis-prevent
-                className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 space-y-4 custom-scrollbar bg-white dark:bg-slate-950"
+                className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 pt-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] space-y-4 custom-scrollbar bg-white dark:bg-slate-950"
                 style={{
                   backgroundColor: isDark ? "#020617" : "#ffffff",
                 }}
               >
                 {/* Top Slideable Quick Action Bar */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-1 px-1">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-1 px-1 touch-pan-x">
                   {exploreEnabled && (
                     <button
                       onClick={() => {

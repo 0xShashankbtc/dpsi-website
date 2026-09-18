@@ -84,7 +84,7 @@ export default function QuickStats() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className={`grid ${getGridClasses(effectiveStats.length)} gap-4 sm:gap-6 mx-auto justify-center`}
+          className={`grid ${getGridClasses(effectiveStats.length)} gap-3 sm:gap-6 mx-auto justify-center`}
         >
           {effectiveStats.map((stat: any, i: number) => (
             <motion.div
@@ -94,7 +94,7 @@ export default function QuickStats() {
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: i * 0.07 }}
               whileHover={{ y: -8, scale: 1.02 }}
-              className="flat-card relative overflow-hidden bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 text-center p-6 sm:p-7 flex flex-col items-center justify-center min-h-[160px] group cursor-default shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl"
+              className="flat-card relative overflow-hidden bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 text-center p-4 sm:p-6 lg:p-7 flex flex-col items-center justify-center min-h-[140px] sm:min-h-[160px] group cursor-default shadow-sm hover:shadow-xl transition-all duration-300 rounded-2xl"
             >
               <Spotlight
                 className="from-amber-400/20 via-emerald-400/10 to-transparent"
@@ -105,13 +105,13 @@ export default function QuickStats() {
               <motion.div
                 whileHover={{ rotate: [0, -10, 10, -5, 0], scale: 1.15 }}
                 transition={{ duration: 0.4 }}
-                className="text-amber-500 mb-3 flex justify-center cursor-pointer"
+                className="text-amber-500 mb-2.5 sm:mb-3 flex justify-center cursor-pointer"
               >
-                {iconMap[stat.icon || "Award"] || <Award className="w-7 h-7" />}
+                {iconMap[stat.icon || "Award"] || <Award className="w-6 h-6 sm:w-7 sm:h-7" />}
               </motion.div>
 
               {/* Large bold number with count-up */}
-              <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-1.5 tracking-tight leading-none">
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-1 sm:mb-1.5 tracking-tight leading-none">
                 <AnimatedCounter
                   target={stat.value}
                   suffix={stat.value.includes("%") ? "%" : stat.value.includes("+") ? "+" : ""}

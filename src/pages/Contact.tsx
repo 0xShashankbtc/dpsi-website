@@ -185,7 +185,7 @@ export default function Contact() {
                   <p className="text-muted-foreground">Thank you for reaching out. We will get back to you shortly.</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-8 space-y-5">
+                <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-5 sm:p-8 space-y-5">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Send a Message</h2>
                   {errorMessage && (
                     <div role="alert" className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-sm font-medium">

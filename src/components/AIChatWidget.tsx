@@ -933,7 +933,7 @@ export default function AIChatWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.95 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="w-[calc(100vw-24px)] sm:w-[385px] h-[520px] max-h-[82dvh] bg-gradient-to-b from-slate-50 via-emerald-50/40 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-emerald-500/30 rounded-[26px] sm:rounded-[28px] shadow-2xl shadow-slate-900/40 flex flex-col overflow-hidden text-slate-900 dark:text-white relative pointer-events-auto"
+              className="w-[calc(100vw-24px)] sm:w-[385px] h-[min(540px,calc(100dvh-4.5rem))] max-h-[85dvh] bg-gradient-to-b from-slate-50 via-emerald-50/40 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/80 backdrop-blur-2xl border border-emerald-500/20 dark:border-emerald-500/30 rounded-[26px] sm:rounded-[28px] shadow-2xl shadow-slate-900/40 flex flex-col overflow-hidden text-slate-900 dark:text-white relative pointer-events-auto"
               role="dialog"
               aria-modal="true"
               aria-label="DPSI AI Assistant"

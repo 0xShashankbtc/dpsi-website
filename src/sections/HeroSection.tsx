@@ -353,15 +353,15 @@ export default function HeroSection() {
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="absolute top-5 sm:top-7 inset-x-0 z-20 flex justify-center items-center px-4 pointer-events-auto"
+        className="absolute top-[max(1.25rem,calc(env(safe-area-inset-top)+0.5rem))] sm:top-7 inset-x-0 z-20 flex justify-center items-center px-3 sm:px-4 pointer-events-auto"
       >
         <div
           style={{ backgroundColor: "rgba(0, 0, 0, 0.45)" }}
-          className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 rounded-full backdrop-blur-xl border border-white/40 text-white text-xs sm:text-sm font-semibold tracking-wide shadow-xl shadow-black/20 cursor-default transition-all"
+          className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full backdrop-blur-xl border border-white/40 text-white text-[11px] sm:text-xs md:text-sm font-semibold tracking-wide shadow-xl shadow-black/20 cursor-default transition-all max-w-[94vw] truncate"
         >
-          <span className="text-white font-bold">{slide.badge || defaultBadge}</span>
-          <span className="text-white/70" aria-hidden="true">•</span>
-          <span className="text-[11px] sm:text-xs text-slate-100 font-medium">{affiliationText}</span>
+          <span className="text-white font-bold truncate">{slide.badge || defaultBadge}</span>
+          <span className="text-white/70 shrink-0" aria-hidden="true">•</span>
+          <span className="text-[10px] sm:text-xs text-slate-100 font-medium truncate">{affiliationText}</span>
         </div>
       </motion.div>
 

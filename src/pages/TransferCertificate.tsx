@@ -181,19 +181,19 @@ export default function TransferCertificate() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                  Transfer Certificate Record Verified
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span>Transfer Certificate Record Verified</span>
                 </h2>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50">
+                <span className="self-start sm:self-auto px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50">
                   Status: {verifiedResult.status || "Issued"}
                 </span>
               </div>
 
-              <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div className="space-y-3 flex-1">
-                  <div className="flex items-center gap-2">
+              <div className="p-4 sm:p-6 md:p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 sm:gap-6">
+                <div className="space-y-3 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50">
                       Admission No: {verifiedResult.admissionNumber}
                     </span>
@@ -202,7 +202,7 @@ export default function TransferCertificate() {
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                     {verifiedResult.studentName}
                   </h3>
 
@@ -210,7 +210,7 @@ export default function TransferCertificate() {
                     <p><strong>Father's Name:</strong> {verifiedResult.fatherName}</p>
                     <p><strong>Class Leaving:</strong> {verifiedResult.classLeaving}</p>
                     <p><strong>Date of Issue:</strong> {formatISTDate(verifiedResult.dateOfIssue)}</p>
-                    <p><strong>Verification Hash:</strong> <span className="font-mono text-[10px]">DPSI-TC-{verifiedResult.id.slice(-6).toUpperCase()}</span></p>
+                    <p><strong>Verification Hash:</strong> <span className="font-mono text-[10px] break-all">DPSI-TC-{verifiedResult.id.slice(-6).toUpperCase()}</span></p>
                   </div>
                 </div>
 
