@@ -368,6 +368,12 @@ export default function Navbar() {
                 }`}
                 loading="eager"
                 decoding="async"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.endsWith("/images/dps/logo.webp")) {
+                    target.src = "/images/dps/logo.webp";
+                  }
+                }}
               />
               {logoShowText && (
                 <div className="hidden md:flex flex-col">
@@ -708,6 +714,12 @@ export default function Navbar() {
                     width={160}
                     height={40}
                     className="h-9 sm:h-10 w-auto object-contain shrink-0"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.endsWith("/images/dps/logo.webp")) {
+                        target.src = "/images/dps/logo.webp";
+                      }
+                    }}
                   />
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-black text-slate-900 dark:text-white truncate">

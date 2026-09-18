@@ -3,6 +3,9 @@ import type { QueryClient } from "@tanstack/react-query";
 export const DEFAULT_SITE_SETTINGS = [
   { key: "school_name", value: "Delhi Public School Indirapuram", label: "School Name", group: "general" },
   { key: "school_tagline", value: "Service Before Self • Nurturing Global Leaders", label: "School Tagline", group: "general" },
+  { key: "logo_url", value: "/images/dps/logo.webp", label: "School Primary Logo", group: "branding" },
+  { key: "logo_height", value: "62", label: "Logo Height (px)", group: "branding" },
+  { key: "logo_shape", value: "default", label: "Logo Shape", group: "branding" },
   { key: "cbse_affiliation_no", value: "2130663", label: "CBSE Affiliation No.", group: "general" },
   { key: "school_code", value: "60297", label: "School Code", group: "general" },
   { key: "contact_phone", value: "+91-0120-4660000, 4670000", label: "Primary Phone", group: "contact" },
@@ -28,6 +31,7 @@ export const DEFAULT_SITE_SETTINGS = [
   { key: "cta_button_link", value: "/admissions", label: "CTA Button Link", group: "cta" },
   { key: "footer_copyright", value: "© 2026 Delhi Public School Indirapuram. All rights reserved.", label: "Footer Copyright", group: "general" },
   { key: "footer_credit", value: "Developed by : Shashank Jangid", label: "Footer / Credit Text", group: "general" },
+  { key: "developer_url", value: "https://dpsiwhale.vercel.app", label: "Developer Website / Portfolio URL", group: "footer" },
   { key: "footer_tagline", value: "Delhi Public School Indirapuram, established in 2003, is a premier institution under the DPS Society, committed to holistic education and excellence.", label: "Footer Tagline", group: "general" },
   { key: "chat_welcome_message", value: "Hello! I am DPSI AI. I can assist you with Admissions, Exam Schedules, Vacations, Academic Streams, and Campus Facilities.", label: "AI Chat Welcome Message", group: "ai" },
   { key: "calendar_pdf_url", value: "https://www.dpsindirapuram.com/calendar/annual-academic-calendar.pdf", label: "Academic Calendar PDF URL", group: "ai" },

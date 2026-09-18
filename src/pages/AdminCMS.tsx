@@ -6916,7 +6916,12 @@ export default function AdminCMS() {
                     ];
                     const groupsToRender = allGroups.length > 0 ? allGroups : preferredOrder;
 
-                    return groupsToRender.map((group) => (
+                    return groupsToRender
+                      .filter((group) => {
+                        const items = (siteSettings || []).filter((s: any) => s.group === group && s.key !== "footer_credit" && s.key !== "footer_copyright" && s.key !== "developer_url");
+                        return items.length > 0;
+                      })
+                      .map((group) => (
                     <div key={group} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
                       <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
                         <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">

@@ -46,6 +46,10 @@ export default function Footer() {
     "footer_credit",
     "Developed by : Shashank Jangid"
   );
+  const developerUrl = getSetting(
+    "developer_url",
+    "https://dpsiwhale.vercel.app"
+  );
 
   const rawQuick = dbQuickMenus && dbQuickMenus.length > 0 ? dbQuickMenus : DEFAULT_FOOTER_QUICK_MENUS;
   const quickLinks = rawQuick
@@ -92,6 +96,12 @@ export default function Footer() {
                     ? "rounded-none"
                     : ""
                 }`}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.endsWith("/images/dps/logo.webp")) {
+                    target.src = "/images/dps/logo.webp";
+                  }
+                }}
               />
             </div>
             <p className="text-sm leading-relaxed">
@@ -257,11 +267,46 @@ export default function Footer() {
 
           {/* Center: Developer Credit */}
           <div className="flex justify-center items-center">
-            {footerCredit && (
-              <p className="text-[11px] text-slate-500/70 font-normal tracking-wide select-none hover:text-slate-400 transition-colors">
-                {footerCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim()}
-              </p>
-            )}
+            {footerCredit && (() => {
+              const cleanCredit = footerCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim();
+              const targetUrl = developerUrl && developerUrl.trim()
+                ? (developerUrl.startsWith("http://") || developerUrl.startsWith("https://")
+                    ? developerUrl.trim()
+                    : `https://${developerUrl.trim()}`)
+                : "https://dpsiwhale.vercel.app";
+
+              // Extract "Developed by :" or similar prefix from developer name
+              const match = cleanCredit.match(/^(.*?(?:developed|designed|created)\s+by\s*[:\-]?\s*)(.+)$/i);
+
+              if (match) {
+                return (
+                  <p className="text-[11px] text-slate-500/70 font-normal tracking-wide select-none">
+                    <span>{match[1]}</span>
+                    <a
+                      href={targetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-400 hover:text-emerald-400 underline decoration-slate-600/60 underline-offset-2 hover:decoration-emerald-400 font-medium transition-colors cursor-pointer"
+                      title="Visit Developer Portfolio"
+                    >
+                      {match[2]}
+                    </a>
+                  </p>
+                );
+              }
+
+              return (
+                <a
+                  href={targetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-slate-400 hover:text-emerald-400 underline decoration-slate-600/60 underline-offset-2 hover:decoration-emerald-400 font-medium tracking-wide transition-colors cursor-pointer"
+                  title="Visit Developer Portfolio"
+                >
+                  {cleanCredit}
+                </a>
+              );
+            })()}
           </div>
 
           {/* Right: Scroll to Top */}
