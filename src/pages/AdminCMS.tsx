@@ -71,8 +71,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button";
 import { toast } from "sonner";
-import { formatISTDate } from "@/lib/dateUtils";
 import RichTextEditor from "@/components/RichTextEditor";
+import { optimizeMediaUrl, getVideoPosterUrl } from "@/lib/mediaUtils";
+import { formatISTDate } from "@/lib/dateUtils";
 import {
   Sidebar001,
   Sidebar001Header,
@@ -124,18 +125,17 @@ export default function AdminCMS() {
   const [selectedContactMessage, setSelectedContactMessage] = useState<any | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    return !!localStorage.getItem("dpsi_admin_token") || localStorage.getItem("dpsi_admin_auth") === "true";
-  });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isAuth = localStorage.getItem("dpsi_admin_auth") === "true";
-      const token = localStorage.getItem("dpsi_admin_token");
-      if (isAuth && !token) {
-        localStorage.setItem("dpsi_admin_token", "admin-session-active");
+    const token = localStorage.getItem("dpsi_admin_token");
+    const isAuth = localStorage.getItem("dpsi_admin_auth") === "true";
+    if (!token || token === "admin-session-active" || !isAuth) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("dpsi_admin_auth");
+        localStorage.removeItem("dpsi_admin_token");
       }
+      return false;
     }
-  }, []);
+    return true;
+  });
 
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -187,9 +187,22 @@ export default function AdminCMS() {
   });
 
   // Queries
-  const { data: stats, refetch: refetchStats } = trpc.cms.dashboardStats.useQuery(undefined, {
+  const { data: stats, refetch: refetchStats, error: statsError } = trpc.cms.dashboardStats.useQuery(undefined, {
     enabled: isAuthenticated,
+    retry: false,
   });
+
+  useEffect(() => {
+    if (statsError && (statsError.data?.code === "UNAUTHORIZED" || statsError.message?.includes("logged in"))) {
+      localStorage.removeItem("dpsi_admin_auth");
+      localStorage.removeItem("dpsi_admin_user");
+      localStorage.removeItem("dpsi_admin_token");
+      localStorage.removeItem("dpsi_admin_tenant");
+      localStorage.removeItem("dpsi_admin_tenant_name");
+      setIsAuthenticated(false);
+      toast.error("Session expired or invalid. Please sign in again.");
+    }
+  }, [statsError]);
   const { data: pagesList, refetch: refetchPages } = trpc.cms.listPages.useQuery({ showTrash: false }, {
     enabled: isAuthenticated,
   });
@@ -1667,6 +1680,7 @@ export default function AdminCMS() {
   const [sliderForm, setSliderForm] = useState({
     title: "",
     subtitle: "",
+    badge: "",
     imageUrl: "",
     videoUrl: "",
     mobileVideoUrl: "",
@@ -4106,6 +4120,7 @@ export default function AdminCMS() {
                           setSliderForm({
                             title: "",
                             subtitle: "",
+                            badge: "",
                             imageUrl: "",
                             videoUrl: "",
                             mobileVideoUrl: "",
@@ -4131,6 +4146,7 @@ export default function AdminCMS() {
                         !tabSearch ||
                         s.title?.toLowerCase().includes(tabSearch.toLowerCase()) ||
                         s.subtitle?.toLowerCase().includes(tabSearch.toLowerCase()) ||
+                        s.badge?.toLowerCase().includes(tabSearch.toLowerCase()) ||
                         s.mediaType?.toLowerCase().includes(tabSearch.toLowerCase()) ||
                         s.buttonText?.toLowerCase().includes(tabSearch.toLowerCase())
                       )
@@ -4138,9 +4154,21 @@ export default function AdminCMS() {
                       <Card key={s._id} className="bg-white border-slate-200 shadow-sm overflow-hidden">
                         <div className="h-44 w-full overflow-hidden bg-slate-900 relative">
                           {s.mediaType === "video" || s.videoUrl ? (
-                            <video src={s.videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                            <div className="relative w-full h-full">
+                              <img
+                                src={getVideoPosterUrl(s.videoUrl, true) || s.imageUrl || "/images/dps/logo.webp"}
+                                alt={s.title}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                              <div className="absolute inset-0 bg-black/25 flex items-center justify-center pointer-events-none">
+                                <div className="w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-xs">
+                                  <Play className="w-4 h-4 fill-white ml-0.5" />
+                                </div>
+                              </div>
+                            </div>
                           ) : (
-                            <img src={s.imageUrl} alt={s.title} className="w-full h-full object-cover" />
+                            <img src={s.imageUrl} alt={s.title} className="w-full h-full object-cover" loading="lazy" />
                           )}
                           <div className="absolute top-2 left-2 flex items-center gap-1.5 flex-wrap">
                             <span className="px-2 py-0.5 bg-black/60 rounded text-[10px] text-white font-mono">
@@ -4164,7 +4192,14 @@ export default function AdminCMS() {
                         </div>
                         <CardContent className="p-4 flex items-start justify-between">
                           <div>
-                            <h3 className="font-bold text-slate-900 text-sm">{s.title}</h3>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h3 className="font-bold text-slate-900 text-sm">{s.title || "Hero Slide"}</h3>
+                              {s.badge && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+                                  {s.badge}
+                                </span>
+                              )}
+                            </div>
                             {s.subtitle && <p className="text-xs text-slate-500 mt-0.5">{s.subtitle}</p>}
                             <div className="flex items-center gap-2 mt-2">
                               <span className="text-[10px] px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 font-medium">
@@ -4184,6 +4219,7 @@ export default function AdminCMS() {
                                 setSliderForm({
                                   title: s.title || "",
                                   subtitle: s.subtitle || "",
+                                  badge: s.badge || "",
                                   imageUrl: s.imageUrl || "",
                                   videoUrl: s.videoUrl || "",
                                   mobileVideoUrl: s.mobileVideoUrl || "",
@@ -6401,10 +6437,14 @@ export default function AdminCMS() {
                           const copyVal = settingsEdits["footer_copyright"] !== undefined
                             ? settingsEdits["footer_copyright"]
                             : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
+                          const urlVal = settingsEdits["developer_url"] !== undefined
+                            ? settingsEdits["developer_url"]
+                            : ((siteSettings || []).find((s: any) => s.key === "developer_url")?.value || "https://dpsiwhale.vercel.app");
                           updateSiteSettingsMutation.mutate({
                             updates: [
                               { key: "footer_credit", value: creditVal },
                               { key: "footer_copyright", value: copyVal },
+                              { key: "developer_url", value: urlVal },
                             ],
                             unlockPassword: creditUnlockPassword,
                           });
@@ -6431,6 +6471,9 @@ export default function AdminCMS() {
                           const previewCopy = settingsEdits["footer_copyright"] !== undefined
                             ? settingsEdits["footer_copyright"]
                             : ((siteSettings || []).find((s: any) => s.key === "footer_copyright")?.value || `Copyrights ${new Date().getFullYear()} DPS Indirapuram. All Rights Reserved.`);
+                          const previewDevUrl = settingsEdits["developer_url"] !== undefined
+                            ? settingsEdits["developer_url"]
+                            : ((siteSettings || []).find((s: any) => s.key === "developer_url")?.value || "https://dpsiwhale.vercel.app");
 
                           return (
                             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 shadow-inner">
@@ -6439,9 +6482,16 @@ export default function AdminCMS() {
                                   {previewCopy}
                                 </p>
                                 {previewCredit && (
-                                  <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm">
+                                  <a
+                                    href={previewDevUrl.startsWith("http") ? previewDevUrl : `https://${previewDevUrl}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-slate-400 hover:text-emerald-400 font-medium flex items-center gap-1.5 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700/50 shadow-sm hover:border-emerald-500/50 transition-colors cursor-pointer"
+                                    title={`Click to test developer link: ${previewDevUrl}`}
+                                  >
                                     <span>{previewCredit.replace(/\s*\(?Orange\)?\s*/gi, "").trim()}</span>
-                                  </div>
+                                    <ExternalLink className="w-3 h-3 text-emerald-400 shrink-0" />
+                                  </a>
                                 )}
                                 <div className="p-2 rounded-full bg-emerald-700 text-white opacity-80 cursor-default">
                                   <ArrowRight className="w-3.5 h-3.5 -rotate-90" />
@@ -6549,6 +6599,72 @@ export default function AdminCMS() {
                             className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
                           />
                           <p className="text-[10px] text-slate-400">Standard legal copyright notice</p>
+                        </div>
+
+                        <div className="space-y-1.5 md:col-span-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-semibold text-slate-700 flex items-center gap-1.5">
+                              {isCreditLocked ? (
+                                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                              ) : (
+                                <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                              )}
+                              <span>Developer Website / Portfolio URL (Opened when someone clicks developer name)</span>
+                            </label>
+                            {(() => {
+                              const currentDevUrl = settingsEdits["developer_url"] !== undefined
+                                ? settingsEdits["developer_url"]
+                                : ((siteSettings || []).find((s: any) => s.key === "developer_url")?.value || "https://dpsiwhale.vercel.app");
+                              return (
+                                <a
+                                  href={currentDevUrl.startsWith("http") ? currentDevUrl : `https://${currentDevUrl}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium hover:underline cursor-pointer"
+                                >
+                                  <span>Test URL: {currentDevUrl.replace(/^https?:\/\//, "")}</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              );
+                            })()}
+                          </div>
+
+                          <div className="relative">
+                            <Input
+                              placeholder="https://dpsiwhale.vercel.app"
+                              value={settingsEdits["developer_url"] !== undefined
+                                ? settingsEdits["developer_url"]
+                                : ((siteSettings || []).find((s: any) => s.key === "developer_url")?.value || "https://dpsiwhale.vercel.app")}
+                              readOnly={isCreditLocked}
+                              onClick={() => {
+                                if (isCreditLocked) {
+                                  setCreditPasswordInput("");
+                                  setShowCreditPassword(false);
+                                  setCreditUnlockModal(true);
+                                }
+                              }}
+                              onChange={(e) => {
+                                if (!isCreditLocked) {
+                                  setSettingsEdits({ ...settingsEdits, developer_url: e.target.value });
+                                }
+                              }}
+                              className={isCreditLocked
+                                ? "bg-slate-100/90 border-slate-300 text-slate-500 text-xs cursor-not-allowed select-none pr-8 font-mono font-medium"
+                                : "bg-emerald-50/40 border-emerald-400 text-slate-900 text-xs focus:ring-emerald-500 pr-8 font-mono font-medium"
+                              }
+                            />
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                              {isCreditLocked ? (
+                                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                              ) : (
+                                <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                              )}
+                            </div>
+                          </div>
+
+                          <p className="text-[10px] text-slate-400">
+                            When users click on the developer name on the website footer, this link will open in a new tab.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -6776,14 +6892,40 @@ export default function AdminCMS() {
                     </div>
                   </div>
 
-                  {["general", "contact", "social", "principal", "cta", "admissions", "footer"].map((group) => (
+                  {(() => {
+                    const distinctGroups = Array.from(new Set((siteSettings || []).map((s: any) => s.group))).filter(
+                      (group): group is string => Boolean(group && group !== "buttons" && group !== "virtual_tour")
+                    );
+                    const preferredOrder = [
+                      "general",
+                      "branding",
+                      "admissions",
+                      "academics",
+                      "facilities",
+                      "achievements",
+                      "testimonials",
+                      "principal",
+                      "cta",
+                      "contact",
+                      "social",
+                      "footer",
+                    ];
+                    const allGroups = [
+                      ...preferredOrder.filter((g) => distinctGroups.includes(g)),
+                      ...distinctGroups.filter((g) => !preferredOrder.includes(g)),
+                    ];
+                    const groupsToRender = allGroups.length > 0 ? allGroups : preferredOrder;
+
+                    return groupsToRender.map((group) => (
                     <div key={group} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
                       <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">{group} Settings</h3>
+                        <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                          {group === "cta" ? "Call to Action (CTA)" : `${group} Settings`}
+                        </h3>
                         <Button
                           size="sm"
                           onClick={() => {
-                            const groupSettings = (siteSettings || []).filter((s: any) => s.group === group && s.key !== "footer_credit" && s.key !== "footer_copyright");
+                            const groupSettings = (siteSettings || []).filter((s: any) => s.group === group && s.key !== "footer_credit" && s.key !== "footer_copyright" && s.key !== "developer_url");
                             const updates = groupSettings.map((s: any) => ({
                               key: s.key,
                               value: settingsEdits[s.key] !== undefined ? settingsEdits[s.key] : s.value,
@@ -6794,11 +6936,11 @@ export default function AdminCMS() {
                           className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs h-7 px-3 cursor-pointer flex items-center gap-1 shadow-sm"
                         >
                           <Save className="w-3.5 h-3.5" />
-                          <span>Save {group.charAt(0).toUpperCase() + group.slice(1)}</span>
+                          <span>Save {group === "cta" ? "CTA" : group.charAt(0).toUpperCase() + group.slice(1)}</span>
                         </Button>
                       </div>
                       <div className="p-4 space-y-4">
-                        {(siteSettings || []).filter((s: any) => s.group === group && s.key !== "footer_credit" && s.key !== "footer_copyright").map((s: any) => {
+                        {(siteSettings || []).filter((s: any) => s.group === group && s.key !== "footer_credit" && s.key !== "footer_copyright" && s.key !== "developer_url").map((s: any) => {
                           const isImageKey = s.key.includes("image") || s.key.includes("logo") || s.key.includes("photo");
                           const currentValue = settingsEdits[s.key] !== undefined ? settingsEdits[s.key] : s.value;
 
@@ -6890,7 +7032,7 @@ export default function AdminCMS() {
                         )}
                       </div>
                     </div>
-                  ))}
+                  ))})()}
                 </motion.div>
               )}
 
@@ -7675,9 +7817,15 @@ export default function AdminCMS() {
                 className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
               />
               <Input
-                placeholder="Subtitle (e.g. Excellence in CBSE Education)"
+                placeholder="Subtitle (e.g. Premier CBSE Day School in Ghaziabad • Nursery to Class XII)"
                 value={sliderForm.subtitle}
                 onChange={(e) => setSliderForm({ ...sliderForm, subtitle: e.target.value })}
+                className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
+              />
+              <Input
+                placeholder="Top Badge (e.g. Admissions Open 2026-27 or Excellence in Education)"
+                value={sliderForm.badge}
+                onChange={(e) => setSliderForm({ ...sliderForm, badge: e.target.value })}
                 className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
               />
               <div className="grid grid-cols-3 gap-2">
@@ -7781,12 +7929,12 @@ export default function AdminCMS() {
                   {sliderForm.videoUrl && (
                     <div className="relative rounded-lg overflow-hidden h-44 bg-slate-950 border border-slate-200">
                       <video
-                        src={sliderForm.videoUrl}
+                        src={optimizeMediaUrl(sliderForm.videoUrl, { isMobile: true, quality: "eco", width: 720 })}
                         controls
-                        autoPlay
                         loop
                         muted
                         playsInline
+                        preload="metadata"
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute top-2 left-2 flex items-center gap-1.5">
@@ -7887,12 +8035,12 @@ export default function AdminCMS() {
                         {sliderForm.mobileVideoUrl && (
                           <div className="relative rounded-lg overflow-hidden h-48 w-32 mx-auto bg-slate-950 border border-purple-300 shadow-md">
                             <video
-                              src={sliderForm.mobileVideoUrl}
+                              src={optimizeMediaUrl(sliderForm.mobileVideoUrl, { isMobile: true, quality: "eco", width: 720 })}
                               controls
-                              autoPlay
                               loop
                               muted
                               playsInline
+                              preload="metadata"
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute top-1.5 left-1.5">
