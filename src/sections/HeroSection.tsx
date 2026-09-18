@@ -269,7 +269,7 @@ export default function HeroSection() {
       ref={containerRef}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative w-full h-[100dvh] min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950 text-white select-none contain-paint touch-pan-y"
+      className="relative w-full h-[100dvh] min-h-[100dvh] flex items-center justify-center overflow-hidden bg-slate-950 text-white select-none"
     >
       {/* BRANDED FALLBACK BACKDROP WITH DPSI LOGO */}
       <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center pointer-events-none z-0">

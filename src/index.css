@@ -78,9 +78,6 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior-y: none;
-    overflow-x: clip;
-    max-width: 100vw;
   }
   button, a, input, select, textarea, [role="button"] {
     touch-action: manipulation;
@@ -92,9 +89,8 @@
   }
   body {
     @apply bg-background text-foreground antialiased selection:bg-emerald-500/20 selection:text-emerald-700;
-    overflow-x: clip;
+    overflow-x: hidden;
     width: 100%;
-    max-width: 100vw;
     position: relative;
     -webkit-overflow-scrolling: touch;
   }
