@@ -505,5 +505,74 @@ export const aiRouter = createRouter({
 
       return { audioBase64: null };
     }),
+
+  // High-Speed Voice-to-Text Transcription via Groq Whisper AI
+  // Serves as universal hardware-level speech recognition for Brave Browser, Firefox, and privacy-shielded environments
+  transcribeAudio: publicQuery
+    .input(
+      z.object({
+        audioBase64: z.string().min(20),
+        mimeType: z.string().default("audio/webm"),
+        language: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const ip = getClientIp(ctx.req);
+      const isAllowed = await checkPersistentRateLimit(`stt:${ip}`, 30, 60, ctx.tenantId);
+      if (!isAllowed) {
+        return { text: "", error: "Rate limit exceeded. Please wait a moment." };
+      }
+
+      const cleanBase64 = input.audioBase64.replace(/^data:audio\/[a-z0-9-]+;base64,/i, "");
+      const buffer = Buffer.from(cleanBase64, "base64");
+
+      let groqApiKey = process.env.GROQ_API_KEY || process.env.DOPPLER_GROQ_API_KEY || "";
+      if (!groqApiKey) {
+        try {
+          const { SiteSettings } = await getMainModels(ctx.tenantId);
+          const configDoc = await SiteSettings.findOne({ key: "ai_bot_config" }).lean();
+          if (configDoc?.value) {
+            const config = JSON.parse(configDoc.value);
+            if (config.apiKey) groqApiKey = config.apiKey;
+          }
+        } catch {}
+      }
+
+      if (!groqApiKey) {
+        return { text: "", error: "Voice transcription provider not configured" };
+      }
+
+      try {
+        const ext = input.mimeType.includes("mp4") ? "m4a" : (input.mimeType.includes("ogg") ? "ogg" : "webm");
+        const form = new FormData();
+        form.append("file", new Blob([buffer], { type: input.mimeType }), `recording.${ext}`);
+        form.append("model", "whisper-large-v3-turbo");
+        form.append("temperature", "0");
+        if (input.language) {
+          form.append("language", input.language);
+        }
+
+        const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${groqApiKey}`,
+          },
+          body: form,
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as { text?: string };
+          return { text: (data.text || "").trim() };
+        } else {
+          const errText = await res.text();
+          console.warn("[STT] Groq Whisper notice:", errText);
+          return { text: "", error: "Transcription failed" };
+        }
+      } catch (err: any) {
+        console.warn("[STT] Transcription error:", err.message);
+        return { text: "", error: err.message };
+      }
+    }),
 });
 

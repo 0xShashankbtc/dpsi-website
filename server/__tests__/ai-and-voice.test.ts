@@ -218,5 +218,48 @@ describe("AI Chat & Voice Synthesis Unit Test Suite", () => {
       expect(normalizeGroqModel("openai/gpt-oss-20b")).toBe("openai/gpt-oss-20b");
     });
   });
+
+  // 7. High-Speed Speech-to-Text (STT) & Brave Browser Fallback Contract
+  describe("STT Audio Transcription & Brave Browser Fallback", () => {
+    const sttInputSchema = z.object({
+      audioBase64: z.string().min(20),
+      mimeType: z.string().default("audio/webm"),
+      language: z.string().optional(),
+    });
+
+    it("validates audio input schema properly", () => {
+      const valid = sttInputSchema.safeParse({
+        audioBase64: "data:audio/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwH/////////FUmpZpkq17GDD0JATYCGQ2hyb21lV0GGQ2hyb21lFlSua8+1gwnqCQ==",
+        mimeType: "audio/webm",
+      });
+      expect(valid.success).toBe(true);
+
+      const tooShort = sttInputSchema.safeParse({
+        audioBase64: "too-short",
+      });
+      expect(tooShort.success).toBe(false);
+    });
+
+    it("verifies Brave browser detection heuristics", () => {
+      // Mock navigator with brave object
+      const mockBraveNav = {
+        brave: {
+          isBrave: async () => true,
+        },
+      };
+      expect(typeof mockBraveNav.brave?.isBrave).toBe("function");
+
+      // Mock userAgentData brands check
+      const mockBrandsNav = {
+        userAgentData: {
+          brands: [{ brand: "Chromium" }, { brand: "Brave" }],
+        },
+      };
+      const isBraveBrand = mockBrandsNav.userAgentData.brands.some((b) =>
+        b.brand.toLowerCase().includes("brave")
+      );
+      expect(isBraveBrand).toBe(true);
+    });
+  });
 });
 

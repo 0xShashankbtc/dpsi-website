@@ -48,10 +48,6 @@ export default class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  private handleReload = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
-    window.location.reload();
-  };
 
   private handleResetAndReload = async () => {
     this.setState({ hasError: false, error: null, errorInfo: null });

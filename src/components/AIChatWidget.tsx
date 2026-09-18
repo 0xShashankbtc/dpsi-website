@@ -52,6 +52,7 @@ function getDynamicAction(query: string, text?: string, settings?: { calendarPdf
 export default function AIChatWidget() {
   const aiChatMutation = trpc.ai.chat.useMutation();
   const ttsMutation = trpc.ai.synthesizeSpeech.useMutation();
+  const sttMutation = trpc.ai.transcribeAudio.useMutation();
   const { data: siteSettings } = trpc.cms.getSiteSettings.useQuery();
 
   const getSetting = (key: string, fallback: string) => {
@@ -115,8 +116,15 @@ export default function AIChatWidget() {
 
   // Hold-to-Talk Voice Input State & Handlers
   const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef<string>("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const isMediaRecordingRef = useRef(false);
+  const voiceNoticeTimerRef = useRef<any>(null);
 
   // Voice State & Speech Synthesis Control
   const [isMuted, setIsMuted] = useState(false);
@@ -426,20 +434,176 @@ export default function AIChatWidget() {
 
   const isProcessingRef = useRef(false);
 
-  const startListening = (e?: React.SyntheticEvent) => {
+  // Helper to detect Brave Browser (which blocks Google Speech API by default)
+  const checkIsBraveBrowser = async (): Promise<boolean> => {
+    if (typeof window === "undefined") return false;
+    if ((navigator as any).brave && typeof (navigator as any).brave.isBrave === "function") {
+      try {
+        return await (navigator as any).brave.isBrave();
+      } catch {
+        return false;
+      }
+    }
+    if ((navigator as any).userAgentData?.brands?.some((b: any) => b.brand?.toLowerCase()?.includes("brave"))) {
+      return true;
+    }
+    return false;
+  };
+
+  const showVoiceNotice = (msg: string, durationMs = 5000) => {
+    setVoiceNotice(msg);
+    if (voiceNoticeTimerRef.current) clearTimeout(voiceNoticeTimerRef.current);
+    voiceNoticeTimerRef.current = setTimeout(() => {
+      setVoiceNotice(null);
+    }, durationMs);
+  };
+
+  const startMediaRecording = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
+    stopAllAudio();
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
+      showVoiceNotice("Voice recording is not supported in this browser. Please type your query or press Windows + H.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      let mimeType = "audio/webm;codecs=opus";
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        if (MediaRecorder.isTypeSupported("audio/webm")) {
+          mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+        } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+          mimeType = "audio/ogg";
+        } else {
+          mimeType = "";
+        }
+      }
+
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+      isMediaRecordingRef.current = true;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        setIsListening(false);
+        isMediaRecordingRef.current = false;
+
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+        }
+
+        const chunks = audioChunksRef.current;
+        if (!chunks || chunks.length === 0) return;
+
+        const effectiveMime = recorder.mimeType || "audio/webm";
+        const audioBlob = new Blob(chunks, { type: effectiveMime });
+        if (audioBlob.size < 400) return;
+
+        setIsTranscribing(true);
+        try {
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result as string;
+            try {
+              const res = await sttMutation.mutateAsync({
+                audioBase64: base64Audio,
+                mimeType: effectiveMime,
+              });
+
+              if (res?.text) {
+                setInput(res.text);
+                handleSend(res.text);
+              } else if (res?.error) {
+                showVoiceNotice("Could not recognize voice. Please speak clearly or type.");
+              }
+            } catch {
+              showVoiceNotice("Voice transcription failed. Please try again or type.");
+            } finally {
+              setIsTranscribing(false);
+            }
+          };
+        } catch {
+          setIsTranscribing(false);
+        }
+      };
+
+      recorder.start(250);
+      setIsListening(true);
+      showVoiceNotice("🎙️ Listening... Click mic again when done to send.", 4000);
+
+      // Auto-stop after 15 seconds to prevent runaway recording
+      setTimeout(() => {
+        if (isMediaRecordingRef.current && mediaRecorderRef.current?.state === "recording") {
+          mediaRecorderRef.current.stop();
+        }
+      }, 15000);
+    } catch (err: any) {
+      console.warn("Microphone access error:", err);
+      setIsListening(false);
+      isMediaRecordingRef.current = false;
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        showVoiceNotice("Microphone permission blocked. Click the lock/shield icon in Brave's URL bar to allow microphone.");
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        showVoiceNotice("No microphone detected on this PC. Please connect a mic/headset or type your query.");
+      } else {
+        showVoiceNotice("Microphone unavailable. Please type your query.");
+      }
+    }
+  };
+
+  const stopListening = (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
+    if (isMediaRecordingRef.current && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {}
+      return;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+    }
+  };
+
+  const startListening = async (e?: React.SyntheticEvent) => {
     if (e) e.preventDefault();
     
     // CRITICAL: Instantly stop and silence any playing voice before listening
     stopAllAudio();
 
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (isListening || recognitionRef.current || isMediaRecordingRef.current) return;
 
-    if (!SpeechRecognitionAPI) {
-      alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
+    // 1. Detect Brave Browser upfront:
+    // Brave disables Google's proprietary WebkitSpeechRecognition cloud endpoint by default for privacy,
+    // which causes recognition.start() to fail immediately with a network error.
+    // We immediately route Brave users to standard HTML5 MediaRecorder + Whisper AI!
+    const isBrave = await checkIsBraveBrowser();
+    if (isBrave) {
+      console.log("[Voice] Brave browser detected. Using HTML5 MediaRecorder + Whisper AI...");
+      startMediaRecording(e);
       return;
     }
 
-    if (isListening || recognitionRef.current) return;
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      startMediaRecording(e);
+      return;
+    }
 
     try {
       const recognition = new SpeechRecognitionAPI();
@@ -462,6 +626,19 @@ export default function AIChatWidget() {
         console.warn("Speech recognition error:", event.error);
         setIsListening(false);
         recognitionRef.current = null;
+
+        // If network error, not-allowed, or service-not-allowed:
+        // This is the classic symptom of Brave or blocked Chromium Speech-to-Text!
+        // Seamlessly failover to MediaRecorder so the user can speak!
+        if (event.error === "network" || event.error === "service-not-allowed") {
+          console.log("[Voice] SpeechRecognition cloud service blocked. Failing over to MediaRecorder...");
+          startMediaRecording();
+          return;
+        }
+
+        if (event.error === "not-allowed") {
+          showVoiceNotice("Microphone permission blocked. Please allow microphone access in your browser address bar.");
+        }
       };
 
       recognition.onend = () => {
@@ -478,20 +655,10 @@ export default function AIChatWidget() {
       recognitionRef.current = recognition;
       setIsListening(true);
     } catch (err) {
-      console.error("Speech recognition error:", err);
+      console.error("Speech recognition error, failing over to MediaRecorder:", err);
       setIsListening(false);
       recognitionRef.current = null;
-    }
-  };
-
-  const stopListening = (e?: React.SyntheticEvent) => {
-    if (e) e.preventDefault();
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
+      startMediaRecording(e);
     }
   };
 
@@ -522,6 +689,19 @@ export default function AIChatWidget() {
         setIsListening(false);
         recognitionRef.current = null;
       }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {}
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      isMediaRecordingRef.current = false;
+      setIsTranscribing(false);
+      setVoiceNotice(null);
+
       if (typingTimerRef.current) {
         clearInterval(typingTimerRef.current);
       }
@@ -543,6 +723,19 @@ export default function AIChatWidget() {
       setIsListening(false);
       recognitionRef.current = null;
     }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {}
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+    isMediaRecordingRef.current = false;
+    setIsTranscribing(false);
+    setVoiceNotice(null);
+
     if (typingTimerRef.current) {
       clearInterval(typingTimerRef.current);
     }
@@ -946,6 +1139,19 @@ export default function AIChatWidget() {
                 }}
                 className="relative z-20 p-3 bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-950 text-white shrink-0 border-t border-emerald-500/30 rounded-b-[27px] mt-auto w-full"
               >
+                {voiceNotice && (
+                  <div className="mb-2 p-2 rounded-xl bg-amber-500/20 border border-amber-500/35 text-amber-200 text-[11px] flex items-center justify-between gap-2 animate-in fade-in">
+                    <span className="leading-tight">{voiceNotice}</span>
+                    <button
+                      type="button"
+                      onClick={() => setVoiceNotice(null)}
+                      className="text-amber-300 hover:text-white shrink-0 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 <AnimatePresence>
                   {isListening && (
                     <motion.div
@@ -955,7 +1161,18 @@ export default function AIChatWidget() {
                       className="absolute -top-9 left-1/2 -translate-x-1/2 px-3 py-1 bg-rose-600/95 backdrop-blur-md text-white text-[11px] font-semibold rounded-full shadow-lg border border-rose-400/40 flex items-center gap-1.5 whitespace-nowrap z-30 pointer-events-none"
                     >
                       <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                      <span>Listening...</span>
+                      <span>Listening... (Click mic to send)</span>
+                    </motion.div>
+                  )}
+                  {isTranscribing && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute -top-9 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-600/95 backdrop-blur-md text-white text-[11px] font-semibold rounded-full shadow-lg border border-emerald-400/40 flex items-center gap-1.5 whitespace-nowrap z-30 pointer-events-none"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-white animate-spin" />
+                      <span>Transcribing voice...</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
