@@ -34,11 +34,6 @@ Sentry.init({
       createRoutesFromChildren,
       matchRoutes,
     }),
-    // Session Replay — record error sessions fully, 10% of normal sessions
-    Sentry.replayIntegration({
-      maskAllText: false,  // School site has no sensitive text to hide
-      blockAllMedia: false,
-    }),
   ],
 
   // Performance: 100% in dev, 10% in production
@@ -52,9 +47,7 @@ Sentry.init({
     /^https:\/\/dpsi-website\.vercel\.app/,
   ],
 
-  // Session Replay sample rates: 0 for normal browsing to avoid main-thread scroll jank, 1.0 on errors
-  replaysSessionSampleRate: 0,
-  replaysOnErrorSampleRate: 1.0,
+
 
   // Enable structured logging API (Sentry.logger.*)
   enableLogs: true,
