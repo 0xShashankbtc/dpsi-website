@@ -13,6 +13,7 @@ import {
   Compass,
   Globe,
   Zap,
+  Bot,
 } from "lucide-react";
 const InteractiveHoverLinks = React.lazy(() =>
   import("@/components/ui/interactive-hover-links").then((m) => ({
@@ -328,6 +329,18 @@ export default function Navbar() {
                   title="360 Virtual Tour"
                 >
                   <span>360 View</span>
+                </a>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <a
+                  href="https://dpsirobot.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded transition-all block font-bold flex items-center gap-1 shadow-xs"
+                  title="Robot"
+                >
+                  <Bot className="w-3.5 h-3.5" />
+                  <span>Robot</span>
                 </a>
               </motion.div>
             </div>
@@ -786,6 +799,17 @@ export default function Navbar() {
                   >
                     <Globe className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                     <span>360 View</span>
+                    <span className="text-[11px] opacity-70">↗</span>
+                  </a>
+                  <a
+                    href="https://dpsirobot.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMobileOpen(false)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200/80 dark:border-purple-800/60 flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-transform"
+                  >
+                    <Bot className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>Robot</span>
                     <span className="text-[11px] opacity-70">↗</span>
                   </a>
                   <a
