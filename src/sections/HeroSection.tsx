@@ -126,8 +126,8 @@ export default function HeroSection() {
 
   const videoSource = hasVideo
     ? (isMobile
-        ? optimizeMediaUrl(effectiveRawVideo, { isMobile: true, quality: "best", width: 1080 })
-        : optimizeMediaUrl(effectiveRawVideo, { isMobile: false, quality: "best", width: 1920 }))
+        ? optimizeMediaUrl(effectiveRawVideo, { isMobile: true, quality: "good", width: 720 })
+        : optimizeMediaUrl(effectiveRawVideo, { isMobile: false, quality: "good", width: 1920 }))
     : "";
 
   const videoPoster = (hasVideo && effectiveRawVideo) ? getVideoPosterUrl(effectiveRawVideo, isMobile) : "";
@@ -307,7 +307,7 @@ export default function HeroSection() {
               muted={isMuted}
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
               disablePictureInPicture
               disableRemotePlayback
               onEnded={(e) => {

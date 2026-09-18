@@ -4,6 +4,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { idlePrefetchTopRoutes } from './lib/routePreloader'
 import { trpc } from './providers/trpc'
 import { Toaster } from 'sonner'
+import Home from './pages/Home'
 
 /**
  * Self-healing lazy loader for dynamic chunks.
@@ -52,7 +53,6 @@ function safeLazy<T extends ComponentType<any>>(factory: () => Promise<{ default
   })
 }
 
-const Home = safeLazy(() => import('./pages/Home'))
 const About = safeLazy(() => import('./pages/About'))
 const Academics = safeLazy(() => import('./pages/Academics'))
 const Admissions = safeLazy(() => import('./pages/Admissions'))
